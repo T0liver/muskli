@@ -24,7 +24,7 @@ Social anything (feed, follow, likes, comments, leaderboards, sharing), coach/cl
 - **Exercise types:** `weight_reps`, `reps_only`, `bodyweight_reps`, `bodyweight_assisted_reps`, `duration`, `weight_duration`, `distance_duration`, `short_distance_weight`.
 - **Superset:** exercises sharing a `superset_group` value.
 - **Previous:** values from the last time this exercise was done (see F-04).
-- **Volume:** weight(kg) x reps summed over qualifying sets (D-010).
+- **Volume:** per D-010 — `weight_reps`: weight_kg × reps; bodyweight/assisted use profile body weight; summed over qualifying completed sets.
 
 ## 5. MVP features (Phase 1)
 

@@ -10,13 +10,13 @@ Status: **proposal v0.1.** Items marked *(open)* are decided in `docs/DECISIONS.
 | Navigation | Navigation Compose (type-safe routes) | proposed |
 | State | ViewModel + `StateFlow`, unidirectional data flow | proposed |
 | Async | Kotlin Coroutines + Flow | proposed |
-| Persistence | Room (SQLite) | proposed (D-002) |
+| Persistence | Room (SQLite) | decided (D-002) |
 | Settings | Jetpack DataStore (Preferences) | proposed |
-| DI | Hilt *(open, D-006: Hilt vs. manual constructor injection)* | open |
+| DI | Hilt | decided (D-006) |
 | Serialization | kotlinx.serialization (export/import) | proposed |
 | Testing | JUnit, kotlin.test, Turbine (Flow), Compose UI tests, Room in-memory tests | proposed |
 | Build | Gradle Kotlin DSL, version catalog `gradle/libs.versions.toml` | proposed |
-| minSdk / targetSdk | *(open, D-007)* targetSdk = latest stable | open |
+| minSdk / targetSdk | minSdk 24 (D-007); targetSdk = latest stable | decided (D-007) |
 
 **Dependency policy:** an agent may not add a library without owner approval. When proposing one, state why the platform/stdlib isn't enough, and pin a stable version verified at that time (do not copy versions from memory).
 
@@ -39,6 +39,11 @@ Status: **proposal v0.1.** Items marked *(open)* are decided in `docs/DECISIONS.
   di/           wiring
 ```
 Rules: `:domain` depends on nothing. `:data` depends on `:domain`. `:app` depends on both. UI never touches DAOs.
+
+### Exercise catalogue (D-005)
+- **`catalogue` branch:** contributors add exercises as validated JSON/TOML (schema from T-007).
+- **CI:** PR checks format/schema; merge to `main` updates the canonical catalogue and publishes a **GitHub Pages** static JSON API.
+- **App:** MVP downloads the full published bundle into Room; optional delta-sync later. Workout data stays local (D-002).
 
 ## 3. Data model
 Follow `research/04-data-model.md` section 4 (SQLite proposal), translated to Room entities. Conventions:
@@ -63,7 +68,7 @@ Follow `research/04-data-model.md` section 4 (SQLite proposal), translated to Ro
 
 ## 5. Rest timer (reliability matters)
 - Persist `restTimerEndsAtEpochMs` in the draft state. UI time left = `endsAt - now`, so it survives process death.
-- Alerts when the screen is off or the app is backgrounded need a platform mechanism. **Choice is decided by spike T-013** (candidates: foreground service with ongoing notification; exact alarm; both), taking Android's background/exact-alarm restrictions and battery optimization into account. Do not pick by guessing.
+- Alerts when the screen is off or the app is backgrounded: **D-015** — foreground service while the app was recently used, plus **exact alarm** as backup. **T-009** validates the combo on the owner's phone (permissions, Doze, battery optimization); adjust wiring only if the spike fails.
 - Notification actions: +15 s, skip.
 
 ## 6. UI architecture
@@ -99,4 +104,4 @@ Single JSON document with `schemaVersion`; mirrors Hevy's public API shapes wher
 | Device | Manual acceptance scenarios `AC-*` on the owner's phone, run by VERIFY tickets |
 
 ## 10. Out of scope here
-Sync, accounts, analytics SDKs, crash-reporting SDKs, remote config, ads. Do not add.
+User-account / multi-device **workout** sync, analytics SDKs, crash-reporting SDKs, remote config, ads. (Public **exercise catalogue** download per D-005 is in scope.) Do not add out-of-scope items without owner approval.

@@ -41,7 +41,10 @@ Volume = weight_kg x reps for `weight_reps`. Only **completed** sets count (D-01
 | TC-VOL-03 | normal 100x5 completed, 100x5 **not** completed | 500 |
 | TC-VOL-04 | set with null weight or null reps | 0, no crash |
 | TC-VOL-05 | `reps_only` exercise | volume 0 (volume undefined for reps-only) |
-| TC-VOL-06 | bodyweight / assisted volume | **DECISION** (D-010) |
+| TC-VOL-06 | bodyweight: profile 80 kg, added 0, 10 reps | 800 |
+| TC-VOL-07 | bodyweight: profile 80 kg, added 10 kg, 8 reps | 720 |
+| TC-VOL-08 | assisted: profile 80 kg, assistance 20 kg, 5 reps | 300 |
+| TC-VOL-09 | unilateral `both`: 20 kg × 10 reps (one row, both sides) | 400 (2× 20×10, D-014) |
 
 ## TC-PR: records
 Records computed from all completed qualifying sets of one exercise.
@@ -101,7 +104,7 @@ Streak = consecutive calendar weeks with at least one workout, week start config
 | TC-REST-05 | Both null | None |
 | TC-REST-06 | Completed set is the last set of the exercise, next is another exercise's normal set | Start(per completed set's exercise) |
 | TC-REST-07 | Completed set is the last set of the whole workout | decide: Start or None **DECISION** (propose None) |
-| TC-REST-08 | Superset round semantics | **DECISION** (D-012) |
+| TC-REST-08 | Superset A then B: complete a set on A (A rest 90, B rest 60) | Start(90) — rest of completed exercise (D-012) |
 
 ## TC-PREV: previous values
 | ID | Case | Expected |

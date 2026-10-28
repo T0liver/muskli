@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Personal Android workout tracker, inspired by Hevy. **One user (the owner). Offline-first. Native Kotlin + Jetpack Compose.**
-Working name: `TBD` (see docs/DECISIONS.md D-008).
+Working name: **Muskli** (`hu.toliver.muskli`, see docs/DECISIONS.md D-008).
 
 This file is the rulebook. Keep it short; details live in the linked docs.
 

@@ -11,13 +11,13 @@ Choose a mechanism that fires the rest-timer alert reliably with the screen off 
 ## In scope
 - Read the current Android documentation on foreground services, exact alarms, notification permission, and battery optimization (cite pages; do not rely on memory, rules change by Android version).
 - Build a throwaway prototype (kept on a branch, not merged) for the 1–2 most promising approaches; test on the owner's phone: lock screen, 90 s timer, 5 repetitions each, with default battery settings.
-- Report: reliability table, permissions/user-visible side effects, complexity, battery impact, recommendation.
+- Report: reliability table, permissions/user-visible side effects, complexity, battery impact. **Validate D-015** (FGS + exact-alarm backup); note any required tweak for owner approval.
 
 ## Out of scope (do NOT do)
 - Merging prototype code; polishing UI; any other feature.
 
 ## Acceptance criteria
 - [ ] Measured results on the real device (not emulator only).
-- [ ] Recommendation + proposed D-015 update for the owner to confirm.
+- [ ] Report confirms D-015 combo or documents required change for owner approval.
 
 ## Handoff log
