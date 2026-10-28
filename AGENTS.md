@@ -34,14 +34,17 @@ Three Gradle modules: `:domain` (pure Kotlin/JVM: models, calculations, reposito
 - Comments explain *why*, not *what*. No dead code, no commented-out code, no TODO without a ticket id (`TODO(T-123)`).
 - Dependencies come from `gradle/libs.versions.toml` only.
 
-## 5. Commands (confirm/fill in during T-001)
+## 5. Commands (verified in T-001; on Windows use `.\gradlew.bat`)
 ```
-./gradlew :domain:test            # fast pure-Kotlin tests (run constantly)
-./gradlew testDebugUnitTest       # all JVM unit tests
-./gradlew assembleDebug           # build
-./gradlew lintDebug               # Android lint
-./gradlew connectedDebugAndroidTest   # instrumented/UI tests (device/emulator)
+./gradlew :domain:test                # fast pure-Kotlin tests, JUnit 5 (run constantly)
+./gradlew testDebugUnitTest           # JVM unit tests in :app and :data (:domain:test covers :domain)
+./gradlew assembleDebug               # build -> app/build/outputs/apk/debug/app-debug.apk
+./gradlew lintDebug                   # Android lint -> app/build/reports/lint-results-debug.html
+./gradlew connectedDebugAndroidTest   # instrumented/UI tests (needs a running device/emulator)
+adb install -r app/build/outputs/apk/debug/app-debug.apk   # install on a device/emulator
 ```
+Toolchain: JDK 17+ (verified with 21), Android SDK platform 37, `local.properties` with `sdk.dir` (git-ignored).
+Behind a TLS-inspecting proxy on Windows, set `JAVA_TOOL_OPTIONS=-Djavax.net.ssl.trustStoreType=Windows-ROOT` in the shell before running Gradle.
 Run `:domain:test` and `assembleDebug` before declaring any ticket done. Never claim something works without running it; if you couldn't run it, say so.
 
 ## 6. Session end (always)

@@ -15,3 +15,6 @@ captures/
 # Private personal data (remove this line if you want fixtures in git)
 docs/fixtures/*
 !docs/fixtures/.gitkeep
+
+# Kotlin
+.kotlin/
