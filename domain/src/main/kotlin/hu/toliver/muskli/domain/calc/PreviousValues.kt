@@ -17,9 +17,10 @@ data class WorkoutExerciseRecord(
 
 /**
  * The previous set for position [setIndex] of one exercise, given that exercise's [history].
- * Aligns by raw index among completed sets, warm-ups included; a repeated exercise uses its
- * first occurrence in the workout (D-019). Workouts are ordered by start time so a back-dated
- * workout does not become "last time".
+ * Aligns by raw index, warm-ups included; an uncompleted set at that index is not a previous
+ * value and does not shift the sets after it (D-019). A repeated exercise uses its first
+ * occurrence in the workout. Workouts are ordered by start time so a back-dated workout does
+ * not become "last time".
  */
 fun previousFor(
     history: List<WorkoutExerciseRecord>,
@@ -33,5 +34,5 @@ fun previousFor(
     val occurrence = finished
         .filter { it.workoutId == lastWorkoutId }
         .minBy { it.positionInWorkout }
-    return occurrence.sets.filter { it.completed }.getOrNull(setIndex)
+    return occurrence.sets.getOrNull(setIndex)?.takeIf { it.completed }
 }

@@ -78,10 +78,13 @@ class PreviousValuesTest {
     }
 
     @Test
-    fun `TC-PREV-06 uncompleted sets are ignored`() {
-        val history = listOf(record("last", 2_000, set(60.0, 10, completed = false), set(80.0, 8)))
-        assertEquals(set(80.0, 8), anywhere(history, 0))
+    fun `TC-PREV-06 an uncompleted set keeps its index and is not returned`() {
+        val history = listOf(
+            record("last", 2_000, set(40.0, 10, SetType.WARMUP), set(70.0, 8, completed = false), set(100.0, 5)),
+        )
+        assertEquals(set(40.0, 10, SetType.WARMUP), anywhere(history, 0))
         assertNull(anywhere(history, 1))
+        assertEquals(set(100.0, 5), anywhere(history, 2))
     }
 
     @Test

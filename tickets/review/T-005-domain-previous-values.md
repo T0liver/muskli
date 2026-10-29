@@ -23,6 +23,9 @@ Pure function that returns the previous set for (exercise, set position) from fi
 `./gradlew :domain:test`
 
 ## Handoff log
+### 2026-10-29 — BUILD (validation)
+**Fixed before merge.** The first version dropped uncompleted sets and then indexed, so a gap shifted every later set. That contradicts D-019's raw index. `previousFor` now returns the set at the raw index only when it is completed. The TC-PREV-06 test covers a warm-up at index 0, an uncompleted set at index 1, and a completed set that stays at index 2.
+
 ### 2026-10-29 — BUILD
 **Done.** `:domain/calc/PreviousValues.kt` adds `PreviousMode { ANYWHERE, ROUTINE_SCOPED }`, `WorkoutExerciseRecord`, and `previousFor(history, setIndex, mode, routineId)` (ARCHITECTURE §7 signature). `WorkoutExerciseRecord` holds the workout id, start, finished-at, deleted-at, the exercise's position in the workout, its sets, and an optional `routineId`. The caller passes one exercise's records.
 
@@ -30,7 +33,7 @@ Pure function that returns the previous set for (exercise, set position) from fi
 - Drafts (null finished-at) and soft-deleted workouts are skipped.
 - The most recent workout by **start time** wins, so a back-dated workout doesn't count as "last time".
 - If the exercise appears more than once in that workout, the lowest `positionInWorkout` is used (TC-PREV-07).
-- The set is picked by raw index among that occurrence's completed sets, with warm-ups included (TC-PREV-05).
+- The set is picked by raw index, warm-ups included (TC-PREV-05). An uncompleted set at that index returns null and does not shift the sets after it (TC-PREV-06).
 - An out-of-range or negative index returns null.
 
 **TC-PREV-03 is not implemented (Phase 2).** `ROUTINE_SCOPED` is typed but calls `TODO("T-024 ...")`, which throws `NotImplementedError`. Nothing may select that mode until **T-024** (new) lands. T-024 also records the open question of what routine mode returns for a workout without a routine.
