@@ -23,6 +23,9 @@ Pure function that returns the previous set for (exercise, set position) from fi
 `./gradlew :domain:test`
 
 ## Handoff log
+### 2026-10-29 — REVIEW
+Owner review: no findings (Blocker / Should-fix / Nit: none). TC-PREV-03 stays with T-024. Verification is `:domain:test`, already green. Moved to `done/`.
+
 ### 2026-10-29 — BUILD (validation)
 **Fixed before merge.** The first version dropped uncompleted sets and then indexed, so a gap shifted every later set. That contradicts D-019's raw index. `previousFor` now returns the set at the raw index only when it is completed. The TC-PREV-06 test covers a warm-up at index 0, an uncompleted set at index 1, and a completed set that stays at index 2.
 

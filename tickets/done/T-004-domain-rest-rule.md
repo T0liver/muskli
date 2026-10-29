@@ -22,6 +22,9 @@ Pure function `restTimerEffect(...)` returning `Start(seconds)` or `None` per th
 `./gradlew :domain:test`
 
 ## Handoff log
+### 2026-10-29 — REVIEW
+Owner review: no findings (Blocker / Should-fix / Nit: none). The not-completed guard stays. Verification is `:domain:test`, already green. Moved to `done/`.
+
 ### 2026-10-29 — BUILD
 **Done.** `:domain/calc/RestTimer.kt` adds `sealed interface RestEffect { Start(seconds), None }` and `restTimerEffect(completed, next, exerciseRestS, defaultRestS)`, matching the ARCHITECTURE §7 signature. The order of the checks:
 1. Return None if `next` is null (last set of the workout, D-018), if the next set is a drop set, or if `completed` isn't marked completed.

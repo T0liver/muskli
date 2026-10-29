@@ -24,6 +24,9 @@ Given an exercise's history and a candidate set, compute which records it breaks
 `./gradlew :domain:test`
 
 ## Handoff log
+### 2026-10-29 — REVIEW
+Owner review: no findings (Blocker / Should-fix / Nit: none). Verification is `:domain:test`, already green. Moved to `done/`.
+
 ### 2026-10-29 — BUILD
 **Done.** `:domain/calc/Records.kt` adds `RecordType` (heaviest weight, estimated 1RM, most reps, best set volume, best duration), `HistorySet(workoutId, performedAtEpochMs, set)` and `Record(type, value, workoutId)`. It also adds three functions:
 - `currentRecords(history, exerciseType, formula)`: recomputed from the list on each call, nothing stored. When values tie, the earliest set keeps the record (strictly-greater rule).

@@ -26,6 +26,9 @@ Pure, tested functions for kg/lb conversion, set/session volume and estimated 1R
 `./gradlew :domain:test`
 
 ## Handoff log
+### 2026-10-29 — REVIEW
+Owner review: no findings (Blocker / Should-fix / Nit: none). Verification is `:domain:test`, already green. Moved to `done/`.
+
 ### 2026-10-29 — BUILD
 **Done.** `:domain/model/SetData.kt` adds `SetType`, `ExerciseType` (8 values), `Side` (D-014), and `SetData`. For bodyweight types `weightKg` holds the added weight; for assisted types it holds the assistance. `:domain/calc` adds `kgToLb`/`lbToKg` (full precision), `estimateOneRepMax(weightKg, reps, OneRmFormula)`, `setVolumeKg(set, type, bodyweightKg, unilateral = false)` and `sessionVolumeKg(exercises: List<ExerciseSets>, bodyweightKg, includeWarmUps = false)`. The caller chooses the formula (D-003).
 
