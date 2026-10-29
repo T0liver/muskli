@@ -1,4 +1,51 @@
 <resources>
     <string name="app_name">Muskli</string>
     <string name="placeholder_message">Muskli</string>
+
+    <!-- Live workout -->
+    <string name="live_workout_title">Workout</string>
+    <string name="action_finish">Finish</string>
+    <string name="stat_duration">Duration</string>
+    <string name="stat_volume">Volume</string>
+    <string name="stat_sets">Sets</string>
+    <string name="cd_edit_duration">Duration %1$s. Edit start time</string>
+    <string name="volume_kg">%1$s kg</string>
+    <string name="live_workout_empty_title">No exercises yet</string>
+    <string name="live_workout_empty_body">Add an exercise to start logging.</string>
+
+    <!-- Exercise card -->
+    <string name="column_set">SET</string>
+    <string name="column_previous">PREVIOUS</string>
+    <string name="column_kg">KG</string>
+    <string name="column_reps">REPS</string>
+    <string name="cd_column_completed">Completed</string>
+    <string name="action_add_set">Add set</string>
+    <string name="action_add_exercise">Add exercise</string>
+    <string name="cd_exercise_menu">Options for %1$s</string>
+    <string name="menu_reorder">Reorder</string>
+    <string name="menu_replace">Replace</string>
+    <string name="menu_remove">Remove</string>
+
+    <!-- Set row -->
+    <string name="previous_none">–</string>
+    <string name="previous_value">%1$s × %2$s</string>
+    <string name="set_marker_warmup">W</string>
+    <string name="set_marker_dropset">D</string>
+    <string name="set_marker_failure">F</string>
+    <string name="set_type_normal">normal</string>
+    <string name="set_type_warmup">warm-up</string>
+    <string name="set_type_dropset">drop set</string>
+    <string name="set_type_failure">failure</string>
+    <string name="cd_set_type">Set %1$d, %2$s. Change type</string>
+    <string name="cd_weight">Weight, set %1$d</string>
+    <string name="cd_reps">Reps, set %1$d</string>
+    <string name="cd_complete_set">Complete set %1$d</string>
+
+    <!-- Rest timer -->
+    <string name="rest_timer_label">Rest</string>
+    <string name="rest_minus_15">−15 s</string>
+    <string name="rest_plus_15">+15 s</string>
+    <string name="rest_skip">Skip</string>
+    <string name="cd_rest_minus_15">Shorten rest by 15 seconds</string>
+    <string name="cd_rest_plus_15">Lengthen rest by 15 seconds</string>
 </resources>
