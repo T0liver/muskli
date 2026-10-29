@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- D-024: Auto Backup includes workout data. Leave allowBackup on and do not exclude the database. -->
     <application
         android:name=".MuskliApplication"
         android:allowBackup="true"

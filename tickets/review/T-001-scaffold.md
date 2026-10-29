@@ -45,8 +45,8 @@ Run the commands above; install on the owner's phone or an emulator.
 - AGP 9 has built-in Kotlin, so Android modules don't apply `org.jetbrains.kotlin.android`. The root build declares `kotlin-jvm` with `apply false` so AGP uses the catalog's Kotlin version instead of its bundled one.
 - Gradle prints one deprecation (`Configuration.setVisible`, removal in Gradle 11). It's raised while configuring `:app`, so it comes from the Hilt or KSP plugin, not our scripts. Recheck when those plugins update.
 - This machine sits behind Zscaler. Java rejects the proxy's certificates unless the shell sets `JAVA_TOOL_OPTIONS=-Djavax.net.ssl.trustStoreType=Windows-ROOT`. That variable crashes the `android` CLI, so unset it before using the CLI. Nothing proxy-specific is committed.
-- `android:allowBackup="true"` is the template/platform default. Whether Android auto-backup should include workout data was not decided here.
+- `android:allowBackup="true"` is intentional (D-024, 2026-10-29): Android Auto Backup may include workout data. No exclusion rules in this scaffold.
 
 **Left:** install on the owner's phone (VERIFY).
 
-**Open questions:** none blocking. The owner may later want JUnit 6 (D-016 says JUnit 5).
+**Open questions:** none. Owner confirmed 2026-10-29: stay on JUnit 5; do not upgrade to JUnit 6 for now.

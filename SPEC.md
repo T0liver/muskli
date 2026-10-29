@@ -71,6 +71,7 @@ Each feature lists acceptance criteria (AC). Test IDs refer to `docs/TEST-CASES.
 - Units, default rest timer, previous-values mode, keep awake, sounds/vibration, week start day, and current body weight. Defaults: kg, 90 s, "anywhere", keep awake on, Monday (D-009); body weight unset (D-017).
 
 ### F-08 Backup / export / import (own format)
+- Android Auto Backup may include workout data (D-024). That is the OS backup, not this feature.
 - AC1: Export everything to one JSON file; import restores identical data (round-trip test).
 - AC2: Import is safe: validates, reports errors, never partially applies.
 

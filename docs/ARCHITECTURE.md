@@ -54,6 +54,7 @@ Follow `research/04-data-model.md` section 4 (SQLite proposal), translated to Ro
 - Schema export on; every schema change = a migration + migration test. **Schema changes need owner approval.**
 - `workout_set.side` is in **schema v1**: non-null, default `both` (D-014, D-022). No left/right logging UI in the MVP.
 - `completed` and `completed_at` are in schema v1 (F-03/F-05). `partial_reps` and `rpe_target` stay out until a ticket adds them.
+- The database stays in the default app database directory so Android Auto Backup includes workouts (D-024). No backup-exclusion rules.
 
 ### Enums
 - SetType: `normal | warmup | dropset | failure`

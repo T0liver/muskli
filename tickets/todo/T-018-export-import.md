@@ -19,3 +19,4 @@ One-file JSON export and safe, all-or-nothing import, via the system file picker
 - [ ] TC-DATA-05 and 06 pass; AC-06 steps work on the device.
 
 ## Handoff log
+- 2026-10-29 DOCS: D-024 is OS Auto Backup, already on via `allowBackup`. This ticket stays the manual JSON file. "Cloud backup" above means do not build a sync or upload feature.

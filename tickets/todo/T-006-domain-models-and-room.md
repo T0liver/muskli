@@ -3,7 +3,7 @@
 - **Role:** BUILD
 - **Phase:** 0
 - **Depends on:** T-001, T-002
-- **Refs:** docs/ARCHITECTURE.md §2–3 · research/04 §4 · TC-DATA-01, 02, 03, 04, 07 · D-002, D-014, D-022
+- **Refs:** docs/ARCHITECTURE.md §2–3 · research/04 §4 · TC-DATA-01, 02, 03, 04, 07 · D-002, D-014, D-022, D-024
 
 ## Goal
 Persistent model for exercise templates, workouts (incl. drafts), workout exercises and sets, with DAOs, mappers, schema export and a first migration test setup.
@@ -13,6 +13,7 @@ Persistent model for exercise templates, workouts (incl. drafts), workout exerci
 - Room entities/DAOs/mappers in `:data` for: exercise_template (+secondary muscles), workout, workout_exercise, workout_set (incl. `completed`, `completed_at`, and `side`), app-level IDs via injected `IdGenerator`.
 - `workout_set.side`: non-null, default `both`, values `left` | `right` | `both` (D-022). No left/right UI.
 - Soft delete on workouts. Foreign keys with cascade.
+- Room database in the default database directory so Android Auto Backup includes it (D-024). No `noBackup` directory and no backup-exclusion rules.
 - In-memory DAO tests.
 
 ## Out of scope (do NOT do)
@@ -29,3 +30,4 @@ Persistent model for exercise templates, workouts (incl. drafts), workout exerci
 
 ## Handoff log
 - 2026-10-28 DOCS: Owner pinned D-022. `side` is in schema v1 (default `both`). The rest of the entity list still needs owner approval before merge.
+- 2026-10-29 DOCS: Owner pinned D-024. Keep the database in the default directory so Auto Backup includes workouts.
