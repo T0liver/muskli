@@ -44,3 +44,4 @@ Persistent model for exercise templates, workouts (incl. drafts), workout exerci
   - Left: repository implementations are T-010 / T-012. "At most one draft" is enforced by use cases in T-012 (Room has no partial unique index).
   - Gotchas: Robolectric's SDK 36 sandbox needs `--add-opens=java.base/jdk.internal.access=ALL-UNNAMED` (set in `data/build.gradle.kts`). The name-based `MigrationTestHelper` constructor fails on Windows because Room's `SupportSQLiteDriver` compares names with `substringAfterLast('/')`; the harness uses the file + `AndroidSQLiteDriver` constructor instead.
   - Commands: `.\gradlew.bat :domain:test testDebugUnitTest assembleDebug lintDebug`, all green; `:data` 11 tests, 0 failures. Not run: `connectedDebugAndroidTest` (no instrumented tests added).
+- 2026-10-29: Owner review: no findings (Blocker / Should-fix / Nit: none). Verification is `testDebugUnitTest`, already green. Moved to `done/`.
