@@ -28,6 +28,9 @@ An empty but healthy Android project: three modules, version catalog, test tooli
 Run the commands above; install on the owner's phone or an emulator.
 
 ## Handoff log
+### 2026-10-29 — REVIEW
+Owner review: no findings (Blocker / Should-fix / Nit: none). Moved to `verify/`. Remaining check is the phone install already noted below; the emulator run stands.
+
 ### 2026-10-28 — BUILD
 **Done.** Three-module Gradle Kotlin DSL project: `:domain` (Kotlin/JVM, JUnit 5 + kotlin.test per D-016), `:data` (Android library, depends on `:domain`), `:app` (Compose + Material 3, Hilt per D-006, `hu.toliver.muskli` per D-008, minSdk 24 / targetSdk 37 per D-007). Hilt wiring is limited to `@HiltAndroidApp MuskliApplication` and `@AndroidEntryPoint MainActivity`. `PlaceholderScreen` is edge-to-edge, takes its text from `strings.xml`, and has light and dark previews. `MuskliTheme` uses Material default light/dark schemes until T-008. One trivial passing test per module. `.gitignore` now also ignores `.kotlin/`.
 
