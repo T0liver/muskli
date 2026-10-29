@@ -22,6 +22,7 @@ Define the **catalogue file format**, validation rules, and GitHub Pages API sha
 - [x] Format is sufficient for T-010 (bundled load) and T-021 (full sync): version field, stable ids, URL layout.
 
 ## Handoff log
+- 2026-10-29 REVIEW: Owner review: no findings (Blocker / Should-fix / Nit: none). Moved to `verify/`. Nothing to install; D-025 is already confirmed.
 - 2026-10-28 DOCS: Renamed from "seed source and license". Delivery is decided (D-021); this spike is format, CI, and URL layout only.
 - 2026-10-29 SPIKE: **Owner confirmed** everything: recorded D-025 and noted it on D-005. Repo will be public for Pages. Two-step flow: PRs into `catalogue`, then a release PR into `main`. CI-only `check-jsonschema` approved. Created T-022 for the checker, workflows, PR template, and `.gitattributes`. Moved to `review/`. Ran `.\gradlew.bat :domain:test assembleDebug`: BUILD SUCCESSFUL (no code changed).
 - 2026-10-29 SPIKE: Proposal written; waiting for owner confirmation before editing `docs/DECISIONS.md`, moving to `review/`, and committing.
