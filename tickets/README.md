@@ -12,10 +12,10 @@ Rules and prompts: `docs/WORKFLOW.md`. Use `TEMPLATE.md` for new tickets. WIP li
 | T-004 | BUILD | Domain: rest-timer rule |
 | T-005 | BUILD | Domain: previous-values lookup |
 | T-006 | BUILD | Domain models + Room schema, DAOs, migrations |
-| T-007 | SPIKE | Exercise seed source and license |
+| T-007 | SPIKE | Catalogue file format and publish flow |
 | T-008 | UI | Design tokens + live-workout screen (static, with previews) |
 | T-009 | SPIKE | Rest timer reliability on Android |
-| T-010 | BUILD | Exercise library: seed loader + repository |
+| T-010 | BUILD | Exercise library: bundled catalogue + repository |
 | T-011 | UI+BUILD | Exercise library screen (search, filter, custom) |
 | T-012 | BUILD | Live workout: draft persistence + use cases |
 | T-013 | UI+BUILD | Live workout screen: sets, set types, completion |
@@ -26,5 +26,6 @@ Rules and prompts: `docs/WORKFLOW.md`. Use `TEMPLATE.md` for new tickets. WIP li
 | T-018 | BUILD | Export/import JSON |
 | T-019 | VERIFY | MVP acceptance on the owner's phone (AC-01..AC-06, AC-08) |
 | T-020 | SPIKE | Hevy export format + importer plan |
+| T-021 | BUILD | Catalogue full sync (GitHub Pages, after T-010) |
 
 REVIEW sessions pick up BUILD/UI tickets sitting in `review/` (findings go into that ticket's Handoff log; blockers become new tickets in `todo/`). VERIFY sessions pick up tickets in `verify/`.

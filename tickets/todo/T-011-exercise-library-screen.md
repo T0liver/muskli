@@ -3,7 +3,7 @@
 - **Role:** UI+BUILD
 - **Phase:** 1
 - **Depends on:** T-008, T-010
-- **Refs:** SPEC F-01 · reference-ui 05/07
+- **Refs:** SPEC F-01 · T-008 tokens. The sorted set in `docs/reference-ui/` has no exercise-library folder; do not block on more screenshots.
 
 ## Goal
 Library screen with search, filters, recents, create/edit custom exercise form, and a picker mode used by "Add exercise" (multi-select).

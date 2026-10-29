@@ -39,4 +39,4 @@ T-001 -> T-002..T-005 (pure domain, quick wins) -> T-006 (approve the schema) ->
 Install it into this repo when you want heavier process. Its brownfield flow can take `SPEC.md`, `docs/ARCHITECTURE.md`, and the tickets as inputs. Until then, this lightweight loop is enough.
 
 ## Know what's proposed vs. decided
-Everything in ARCHITECTURE.md and DECISIONS.md marked *proposed* is a starting suggestion. Test numbers in TEST-CASES.md were hand-checked, but Hevy's real behavior for several rules is unknown (see the *DECISION* markers).
+Everything in `docs/ARCHITECTURE.md` and `docs/DECISIONS.md` marked *proposed* is a starting suggestion. Test numbers in `docs/TEST-CASES.md` were hand-checked. The canonical copies live under `docs/` only.

@@ -45,6 +45,7 @@ Volume = weight_kg x reps for `weight_reps`. Only **completed** sets count (D-01
 | TC-VOL-07 | bodyweight: profile 80 kg, added 10 kg, 8 reps | 720 |
 | TC-VOL-08 | assisted: profile 80 kg, assistance 20 kg, 5 reps | 300 |
 | TC-VOL-09 | unilateral `both`: 20 kg × 10 reps (one row, both sides) | 400 (2× 20×10, D-014) |
+| TC-VOL-10 | bodyweight or assisted, `bodyweightKg` null (unset) | 0, no crash (D-017) |
 
 ## TC-PR: records
 Records computed from all completed qualifying sets of one exercise.
@@ -56,7 +57,7 @@ Records computed from all completed qualifying sets of one exercise.
 | TC-PR-04 | Equal to existing best | Not a PR (strictly greater required) |
 | TC-PR-05 | Delete the workout that holds the PR | Previous record is restored (records recomputed, not stored) |
 | TC-PR-06 | Warm-up sets | Never produce PRs |
-| TC-PR-07 | Best weight per rep count (Set Records): sets 100x5, 90x8, 100x3 | 3 reps: 100, 5 reps: 100, 8 reps: 90; "exactly N" vs "at least N" semantics **DECISION** (research 10, A10) |
+| TC-PR-07 | Set Records, best weight at **N or more** reps (D-020). Sets: 80×5, 100×8, 100×3 | 3+ reps: 100, 5+ reps: 100, 8+ reps: 100. Exactly-5 would be 80; that is wrong |
 
 ## TC-WARM: warm-up ladder
 Default ladder (D-009/own choice): 40% x10, 60% x5, 80% x3. Rounding to the nearest `roundingKg`.
@@ -89,7 +90,7 @@ Streak = consecutive calendar weeks with at least one workout, week start config
 | TC-STREAK-02 | A full empty week between the latest and the previous workout | latest week counts as 1 |
 | TC-STREAK-03 | Workout Sunday 23:30 vs Monday 00:30 (week start Monday) | Different weeks |
 | TC-STREAK-04 | Same dates with week start Sunday | Same-week result differs accordingly |
-| TC-STREAK-05 | Current week empty but previous 3 weeks each have a workout | 3 (streak still alive until the week ends) **proposed**, confirm (research 10, A12) |
+| TC-STREAK-05 | Current week empty but previous 3 weeks each have a workout | 3 (streak still alive until the week ends, D-023) |
 | TC-STREAK-06 | No workouts | 0 |
 | TC-STREAK-07 | Timezone: workout stored with UTC offset +01:00/+02:00 across DST | Week assigned by local date |
 
@@ -103,7 +104,7 @@ Streak = consecutive calendar weeks with at least one workout, week start config
 | TC-REST-04 | Exercise rest 0 (off) | None |
 | TC-REST-05 | Both null | None |
 | TC-REST-06 | Completed set is the last set of the exercise, next is another exercise's normal set | Start(per completed set's exercise) |
-| TC-REST-07 | Completed set is the last set of the whole workout | decide: Start or None **DECISION** (propose None) |
+| TC-REST-07 | Completed set is the last set of the whole workout | None (D-018) |
 | TC-REST-08 | Superset A then B: complete a set on A (A rest 90, B rest 60) | Start(90) — rest of completed exercise (D-012) |
 
 ## TC-PREV: previous values
@@ -113,9 +114,9 @@ Streak = consecutive calendar weeks with at least one workout, week start config
 | TC-PREV-02 | Current set index beyond last session's set count | null |
 | TC-PREV-03 | Mode routine: exercise last done in Routine A (80x8), then Routine B (85x6). Start Routine A | 80x8; Start Routine B gives 85x6; anywhere mode gives 85x6 in both (needs routines, Phase 2) |
 | TC-PREV-04 | No history | null |
-| TC-PREV-05 | Last session had warm-up at index 0. Alignment rule | **DECISION**: align by raw index (propose) or by type-aware index |
+| TC-PREV-05 | Last session: warm-up 40×10 at index 0, normal 100×5 at index 1 (D-019) | Index 0 → 40×10; index 1 → 100×5. Raw index, warm-ups included |
 | TC-PREV-06 | Only completed sets from finished (non-draft) workouts are considered | true |
-| TC-PREV-07 | Exercise appears twice in the history workout | Use the first occurrence **proposed** |
+| TC-PREV-07 | Exercise appears twice in the history workout | First occurrence (D-019) |
 
 ## TC-SET: set type behaviour
 | ID | Case | Expected |

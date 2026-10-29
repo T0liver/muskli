@@ -24,14 +24,14 @@ Social anything (feed, follow, likes, comments, leaderboards, sharing), coach/cl
 - **Exercise types:** `weight_reps`, `reps_only`, `bodyweight_reps`, `bodyweight_assisted_reps`, `duration`, `weight_duration`, `distance_duration`, `short_distance_weight`.
 - **Superset:** exercises sharing a `superset_group` value.
 - **Previous:** values from the last time this exercise was done (see F-04).
-- **Volume:** per D-010 — `weight_reps`: weight_kg × reps; bodyweight/assisted use profile body weight; summed over qualifying completed sets.
+- **Volume:** per D-010 — `weight_reps`: weight_kg × reps; bodyweight/assisted use the settings body weight (D-017); unilateral per D-014; summed over qualifying completed sets.
 
 ## 5. MVP features (Phase 1)
 
 Each feature lists acceptance criteria (AC). Test IDs refer to `docs/TEST-CASES.md`.
 
 ### F-01 Exercise library
-- AC1: Seeded with a reasonable set of exercises, each with type, primary muscle, secondary muscles, equipment (enums in ARCHITECTURE).
+- AC1: First launch works offline from a bundled catalogue snapshot; a full sync updates it when online (D-021). Each exercise has type, primary muscle, secondary muscles, equipment (enums in ARCHITECTURE).
 - AC2: Search by name; filter by muscle and equipment.
 - AC3: Create, edit, archive custom exercises; no limits.
 - AC4: Recently used exercises are easy to reach.
@@ -68,7 +68,7 @@ Each feature lists acceptance criteria (AC). Test IDs refer to `docs/TEST-CASES.
 - AC4: Exercise history screen: sessions for one exercise, tappable.
 
 ### F-07 Settings (basic)
-- Units, default rest timer, previous-values mode, keep awake, sounds/vibration, week start day. Defaults: kg, 90 s, "anywhere", keep awake on, Monday (D-009).
+- Units, default rest timer, previous-values mode, keep awake, sounds/vibration, week start day, and current body weight. Defaults: kg, 90 s, "anywhere", keep awake on, Monday (D-009); body weight unset (D-017).
 
 ### F-08 Backup / export / import (own format)
 - AC1: Export everything to one JSON file; import restores identical data (round-trip test).

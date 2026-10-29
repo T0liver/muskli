@@ -30,7 +30,7 @@ Status: **proposal v0.1.** Items marked *(open)* are decided in `docs/DECISIONS.
 :data     Android library
   db/           Room entities, DAOs, migrations, mappers
   repo/         repository implementations
-  seed/         exercise seed loader
+  seed/         bundled catalogue loader (D-021)
   backup/       export/import (JSON)
 :app      Android application
   ui/<feature>/ Screen, ViewModel, UiState, components
@@ -40,10 +40,10 @@ Status: **proposal v0.1.** Items marked *(open)* are decided in `docs/DECISIONS.
 ```
 Rules: `:domain` depends on nothing. `:data` depends on `:domain`. `:app` depends on both. UI never touches DAOs.
 
-### Exercise catalogue (D-005)
+### Exercise catalogue (D-005, D-021)
 - **`catalogue` branch:** contributors add exercises as validated JSON/TOML (schema from T-007).
 - **CI:** PR checks format/schema; merge to `main` updates the canonical catalogue and publishes a **GitHub Pages** static JSON API.
-- **App:** MVP downloads the full published bundle into Room; optional delta-sync later. Workout data stays local (D-002).
+- **App:** a **bundled snapshot** in assets (T-010) so first launch works offline, plus a **full sync** when online (T-021). Apply either source only when its version is newer; upsert by id; never touch custom exercises; do not hard-delete a published exercise a workout references. Delta-sync is post-MVP. Workout data stays local (D-002).
 
 ## 3. Data model
 Follow `research/04-data-model.md` section 4 (SQLite proposal), translated to Room entities. Conventions:
@@ -52,7 +52,8 @@ Follow `research/04-data-model.md` section 4 (SQLite proposal), translated to Ro
 - Ordering: `position` columns, 0-based.
 - Soft delete on workouts (`deletedAt`) to support undo and future sync.
 - Schema export on; every schema change = a migration + migration test. **Schema changes need owner approval.**
-- Extensions beyond Hevy (`side`, `partial_reps`, `rpe_target`, `default_rest_s`, `completed_at`) are **Phase 2/3**; do not add columns early unless a ticket says so, except `completed` and `completed_at` which F-03/F-05 need.
+- `workout_set.side` is in **schema v1**: non-null, default `both` (D-014, D-022). No left/right logging UI in the MVP.
+- `completed` and `completed_at` are in schema v1 (F-03/F-05). `partial_reps` and `rpe_target` stay out until a ticket adds them.
 
 ### Enums
 - SetType: `normal | warmup | dropset | failure`
@@ -80,7 +81,7 @@ Follow `research/04-data-model.md` section 4 (SQLite proposal), translated to Ro
 ## 7. Domain calculation module (`:domain/calc`)
 Pure functions, no I/O, exhaustive unit tests from `docs/TEST-CASES.md`. API sketch (names are guidance, agents may refine with owner approval):
 ```kotlin
-fun setVolumeKg(set: SetData, type: ExerciseType): Double
+fun setVolumeKg(set: SetData, type: ExerciseType, bodyweightKg: Double?): Double
 fun estimateOneRepMax(weightKg: Double, reps: Int, formula: OneRmFormula): Double?
 fun warmUpSets(targetKg: Double, ladder: List<WarmUpRow>, roundingKg: Double): List<WarmUpSet>
 fun platesPerSide(targetKg: Double, barKg: Double, inventory: List<Plate>): PlateResult
