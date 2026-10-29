@@ -70,7 +70,7 @@ Follow `research/04-data-model.md` section 4 (SQLite proposal), translated to Ro
 
 ## 5. Rest timer (reliability matters)
 - Persist `restTimerEndsAtEpochMs` in the draft state. UI time left = `endsAt - now`, so it survives process death.
-- Alerts when the screen is off or the app is backgrounded: **D-015** — foreground service while the app was recently used, plus **exact alarm** as backup. **T-009** validates the combo on the owner's phone (permissions, Doze, battery optimization); adjust wiring only if the spike fails.
+- Alerts when the screen is off or the app is backgrounded: **D-015** — `specialUse` foreground service while the app was recently used, plus a `setAlarmClock` exact alarm as backup. **T-009** confirmed this on the owner's Samsung (Android 16): the service fired on time, and the service alone did not fire with the screen off. Set the alarm on every rest even while the service is running.
 - Notification actions: +15 s, skip.
 
 ## 6. UI architecture
