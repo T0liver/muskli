@@ -41,7 +41,7 @@ Status: **proposal v0.1.** Items marked *(open)* are decided in `docs/DECISIONS.
 Rules: `:domain` depends on nothing. `:data` depends on `:domain`. `:app` depends on both. UI never touches DAOs.
 
 ### Exercise catalogue (D-005, D-021)
-- **`catalogue` branch:** contributors add exercises as validated JSON/TOML (schema from T-007).
+- **`catalogue` branch:** contributors add exercises as validated JSON. Format, schema, version and id rules, CI checks, and URL layout: `docs/CATALOGUE.md` (D-025).
 - **CI:** PR checks format/schema; merge to `main` updates the canonical catalogue and publishes a **GitHub Pages** static JSON API.
 - **App:** a **bundled snapshot** in assets (T-010) so first launch works offline, plus a **full sync** when online (T-021). Apply either source only when its version is newer; upsert by id; never touch custom exercises; do not hard-delete a published exercise a workout references. Delta-sync is post-MVP. Workout data stays local (D-002).
 

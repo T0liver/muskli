@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://t0liver.github.io/muskli/catalogue/v1/catalogue.schema.json",
+  "title": "Muskli exercise catalogue, format 1",
+  "description": "One file is both the bundled snapshot (T-010) and the published bundle (T-021). Rules beyond this schema (sorting, uniqueness, version bump, id stability) are CI checks in docs/CATALOGUE.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "formatVersion", "version", "license", "exercises", "retiredIds"],
+  "properties": {
+    "$schema": {
+      "const": "https://t0liver.github.io/muskli/catalogue/v1/catalogue.schema.json"
+    },
+    "formatVersion": {
+      "description": "Breaking-change counter of this file format. Matches the /vN/ URL segment.",
+      "const": 1
+    },
+    "version": {
+      "description": "Content version. Strictly increases with every change to this file; the app applies a bundle only when this is greater than its stored version.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "license": {
+      "const": "CC0-1.0"
+    },
+    "exercises": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/exercise" }
+    },
+    "retiredIds": {
+      "description": "Ids removed from exercises. They can never be reused.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+    },
+    "exercise": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "type", "primaryMuscle", "secondaryMuscles", "equipment"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "title": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80,
+          "pattern": "^\\S(.*\\S)?$"
+        },
+        "type": { "$ref": "#/$defs/exerciseType" },
+        "primaryMuscle": { "$ref": "#/$defs/muscleGroup" },
+        "secondaryMuscles": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/muscleGroup" }
+        },
+        "equipment": { "$ref": "#/$defs/equipment" }
+      }
+    },
+    "exerciseType": {
+      "enum": [
+        "weight_reps",
+        "reps_only",
+        "bodyweight_reps",
+        "bodyweight_assisted_reps",
+        "duration",
+        "weight_duration",
+        "distance_duration",
+        "short_distance_weight"
+      ]
+    },
+    "muscleGroup": {
+      "enum": [
+        "abdominals",
+        "shoulders",
+        "biceps",
+        "triceps",
+        "forearms",
+        "quadriceps",
+        "hamstrings",
+        "calves",
+        "glutes",
+        "abductors",
+        "adductors",
+        "lats",
+        "upper_back",
+        "traps",
+        "lower_back",
+        "chest",
+        "cardio",
+        "neck",
+        "full_body",
+        "other"
+      ]
+    },
+    "equipment": {
+      "enum": [
+        "none",
+        "barbell",
+        "dumbbell",
+        "kettlebell",
+        "machine",
+        "plate",
+        "resistance_band",
+        "suspension",
+        "other"
+      ]
+    }
+  }
+}

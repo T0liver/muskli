@@ -27,5 +27,6 @@ Rules and prompts: `docs/WORKFLOW.md`. Use `TEMPLATE.md` for new tickets. WIP li
 | T-019 | VERIFY | MVP acceptance on the owner's phone (AC-01..AC-06, AC-08) |
 | T-020 | SPIKE | Hevy export format + importer plan |
 | T-021 | BUILD | Catalogue full sync (GitHub Pages, after T-010) |
+| T-022 | BUILD | Catalogue CI checks and Pages publish (D-025) |
 
 REVIEW sessions pick up BUILD/UI tickets sitting in `review/` (findings go into that ticket's Handoff log; blockers become new tickets in `todo/`). VERIFY sessions pick up tickets in `verify/`.
