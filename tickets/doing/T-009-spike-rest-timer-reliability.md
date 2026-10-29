@@ -20,4 +20,97 @@ Choose a mechanism that fires the rest-timer alert reliably with the screen off 
 - [ ] Measured results on the real device (not emulator only).
 - [ ] Report confirms D-015 combo or documents required change for owner approval.
 
+## Verification
+Phone run of the prototype on branch `spike/t-009-rest-timer-prototype` (launcher icon "Muskli T-009"). Steps are in the newest Handoff log entry. Paste each series' "Copy log" output into the reliability table below.
+
+## Findings
+
+### Sources (Android Developers, fetched 2026-10-29)
+| Topic | Page | Last updated |
+|---|---|---|
+| FGS types (`shortService`, `specialUse`, `health`) | https://developer.android.com/develop/background-work/services/fgs/service-types | 2026-10-28 |
+| FGS background-start restrictions and exemptions | https://developer.android.com/develop/background-work/services/fgs/restrictions-bg-start | 2026-10-28 |
+| Launching an FGS | https://developer.android.com/develop/background-work/services/fgs/launch | 2026-10-28 |
+| FGS timeouts | https://developer.android.com/develop/background-work/services/fgs/timeout | (no date shown) |
+| Scheduling alarms (exact vs inexact, permissions) | https://developer.android.com/develop/background-work/services/alarms/schedule | 2026-10-28 |
+| Exact alarms denied by default (Android 14) | https://developer.android.com/about/versions/14/changes/schedule-exact-alarms | 2026-03-03 |
+| `POST_NOTIFICATIONS` runtime permission | https://developer.android.com/develop/ui/views/notifications/notification-permission | 2026-10-28 |
+| Doze, App Standby, battery optimisation | https://developer.android.com/training/monitoring-device-state/doze-standby | 2026-10-22 |
+
+### What the docs say that matters here
+- **An FGS keeps the process alive. It does not keep the CPU awake.** In Doze the system "ignores wake locks" and defers jobs and standard alarms (Doze page). A timer inside the service (`Handler.postDelayed` uses uptime) can be late when the CPU suspends with the screen off. Mode D of the prototype measures this.
+- **Exact alarms are the documented way to fire on time with the screen off.** Doze defers `setExact()`. `setExactAndAllowWhileIdle()` fires in Doze, but "can't fire alarms more than once per nine minutes, per app" there (Doze page). `setAlarmClock()` alarms "continue to fire normally. The system exits Doze shortly before those alarms fire". Its cost is that they are "highly visible to users", and the system never adjusts their delivery time (alarms page).
+- **Exact alarm permission.** `SCHEDULE_EXACT_ALARM` is denied by default for new installs on Android 14+ and is user-revocable ("Alarms & reminders"); revoking it cancels all exact alarms. `USE_EXACT_ALARM` is granted at install and is not revocable, but Play only allows publishing with it for alarm-clock and calendar apps. Muskli is sideloaded, so Play policy does not apply today.
+- **FGS type.** Since Android 14 every FGS needs a type.
+  - `shortService` is limited to about 3 minutes, can't be sticky, and can't be extended from the background. That is too tight for long rests or a series of rests.
+  - `health` needs a sensor or `ACTIVITY_RECOGNITION` permission.
+  - `specialUse` needs only `FOREGROUND_SERVICE_SPECIAL_USE` plus a free-text subtype, with no runtime permission. Play reviews that text, which doesn't matter while the app is sideloaded.
+- **Starting an FGS.** Apps targeting Android 12+ can't start an FGS from the background, with exemptions. Two cover us: "the user performs an action on a UI element" (a set tap in the open app or a notification action) and "your app invokes an exact alarm".
+- **Notifications.** On Android 13+ `POST_NOTIFICATIONS` is a runtime permission, and notifications are off by default on a new install. Without it the FGS notice only shows in Task Manager and the rest-over alert is not shown at all. Starting an FGS does not need the permission.
+- **Battery optimisation.** Exemption is a user setting. Requesting it directly (`ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`) is restricted by Play policy unless Doze breaks the app's core function. Exempt apps are also allowed exact alarms and background FGS starts. AC-02 requires default settings, so the prototype doesn't ask for an exemption.
+
+### Prototype (branch `spike/t-009-rest-timer-prototype`, never merge)
+Package `hu.toliver.muskli.spike`, separate launcher icon, platform APIs only (no new dependencies). It runs a series of N timers back to back: each timer's fire starts the next. Every fire is logged with lateness against the target wall-clock time, which path fired it, screen state, and Doze state.
+- **A. Combo (D-015):** `specialUse` FGS with a countdown notification and a Handler, plus `setAlarmClock()`. Whichever fires first wins; the other is ignored.
+- **B. `setAlarmClock()` only:** no service.
+- **C. `setExactAndAllowWhileIdle()` only:** no service.
+- **D. FGS + Handler only, no alarm:** control.
+- Permissions: `POST_NOTIFICATIONS`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_SPECIAL_USE`, `USE_EXACT_ALARM`, and `SCHEDULE_EXACT_ALARM` (maxSdk 32). The alert uses an IMPORTANCE_HIGH channel with vibration and the default sound.
+
+### Reliability table
+"Felt" means the owner noticed sound or vibration with the screen off. Lateness is the fire time minus the target, from the prototype log.
+
+**Owner's phone (default battery settings, unplugged, 90 s × 5): PENDING, not yet run.**
+| Mode | Runs | Felt (screen off) | Lateness median / max | Fired by | Doze at fire | Notes |
+|---|---|---|---|---|---|---|
+| A. combo | 0/5 | | | | | |
+| B. `setAlarmClock` only | 0/5 | | | | | |
+| C. `setExactAndAllowWhileIdle` only (optional) | 0/5 | | | | | |
+| D. FGS + Handler only (control) | 0/5 | | | | | |
+| B after swiping the app away from Recents | 0/1 | | | | | OEM force-stop check |
+
+**Emulator smoke test (API 36 `medium_phone`; not evidence for AC-02, because emulator CPUs don't suspend):**
+| Mode | Runs | Lateness | Fired by | Doze at fire | Notes |
+|---|---|---|---|---|---|
+| A. combo, 20 s × 3, screen off | 3/3 | +1 to +2 ms | fgs-handler (the alarm came ~10 ms later and was correctly ignored) | no | FGS reported as `isForeground=true types=0x40000000` (specialUse) |
+| B. `setAlarmClock`, 20 s, 3 single runs, forced Doze attempted | 3/3 | +6 to +10 ms | alarm-clock | no | `deviceidle force-idle` refused: "Unable to go deep idle; stopped at INACTIVE" while the alarm clock was pending |
+| C. `setExactAndAllowWhileIdle`, 20 s × 1, forced Doze | 1/1 | +7 ms | exact-idle | deep | Delivered inside deep Doze |
+
+On the emulator, a pending `setAlarmClock()` stopped the device from entering deep Doze at all. That matches the doc's "the system exits Doze shortly before those alarms fire". My reading, not verified in a doc: the platform holds off deep idle while an alarm clock is near. Battery cost: deep Doze is blocked for the length of each rest. During a workout the phone is picked up every few minutes anyway.
+
+### Permissions and user-visible side effects
+| Item | Combo (A) | Alarm-clock only (B) |
+|---|---|---|
+| Runtime prompts | `POST_NOTIFICATIONS` once (Android 13+) | same |
+| Special access | none with `USE_EXACT_ALARM` (sideload). With `SCHEDULE_EXACT_ALARM` the user must enable "Alarms & reminders" in Settings | same |
+| Manifest-only | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_SPECIAL_USE` | none extra |
+| Visible while resting | alarm-clock icon in the status bar; "next alarm" on lock screen and clock widgets; ongoing countdown notification (dismissible on Android 14+) | alarm-clock icon and "next alarm"; countdown only if posted as a normal ongoing notification |
+| Battery | no wake locks; one alarm per rest; no deep Doze during a pending rest | same |
+| Code size (prototype) | service + receiver + alarm, ~300 LOC | receiver + alarm, about 2/3 of that |
+
+### Provisional verdict on D-015 (to confirm with the phone results)
+**D-015 holds, with three tweaks for owner approval.** The rest-over alert should not depend on the FGS. If mode B matches mode A on the phone, the FGS isn't needed at all.
+1. **The exact alarm does the job; it isn't just a backup.** Use `setAlarmClock()`. `setExactAndAllowWhileIdle()` would avoid the status-bar alarm icon but has the documented once-per-9-minutes limit in Doze, which back-to-back rests can hit.
+2. **Exact-alarm permission: `USE_EXACT_ALARM`** (auto-granted, can't be revoked, no Settings detour) while Muskli is sideloaded. If it ever ships on Play, switch to `SCHEDULE_EXACT_ALARM` plus a fallback.
+3. **FGS, only if the phone shows B is weaker than A, or a live countdown with ±15 s/Skip actions needs a live process:** type `specialUse`, started from the set-complete tap (foreground, allowed), stopped when the rest ends. Not `shortService`, because of its 3-minute cap.
+- Ask for `POST_NOTIFICATIONS` once, in context. That adds a one-time system dialog, so it needs an owner decision on where it appears (AGENTS: the logging screen is sacred): first workout start, or Settings.
+- Don't request a battery-optimisation exemption.
+
+Proposed `docs/DECISIONS.md` D-015 note (apply only after owner confirmation and phone results):
+> 2026-10-29 (T-009): Mechanism is an exact alarm via `setAlarmClock()` with `USE_EXACT_ALARM` (sideloaded app). The FGS (`specialUse`) is [kept for the live countdown and actions | dropped; the countdown is a normal ongoing notification]. No battery-optimisation exemption. `POST_NOTIFICATIONS` is requested at [first workout start | Settings]. Measured on <phone, Android version>: <A/B results>.
+
 ## Handoff log
+- 2026-10-29 SPIKE: Docs read and cited (see Findings). Prototype built on `spike/t-009-rest-timer-prototype` (commit `70050c1`, never merge) and smoke-tested on the API 36 emulator. Reliability table, side effects, and provisional D-015 verdict written. **Not done:** real-device measurements (owner runs them; steps below). Ticket stays in `doing/` until they are in. `docs/DECISIONS.md` is untouched until the owner confirms.
+  - Note: T-001 (dependency) is still in `verify/`. The owner asked for T-009 explicitly.
+  - Commands: `.\gradlew.bat :domain:test assembleDebug` BUILD SUCCESSFUL. `lintDebug` reports no errors; the new warnings are only in spike code (`commit()` is intentional so state survives process death). Emulator runs are in the table.
+  - Gotcha: `am kill` doesn't kill a recently used app on the emulator, so process death is untested. The phone's "swipe from Recents" step covers it; some OEMs force-stop on swipe, and force-stop cancels alarms.
+  - Phone steps:
+    1. `git switch spike/t-009-rest-timer-prototype`, then `.\gradlew.bat assembleDebug` (with `JAVA_TOOL_OPTIONS` set as in AGENTS §5).
+    2. Phone: enable Developer options and USB debugging, then connect. Run `& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r app\build\outputs\apk\debug\app-debug.apk`. adb isn't on PATH.
+    3. **Unplug the USB cable.** Charging blocks Doze. Turn off DND and silent mode; leave battery settings at their defaults.
+    4. Open the "Muskli T-009" icon. Tap "Allow notifications" if shown. Check the status block: notifications allowed, exact alarms allowed, battery optimisation "optimised (default)".
+    5. Select mode A, 90 s, 5 repetitions, tap "Start series". Lock the phone, put it face down on a table, and don't touch it for about 8 minutes. Count the buzzes.
+    6. Unlock, tap "Copy log", paste it into chat. Note the number of buzzes felt and whether you saw an alarm icon or "next alarm" on the lock screen.
+    7. Tap "Clear log" and repeat step 5 with mode B, then mode D. Mode C is optional.
+    8. Mode B, 120 s, 1 repetition. Start, then swipe the app away from Recents, lock, wait. Report whether it fired.
+    9. Afterwards, `git switch main` and reinstall, or uninstall, to remove the spike icon.
