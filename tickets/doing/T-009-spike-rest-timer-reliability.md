@@ -100,6 +100,7 @@ Proposed `docs/DECISIONS.md` D-015 note (apply only after owner confirmation and
 > 2026-10-29 (T-009): Mechanism is an exact alarm via `setAlarmClock()` with `USE_EXACT_ALARM` (sideloaded app). The FGS (`specialUse`) is [kept for the live countdown and actions | dropped; the countdown is a normal ongoing notification]. No battery-optimisation exemption. `POST_NOTIFICATIONS` is requested at [first workout start | Settings]. Measured on <phone, Android version>: <A/B results>.
 
 ## Handoff log
+- 2026-10-29 SPIKE: **Owner decided** (record in D-015 together with the phone results): use `USE_EXACT_ALARM`; request `POST_NOTIFICATIONS` when the first workout starts, before any set is logged. Still open: keep or drop the FGS, which depends on the mode A vs mode B phone results.
 - 2026-10-29 SPIKE: Docs read and cited (see Findings). Prototype built on `spike/t-009-rest-timer-prototype` (commit `70050c1`, never merge) and smoke-tested on the API 36 emulator. Reliability table, side effects, and provisional D-015 verdict written. **Not done:** real-device measurements (owner runs them; steps below). Ticket stays in `doing/` until they are in. `docs/DECISIONS.md` is untouched until the owner confirms.
   - Note: T-001 (dependency) is still in `verify/`. The owner asked for T-009 explicitly.
   - Commands: `.\gradlew.bat :domain:test assembleDebug` BUILD SUCCESSFUL. `lintDebug` reports no errors; the new warnings are only in spike code (`commit()` is intentional so state survives process death). Emulator runs are in the table.
