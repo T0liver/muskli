@@ -30,5 +30,11 @@ Rules and prompts: `docs/WORKFLOW.md`. Use `TEMPLATE.md` for new tickets. WIP li
 | T-022 | BUILD | Catalogue CI checks and Pages publish (D-025) |
 | T-033 | BUILD | Routines: model, storage, start a workout from one |
 | T-034 | UI | Routines UI: list, editor, start |
+| T-035 | BUILD | Hevy import: CSV reader and parser in `:domain` |
+| T-036 | BUILD | Hevy import: exercise matching and import plan in `:domain` |
+| T-037 | BUILD | Hevy import: repository and use cases (preview, apply) |
+| T-038 | UI | Hevy import screen: pick file, preview, map exercises, confirm |
+| T-039 | UI | Hevy import: body weight from the measurements file |
+| T-040 | VERIFY | Hevy import with the owner's real export (AC-07) |
 
 REVIEW sessions pick up BUILD/UI tickets sitting in `review/` (findings go into that ticket's Handoff log; blockers become new tickets in `todo/`). VERIFY sessions pick up tickets in `verify/`.

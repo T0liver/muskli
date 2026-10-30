@@ -27,6 +27,7 @@ Status: **proposal v0.1.** Items marked *(open)* are decided in `docs/DECISIONS.
   calc/         Volume, OneRepMax, Records, WarmUp, Plates, Streak, Units, PreviousValues
   repo/         repository interfaces
   usecase/      StartWorkout, AddExercise, CompleteSet, FinishWorkout, ...
+  importer/     Hevy CSV parsing, exercise matching, import plan (docs/HEVY-IMPORT.md, D-040)
 :data     Android library
   db/           Room entities, DAOs, migrations, mappers
   repo/         repository implementations
