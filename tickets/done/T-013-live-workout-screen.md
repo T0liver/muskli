@@ -54,3 +54,4 @@ The real live-workout screen wired to the draft: stopwatch, add exercises via th
   - **Gotchas:**
     - `adb exec-out screencap` gives a black image on this emulator; `adb emu screenrecord screenshot <file>` works.
     - In the Robolectric picker the list is lazy, so search before clicking an item.
+- 2026-10-30: Owner review: no findings (Blocker / Should-fix / Nit: none). Owner ran the AC-03 steps on their phone: force-stop mid-workout, reopen, and the draft continued with exercises, values, set types, checks, volume, sets, and duration all intact. Phone model and Android version were not reported. Rest-timer state still waits for T-015. Confirmed and recorded: header set count excludes warm-ups (D-010), distance units (D-030), duration entry (D-031). Moved to `done/`.

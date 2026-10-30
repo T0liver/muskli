@@ -39,3 +39,4 @@ The PREVIOUS column shows real data, and adding an exercise done before pre-fill
     - Add set → its PREVIOUS shows "–". One tap on the check logged 100×5 (header 1 set / 500 kg). Force-stop and reopen: everything restored, previous values included.
   - **Commands:** `.\gradlew.bat :domain:test testDebugUnitTest assembleDebug lintDebug` all pass, 195 tests, 0 failures. Lint has only the existing `NewerVersionAvailable`.
   - **Left:** nothing in scope. On a real phone the PREVIOUS column only fills once T-016 can finish workouts.
+- 2026-10-30: Owner review: no findings (Blocker / Should-fix / Nit: none). Approved with T-013. On-device previous values still wait for a finished workout (T-016). Moved to `done/`.
