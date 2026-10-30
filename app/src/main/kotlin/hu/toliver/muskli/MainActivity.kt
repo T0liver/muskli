@@ -11,11 +11,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import dagger.hilt.android.AndroidEntryPoint
 import hu.toliver.muskli.ui.home.HomeScreen
+import hu.toliver.muskli.ui.library.LibraryMode
+import hu.toliver.muskli.ui.library.LibraryRoute
 import hu.toliver.muskli.ui.settings.SettingsRoute
 import hu.toliver.muskli.ui.theme.MuskliTheme
 
 /** Screens reachable from home; no navigation library yet (owner choice, T-017). */
-private enum class Screen { HOME, SETTINGS }
+private enum class Screen { HOME, LIBRARY, SETTINGS }
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -28,7 +30,12 @@ class MainActivity : ComponentActivity() {
                 val goHome = { screen = Screen.HOME }
                 BackHandler(enabled = screen != Screen.HOME, onBack = goHome)
                 when (screen) {
-                    Screen.HOME -> HomeScreen(onOpenSettings = { screen = Screen.SETTINGS })
+                    Screen.HOME -> HomeScreen(
+                        onOpenLibrary = { screen = Screen.LIBRARY },
+                        onOpenSettings = { screen = Screen.SETTINGS },
+                    )
+                    // The picker mode is opened by "Add exercise" on the live-workout screen (T-013).
+                    Screen.LIBRARY -> LibraryRoute(mode = LibraryMode.BROWSE, onBack = goHome, onPicked = {})
                     Screen.SETTINGS -> SettingsRoute(onBack = goHome)
                 }
             }

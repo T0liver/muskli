@@ -23,7 +23,7 @@ import hu.toliver.muskli.ui.theme.Spacing
 
 /** Temporary entry point until the live-workout screen (T-013) becomes the start destination. */
 @Composable
-fun HomeScreen(onOpenSettings: () -> Unit, modifier: Modifier = Modifier) {
+fun HomeScreen(onOpenLibrary: () -> Unit, onOpenSettings: () -> Unit, modifier: Modifier = Modifier) {
     Surface(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -33,6 +33,7 @@ fun HomeScreen(onOpenSettings: () -> Unit, modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.spacedBy(Spacing.m),
         ) {
             Text(text = stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
+            HomeButton(R.string.home_library, onOpenLibrary)
             HomeButton(R.string.home_settings, onOpenSettings)
         }
     }
@@ -53,6 +54,6 @@ private fun HomeButton(@StringRes label: Int, onClick: () -> Unit) {
 @Composable
 private fun HomeScreenPreview() {
     MuskliTheme {
-        HomeScreen(onOpenSettings = {})
+        HomeScreen(onOpenLibrary = {}, onOpenSettings = {})
     }
 }

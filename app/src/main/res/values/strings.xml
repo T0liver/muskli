@@ -4,6 +4,83 @@
 
     <!-- Home -->
     <string name="home_settings">Settings</string>
+    <string name="home_library">Exercise library</string>
+
+    <!-- Exercise library -->
+    <string name="library_title">Exercises</string>
+    <string name="library_pick_title">Add exercises</string>
+    <string name="library_search">Search exercises</string>
+    <string name="library_filter_muscle">Muscle</string>
+    <string name="library_filter_equipment">Equipment</string>
+    <string name="library_filter_any">Any</string>
+    <string name="library_recent">Recent</string>
+    <string name="library_all">All exercises</string>
+    <string name="library_empty">No exercises match.</string>
+    <string name="library_custom">Custom</string>
+    <string name="library_item_details">%1$s · %2$s</string>
+    <string name="library_add_selected">Add %1$d</string>
+    <string name="cd_create_exercise">Create exercise</string>
+
+    <!-- Exercise form -->
+    <string name="editor_create_title">New exercise</string>
+    <string name="editor_edit_title">Edit exercise</string>
+    <string name="editor_save">Save</string>
+    <string name="editor_name">Name</string>
+    <string name="editor_name_missing">Enter a name</string>
+    <string name="editor_type">Type</string>
+    <string name="editor_primary_muscle">Primary muscle</string>
+    <string name="editor_secondary_muscles">Secondary muscles</string>
+    <string name="editor_equipment">Equipment</string>
+    <string name="editor_choose">Choose</string>
+    <string name="editor_required">Required</string>
+    <string name="editor_archive">Archive exercise</string>
+    <string name="editor_archive_confirm_title">Archive this exercise?</string>
+    <string name="editor_archive_confirm_body">It disappears from the library. Workouts that used it keep it.</string>
+    <string name="editor_archive_confirm">Archive</string>
+    <string name="action_cancel">Cancel</string>
+
+    <!-- Exercise types -->
+    <string name="type_weight_reps">Weight and reps</string>
+    <string name="type_reps_only">Reps only</string>
+    <string name="type_bodyweight_reps">Bodyweight, added weight</string>
+    <string name="type_bodyweight_assisted_reps">Bodyweight, assisted</string>
+    <string name="type_duration">Duration</string>
+    <string name="type_weight_duration">Weight and duration</string>
+    <string name="type_distance_duration">Distance and duration</string>
+    <string name="type_short_distance_weight">Weight and distance</string>
+
+    <!-- Muscle groups -->
+    <string name="muscle_abdominals">Abdominals</string>
+    <string name="muscle_shoulders">Shoulders</string>
+    <string name="muscle_biceps">Biceps</string>
+    <string name="muscle_triceps">Triceps</string>
+    <string name="muscle_forearms">Forearms</string>
+    <string name="muscle_quadriceps">Quadriceps</string>
+    <string name="muscle_hamstrings">Hamstrings</string>
+    <string name="muscle_calves">Calves</string>
+    <string name="muscle_glutes">Glutes</string>
+    <string name="muscle_abductors">Abductors</string>
+    <string name="muscle_adductors">Adductors</string>
+    <string name="muscle_lats">Lats</string>
+    <string name="muscle_upper_back">Upper back</string>
+    <string name="muscle_traps">Traps</string>
+    <string name="muscle_lower_back">Lower back</string>
+    <string name="muscle_chest">Chest</string>
+    <string name="muscle_cardio">Cardio</string>
+    <string name="muscle_neck">Neck</string>
+    <string name="muscle_full_body">Full body</string>
+    <string name="muscle_other">Other</string>
+
+    <!-- Equipment -->
+    <string name="equipment_none">None</string>
+    <string name="equipment_barbell">Barbell</string>
+    <string name="equipment_dumbbell">Dumbbell</string>
+    <string name="equipment_kettlebell">Kettlebell</string>
+    <string name="equipment_machine">Machine</string>
+    <string name="equipment_plate">Plate</string>
+    <string name="equipment_resistance_band">Resistance band</string>
+    <string name="equipment_suspension">Suspension</string>
+    <string name="equipment_other">Other</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
