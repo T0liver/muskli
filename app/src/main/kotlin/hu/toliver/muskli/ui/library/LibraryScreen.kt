@@ -7,7 +7,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -62,6 +63,7 @@ fun LibraryRoute(
     LibraryScreen(state = state, mode = mode, onEvent = viewModel::onEvent, onBack = onBack, onPicked = onPicked)
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun LibraryScreen(
     state: LibraryUiState,
@@ -78,9 +80,10 @@ fun LibraryScreen(
         return
     }
     val onItemClick: (ExerciseTemplate) -> Unit = { exercise ->
-        when (mode) {
-            LibraryMode.PICK -> onEvent(LibraryEvent.SelectionToggled(exercise.id))
-            LibraryMode.BROWSE -> if (exercise.isCustom) onEvent(LibraryEvent.EditClicked(exercise.id))
+        when {
+            state.showArchived -> onEvent(LibraryEvent.RestoreClicked(exercise.id))
+            mode == LibraryMode.PICK -> onEvent(LibraryEvent.SelectionToggled(exercise.id))
+            exercise.isCustom -> onEvent(LibraryEvent.EditClicked(exercise.id))
         }
     }
     Scaffold(
@@ -123,7 +126,7 @@ fun LibraryScreen(
                     .padding(horizontal = Spacing.l)
                     .testTag(SEARCH_FIELD_TAG),
             )
-            Row(
+            FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.s),
                 modifier = Modifier.padding(horizontal = Spacing.l, vertical = Spacing.xs),
             ) {
@@ -141,12 +144,34 @@ fun LibraryScreen(
                     optionLabel = { stringResource(it.labelRes()) },
                     onSelect = { onEvent(LibraryEvent.EquipmentFilterChanged(it)) },
                 )
+                FilterChip(
+                    selected = state.showArchived,
+                    onClick = { onEvent(LibraryEvent.ShowArchivedChanged(!state.showArchived)) },
+                    label = { Text(stringResource(R.string.library_show_archived)) },
+                    modifier = Modifier.heightIn(min = Spacing.minTouchTarget),
+                )
             }
             LazyColumn(Modifier.fillMaxSize()) {
                 if (state.recents.isNotEmpty()) {
-                    section(R.string.library_recent, state.recents, "recent", mode, state.selectedIds, onItemClick)
+                    section(
+                        title = R.string.library_recent,
+                        exercises = state.recents,
+                        keyPrefix = "recent",
+                        mode = mode,
+                        selectedIds = state.selectedIds,
+                        restoring = false,
+                        onClick = onItemClick,
+                    )
                 }
-                section(R.string.library_all, state.results, "all", mode, state.selectedIds, onItemClick)
+                section(
+                    title = if (state.showArchived) R.string.library_show_archived else R.string.library_all,
+                    exercises = state.results,
+                    keyPrefix = "all",
+                    mode = mode,
+                    selectedIds = state.selectedIds,
+                    restoring = state.showArchived,
+                    onClick = onItemClick,
+                )
                 if (state.results.isEmpty()) {
                     item {
                         Text(
@@ -170,6 +195,7 @@ private fun LazyListScope.section(
     keyPrefix: String,
     mode: LibraryMode,
     selectedIds: List<String>,
+    restoring: Boolean,
     onClick: (ExerciseTemplate) -> Unit,
 ) {
     item(key = "$keyPrefix-header") {
@@ -182,12 +208,18 @@ private fun LazyListScope.section(
     }
     // The same exercise may be in Recent and All, so keys carry the section.
     items(exercises, key = { "$keyPrefix-${it.id}" }) { exercise ->
-        ExerciseRow(exercise, mode, selected = exercise.id in selectedIds, onClick = { onClick(exercise) })
+        ExerciseRow(exercise, mode, selected = exercise.id in selectedIds, restoring = restoring, onClick = { onClick(exercise) })
     }
 }
 
 @Composable
-private fun ExerciseRow(exercise: ExerciseTemplate, mode: LibraryMode, selected: Boolean, onClick: () -> Unit) {
+private fun ExerciseRow(
+    exercise: ExerciseTemplate,
+    mode: LibraryMode,
+    selected: Boolean,
+    restoring: Boolean,
+    onClick: () -> Unit,
+) {
     val details = stringResource(
         R.string.library_item_details,
         stringResource(exercise.primaryMuscle.labelRes()),
@@ -198,19 +230,23 @@ private fun ExerciseRow(exercise: ExerciseTemplate, mode: LibraryMode, selected:
         supportingContent = {
             Text(if (exercise.isCustom) stringResource(R.string.library_item_details, details, stringResource(R.string.library_custom)) else details)
         },
-        trailingContent = if (mode == LibraryMode.PICK) {
-            { Checkbox(checked = selected, onCheckedChange = null) }
-        } else {
-            null
+        trailingContent = when {
+            restoring -> {
+                { Text(stringResource(R.string.library_restore), color = MaterialTheme.colorScheme.primary) }
+            }
+            mode == LibraryMode.PICK -> {
+                { Checkbox(checked = selected, onCheckedChange = null) }
+            }
+            else -> null
         },
-        colors = if (selected && mode == LibraryMode.PICK) {
+        colors = if (selected && mode == LibraryMode.PICK && !restoring) {
             ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
         } else {
             ListItemDefaults.colors()
         },
         modifier = Modifier
             .heightIn(min = Spacing.minTouchTarget)
-            .clickable(enabled = mode == LibraryMode.PICK || exercise.isCustom, onClick = onClick),
+            .clickable(enabled = restoring || mode == LibraryMode.PICK || exercise.isCustom, onClick = onClick),
     )
 }
 

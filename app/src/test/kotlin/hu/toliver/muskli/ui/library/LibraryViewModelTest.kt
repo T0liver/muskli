@@ -192,6 +192,48 @@ class LibraryViewModelTest {
     }
 
     @Test
+    fun archivedFilterListsCustomExercisesOnly() = runTest(dispatcher) {
+        repo.recentIds.value = listOf("squat-barbell")
+        repo.templates.value += "c1" to template("c1", "Cable Fly", custom = true).copy(archived = true)
+        repo.templates.value += "old" to template("old", "Retired Plank").copy(archived = true)
+        val vm = subscribed()
+
+        vm.onEvent(LibraryEvent.ShowArchivedChanged(true))
+
+        assertEquals(listOf("c1"), vm.resultIds)
+        assertTrue(vm.uiState.value.recents.isEmpty())
+    }
+
+    @Test
+    fun restorePutsTheSameExerciseBackIntoSearch() = runTest(dispatcher) {
+        repo.templates.value += "c1" to template("c1", "Cable Fly", equipment = Equipment.MACHINE, custom = true).copy(archived = true)
+        val vm = subscribed()
+
+        vm.onEvent(LibraryEvent.ShowArchivedChanged(true))
+        vm.onEvent(LibraryEvent.QueryChanged("cable"))
+        vm.onEvent(LibraryEvent.EquipmentFilterChanged(Equipment.MACHINE))
+        vm.onEvent(LibraryEvent.RestoreClicked("c1"))
+
+        assertTrue(vm.resultIds.isEmpty())
+        val stored = repo.templates.value.getValue("c1")
+        assertFalse(stored.archived)
+        assertEquals("c1", stored.id)
+
+        vm.onEvent(LibraryEvent.ShowArchivedChanged(false))
+        assertEquals(listOf("c1"), vm.resultIds)
+    }
+
+    @Test
+    fun restoreRefusesACatalogueExercise() = runTest(dispatcher) {
+        repo.templates.value += "old" to template("old", "Retired Plank").copy(archived = true)
+        val vm = subscribed()
+
+        vm.onEvent(LibraryEvent.RestoreClicked("old"))
+
+        assertTrue(repo.templates.value.getValue("old").archived)
+    }
+
+    @Test
     fun dismissClosesTheFormWithoutSaving() = runTest(dispatcher) {
         val vm = subscribed()
 

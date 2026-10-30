@@ -10,12 +10,14 @@ import hu.toliver.muskli.domain.usecase.library.CreateCustomExerciseUseCase
 import hu.toliver.muskli.domain.usecase.library.CustomExerciseInput
 import hu.toliver.muskli.domain.usecase.library.EditCustomExerciseUseCase
 import hu.toliver.muskli.domain.usecase.library.SearchExercisesUseCase
+import hu.toliver.muskli.domain.usecase.library.UnarchiveCustomExerciseUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -29,23 +31,30 @@ class LibraryViewModel @Inject constructor(
     private val createCustom: CreateCustomExerciseUseCase,
     private val editCustom: EditCustomExerciseUseCase,
     private val archiveCustom: ArchiveCustomExerciseUseCase,
+    private val unarchiveCustom: UnarchiveCustomExerciseUseCase,
 ) : ViewModel() {
-    private val filter = MutableStateFlow(ExerciseFilter())
+    private val browse = MutableStateFlow(Browse())
     private val selection = MutableStateFlow<List<String>>(emptyList())
     private val editor = MutableStateFlow<ExerciseEditorState?>(null)
 
     val uiState: StateFlow<LibraryUiState> = combine(
-        filter,
-        filter.flatMapLatest { search(it) },
+        browse,
+        browse.flatMapLatest { browse ->
+            search(browse.filter.copy(includeArchived = browse.showArchived)).map { results ->
+                if (browse.showArchived) results.filter { it.archived && it.isCustom } else results
+            }
+        },
         repository.observeRecentlyUsed(RECENTS_LIMIT),
         selection,
         editor,
-    ) { filter, results, recents, selected, editor ->
-        val unfiltered = filter.query.isBlank() && filter.muscle == null && filter.equipment == null
+    ) { browse, results, recents, selected, editor ->
+        val unfiltered = !browse.showArchived &&
+            browse.filter.query.isBlank() && browse.filter.muscle == null && browse.filter.equipment == null
         LibraryUiState(
-            query = filter.query,
-            muscle = filter.muscle,
-            equipment = filter.equipment,
+            query = browse.filter.query,
+            muscle = browse.filter.muscle,
+            equipment = browse.filter.equipment,
+            showArchived = browse.showArchived,
             recents = if (unfiltered) recents else emptyList(),
             results = results,
             selectedIds = selected,
@@ -55,9 +64,11 @@ class LibraryViewModel @Inject constructor(
 
     fun onEvent(event: LibraryEvent) {
         when (event) {
-            is LibraryEvent.QueryChanged -> filter.update { it.copy(query = event.query) }
-            is LibraryEvent.MuscleFilterChanged -> filter.update { it.copy(muscle = event.muscle) }
-            is LibraryEvent.EquipmentFilterChanged -> filter.update { it.copy(equipment = event.equipment) }
+            is LibraryEvent.QueryChanged -> browse.update { it.copy(filter = it.filter.copy(query = event.query)) }
+            is LibraryEvent.MuscleFilterChanged -> browse.update { it.copy(filter = it.filter.copy(muscle = event.muscle)) }
+            is LibraryEvent.EquipmentFilterChanged -> browse.update { it.copy(filter = it.filter.copy(equipment = event.equipment)) }
+            is LibraryEvent.ShowArchivedChanged -> browse.update { it.copy(showArchived = event.show) }
+            is LibraryEvent.RestoreClicked -> viewModelScope.launch { unarchiveCustom(event.id) }
             is LibraryEvent.SelectionToggled -> selection.update { if (event.id in it) it - event.id else it + event.id }
             LibraryEvent.CreateClicked -> editor.value = ExerciseEditorState()
             is LibraryEvent.EditClicked -> viewModelScope.launch {
@@ -121,3 +132,8 @@ class LibraryViewModel @Inject constructor(
         const val RECENTS_LIMIT = 10
     }
 }
+
+private data class Browse(
+    val filter: ExerciseFilter = ExerciseFilter(),
+    val showArchived: Boolean = false,
+)

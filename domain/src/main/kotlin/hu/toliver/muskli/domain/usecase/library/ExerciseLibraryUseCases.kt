@@ -78,6 +78,18 @@ class ArchiveCustomExerciseUseCase(
     }
 }
 
+class UnarchiveCustomExerciseUseCase(
+    private val repository: ExerciseTemplateRepository,
+    private val clock: Clock,
+) {
+    /** False when [id] is missing, not custom, or not archived. The same row is kept, so workouts still reference it. */
+    suspend operator fun invoke(id: String): Boolean {
+        val current = repository.get(id)?.takeIf { it.isCustom && it.archived } ?: return false
+        repository.upsert(current.copy(archived = false, updatedAtEpochMs = clock.nowEpochMs()))
+        return true
+    }
+}
+
 private fun CustomExerciseInput.applyTo(template: ExerciseTemplate): ExerciseTemplate {
     val trimmed = title.trim()
     require(trimmed.isNotEmpty()) { "Custom exercise title must not be blank" }

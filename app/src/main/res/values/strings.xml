@@ -13,6 +13,8 @@
     <string name="library_filter_muscle">Muscle</string>
     <string name="library_filter_equipment">Equipment</string>
     <string name="library_filter_any">Any</string>
+    <string name="library_show_archived">Archived</string>
+    <string name="library_restore">Restore</string>
     <string name="library_recent">Recent</string>
     <string name="library_all">All exercises</string>
     <string name="library_empty">No exercises match.</string>

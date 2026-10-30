@@ -11,6 +11,7 @@ import hu.toliver.muskli.domain.usecase.library.ArchiveCustomExerciseUseCase
 import hu.toliver.muskli.domain.usecase.library.CreateCustomExerciseUseCase
 import hu.toliver.muskli.domain.usecase.library.EditCustomExerciseUseCase
 import hu.toliver.muskli.domain.usecase.library.SearchExercisesUseCase
+import hu.toliver.muskli.domain.usecase.library.UnarchiveCustomExerciseUseCase
 
 // :domain has no javax.inject, so use cases are constructed here.
 @Module
@@ -29,4 +30,8 @@ object UseCaseModule {
     @Provides
     fun archiveCustomExercise(repository: ExerciseTemplateRepository, clock: Clock) =
         ArchiveCustomExerciseUseCase(repository, clock)
+
+    @Provides
+    fun unarchiveCustomExercise(repository: ExerciseTemplateRepository, clock: Clock) =
+        UnarchiveCustomExerciseUseCase(repository, clock)
 }

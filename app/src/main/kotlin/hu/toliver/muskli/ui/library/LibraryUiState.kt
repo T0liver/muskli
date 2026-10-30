@@ -12,6 +12,8 @@ data class LibraryUiState(
     val query: String = "",
     val muscle: MuscleGroup? = null,
     val equipment: Equipment? = null,
+    /** When set, [results] are archived custom exercises only. */
+    val showArchived: Boolean = false,
     /** Empty while a query or filter is active, so the list shows only matches. */
     val recents: List<ExerciseTemplate> = emptyList(),
     val results: List<ExerciseTemplate> = emptyList(),
@@ -40,6 +42,8 @@ sealed interface LibraryEvent {
     data class QueryChanged(val query: String) : LibraryEvent
     data class MuscleFilterChanged(val muscle: MuscleGroup?) : LibraryEvent
     data class EquipmentFilterChanged(val equipment: Equipment?) : LibraryEvent
+    data class ShowArchivedChanged(val show: Boolean) : LibraryEvent
+    data class RestoreClicked(val id: String) : LibraryEvent
     data class SelectionToggled(val id: String) : LibraryEvent
     data object CreateClicked : LibraryEvent
     data class EditClicked(val id: String) : LibraryEvent

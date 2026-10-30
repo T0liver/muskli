@@ -11,6 +11,7 @@ import hu.toliver.muskli.domain.usecase.library.ArchiveCustomExerciseUseCase
 import hu.toliver.muskli.domain.usecase.library.CreateCustomExerciseUseCase
 import hu.toliver.muskli.domain.usecase.library.EditCustomExerciseUseCase
 import hu.toliver.muskli.domain.usecase.library.SearchExercisesUseCase
+import hu.toliver.muskli.domain.usecase.library.UnarchiveCustomExerciseUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -73,5 +74,6 @@ fun libraryViewModel(repository: FakeExerciseTemplateRepository): LibraryViewMod
         createCustom = CreateCustomExerciseUseCase(repository, ids, clock),
         editCustom = EditCustomExerciseUseCase(repository, clock),
         archiveCustom = ArchiveCustomExerciseUseCase(repository, clock),
+        unarchiveCustom = UnarchiveCustomExerciseUseCase(repository, clock),
     )
 }

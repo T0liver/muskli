@@ -37,6 +37,7 @@ class ExerciseLibraryUseCasesTest {
     private val create = CreateCustomExerciseUseCase(repo, ids, clock)
     private val edit = EditCustomExerciseUseCase(repo, clock)
     private val archive = ArchiveCustomExerciseUseCase(repo, clock)
+    private val unarchive = UnarchiveCustomExerciseUseCase(repo, clock)
 
     private val input = CustomExerciseInput(
         title = "  Cable Fly  ",
@@ -116,6 +117,35 @@ class ExerciseLibraryUseCasesTest {
         assertFalse(archive(published.id))
         assertFalse(archive("missing"))
         assertEquals(published, repo.get(published.id))
+    }
+
+    @Test
+    fun `unarchive restores the same custom exercise into search`() = runTest {
+        create(input)
+        archive("custom-0")
+        clock.now = 9_000L
+
+        assertTrue(unarchive("custom-0"))
+
+        val stored = repo.get("custom-0")!!
+        assertFalse(stored.archived)
+        assertEquals(1_000L, stored.createdAtEpochMs)
+        assertEquals(9_000L, stored.updatedAtEpochMs)
+        assertEquals(1, repo.observeAll().first().count { it.id == "custom-0" })
+        assertEquals(published, repo.get(published.id))
+        assertEquals(listOf(stored), SearchExercisesUseCase(repo)(ExerciseFilter(query = "cable", equipment = Equipment.MACHINE)).first())
+    }
+
+    @Test
+    fun `unarchive refuses a published, missing, or active exercise`() = runTest {
+        create(input)
+
+        assertFalse(unarchive(published.id))
+        assertFalse(unarchive("missing"))
+        assertFalse(unarchive("custom-0"))
+        assertEquals(published, repo.get(published.id))
+        assertFalse(repo.get("custom-0")!!.archived)
+        assertEquals(1_000L, repo.get("custom-0")!!.updatedAtEpochMs)
     }
 
     @Test
