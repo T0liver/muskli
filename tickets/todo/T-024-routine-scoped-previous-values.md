@@ -2,7 +2,7 @@
 
 - **Role:** BUILD
 - **Phase:** 2
-- **Depends on:** T-005 and the routines ticket (not written yet)
+- **Depends on:** T-005, T-033
 - **Refs:** TC-PREV-03 · SPEC F-04 AC2 · D-019
 - **Size:** fits one session
 
@@ -23,7 +23,7 @@
 `./gradlew :domain:test`
 
 ## Notes / decisions needed
-What should routine mode return for a workout started without a routine (`routineId` null): anywhere, or null? Ask the owner.
+What should routine mode return for a workout started without a routine (`routineId` null): anywhere, or null? Owner, 2026-10-30: **anywhere** (D-038). Also wire the existing previous-mode setting to pass the draft's `routineId`.
 
 ## Handoff log
 - 2026-10-29 BUILD (T-005): Created. The mode is typed and throws `NotImplementedError` until this ticket.

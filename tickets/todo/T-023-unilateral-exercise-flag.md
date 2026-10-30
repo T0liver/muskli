@@ -24,7 +24,7 @@ Volume knows which exercises are unilateral, so `setVolumeKg(..., unilateral = t
 `./gradlew :domain:test testDebugUnitTest`
 
 ## Notes / decisions needed
-Needs owner approval for any schema or catalogue format change.
+Needs owner approval for any schema or catalogue format change. Owner, 2026-10-30: **both** (D-037); the schema and catalogue changes are approved. Custom exercises get a unilateral toggle in the custom-exercise editor.
 
 ## Handoff log
 - 2026-10-29 BUILD (T-002): Created. `:domain` already accepts the flag; nothing supplies it yet, so every caller currently gets `false`.

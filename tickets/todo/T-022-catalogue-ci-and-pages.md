@@ -28,7 +28,7 @@ PRs that touch `catalogue/**` are validated by CI, and a push to `main` publishe
 Run the checker locally on the sample and on broken copies; open a test PR; `curl` the Pages URL and compare its SHA-256 with `git show main:catalogue/catalogue.json`.
 
 ## Notes / decisions needed
-Owner: make the repo public (D-025), set Pages source to "GitHub Actions", and require branches to be up to date before merging.
+Owner: make the repo public (D-025), set Pages source to "GitHub Actions", and require branches to be up to date before merging. Owner, 2026-10-30: done. Pushing is not possible from this PC, so the test PR and the Pages `curl` check are the owner's after the push; everything runnable locally must be run.
 
 ## Handoff log
 <!-- Newest first. Each entry: date, role, what was done, what's left, gotchas, commands run + results. -->
