@@ -21,6 +21,7 @@ data class ExerciseTemplateEntity(
     @ColumnInfo(defaultValue = "0") val archived: Boolean,
     @ColumnInfo(name = "created_at") val createdAt: Long,
     @ColumnInfo(name = "updated_at") val updatedAt: Long,
+    @ColumnInfo(defaultValue = "0") val unilateral: Boolean,
 )
 
 @Entity(

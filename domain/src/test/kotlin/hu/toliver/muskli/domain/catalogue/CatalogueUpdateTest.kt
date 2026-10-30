@@ -6,6 +6,7 @@ import hu.toliver.muskli.domain.model.ExerciseType
 import hu.toliver.muskli.domain.model.MuscleGroup
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -120,6 +121,21 @@ class CatalogueUpdateTest {
         val update = planCatalogueUpdate(bundle(2, squat), storedVersion = 1, existing = listOf(stored(squat), stored(plank, archived = true)), referencedIds = emptySet(), nowEpochMs = now)!!
 
         assertEquals(emptyList(), update.archiveIds)
+    }
+
+    @Test
+    fun `the unilateral flag of a catalogue exercise reaches its template (D-037)`() {
+        val lunge = squat.copy(id = "dumbbell-lunge", title = "Dumbbell Lunge", unilateral = true)
+
+        assertTrue(lunge.toTemplate(now).unilateral)
+        assertFalse(squat.toTemplate(now).unilateral)
+    }
+
+    @Test
+    fun `a changed unilateral flag upserts the stored exercise`() {
+        val update = planCatalogueUpdate(bundle(2, squat.copy(unilateral = true)), storedVersion = 1, existing = listOf(stored(squat)), referencedIds = emptySet(), nowEpochMs = now)!!
+
+        assertEquals(listOf(true), update.upserts.map { it.unilateral })
     }
 
     @Test

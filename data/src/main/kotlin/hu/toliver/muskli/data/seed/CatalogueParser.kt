@@ -37,6 +37,7 @@ object CatalogueParser {
         primaryMuscle = getString("primaryMuscle").toEnum(),
         secondaryMuscles = getJSONArray("secondaryMuscles").strings().map { it.toEnum<MuscleGroup>() }.toSet(),
         equipment = getString("equipment").toEnum(),
+        unilateral = if (has("unilateral")) getBoolean("unilateral") else false,
     )
 
     private fun JSONArray.strings(): List<String> = List(length()) { getString(it) }

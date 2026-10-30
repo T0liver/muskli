@@ -5,6 +5,7 @@ import hu.toliver.muskli.domain.model.Workout
 import hu.toliver.muskli.domain.model.WorkoutExercise
 import hu.toliver.muskli.domain.model.WorkoutSet
 import hu.toliver.muskli.domain.repo.IdGenerator
+import hu.toliver.muskli.domain.settings.WeightUnit
 import hu.toliver.muskli.domain.usecase.workout.DeleteWorkoutUseCase
 import hu.toliver.muskli.domain.usecase.workout.RestoreWorkoutUseCase
 import hu.toliver.muskli.domain.usecase.workout.StartPastWorkoutUseCase
@@ -85,6 +86,27 @@ class HistoryViewModelTest {
         assertEquals(1, workouts.first().completedSets)
         assertEquals(3_600L, workouts.first().durationS)
         assertEquals(listOf(bench.title), workouts.first().exerciseNames)
+    }
+
+    @Test
+    fun summaryVolumeCountsBothSidesOfAUnilateralExerciseOnly() {
+        val lunge = bench.copy(id = "lunge", title = "Lunge", unilateral = true)
+        val workout = finished("w", 1_000L).let { w ->
+            w.copy(
+                exercises = w.exercises + WorkoutExercise(
+                    "w-e2",
+                    lunge.id,
+                    supersetGroup = null,
+                    notes = null,
+                    restSeconds = null,
+                    sets = listOf(WorkoutSet("w-s2", SetData(weightKg = 20.0, reps = 10, completed = true), null)),
+                ),
+            )
+        }
+
+        val summary = summarizeWorkout(workout, listOf(bench, lunge).associateBy { it.id }, WeightUnit.KG, bodyWeightKg = null)
+
+        assertEquals("900", summary.volume)
     }
 
     @Test

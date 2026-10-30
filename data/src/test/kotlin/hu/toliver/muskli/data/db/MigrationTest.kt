@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
@@ -117,6 +118,30 @@ class MigrationTest {
             val draft = room.workoutDao().observeActiveDraft().first()!!.toDomain()
             assertEquals("draft", draft.id)
             assertNull(draft.restTimer)
+        } finally {
+            room.close()
+        }
+    }
+
+    @Test
+    fun `TC-DATA-04 migration 3 to 4 keeps the library and makes every exercise bilateral`() = runTest {
+        helper.createDatabase(3).apply {
+            execSQL(
+                "INSERT INTO exercise_template (id, title, exercise_type, primary_muscle, equipment, is_custom, archived, created_at, updated_at) " +
+                    "VALUES ('my-lunge', 'My lunge', 'weight_reps', 'quadriceps', 'dumbbell', 1, 0, 1, 1)",
+            )
+            close()
+        }
+
+        helper.runMigrationsAndValidate(4, listOf(MuskliDatabase.MIGRATION_3_4)).close()
+
+        val room = Room.databaseBuilder(context, MuskliDatabase::class.java, dbName)
+            .addMigrations(*MuskliDatabase.MIGRATIONS)
+            .build()
+        try {
+            val template = room.exerciseTemplateDao().get("my-lunge")!!.toDomain()
+            assertEquals("My lunge", template.title)
+            assertFalse(template.unilateral)
         } finally {
             room.close()
         }

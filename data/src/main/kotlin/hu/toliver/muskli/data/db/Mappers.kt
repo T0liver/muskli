@@ -25,6 +25,7 @@ fun ExerciseTemplate.toEntity() = ExerciseTemplateEntity(
     archived = archived,
     createdAt = createdAtEpochMs,
     updatedAt = updatedAtEpochMs,
+    unilateral = unilateral,
 )
 
 fun ExerciseTemplate.secondaryMuscleEntities() =
@@ -41,6 +42,7 @@ fun ExerciseTemplateWithMuscles.toDomain() = ExerciseTemplate(
     archived = template.archived,
     createdAtEpochMs = template.createdAt,
     updatedAtEpochMs = template.updatedAt,
+    unilateral = template.unilateral,
 )
 
 /** Rows for [hu.toliver.muskli.data.db.dao.WorkoutDao.save]; list order becomes `position`. */

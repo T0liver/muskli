@@ -73,7 +73,8 @@ fun summarizeExercises(workout: Workout, templatesById: Map<String, ExerciseTemp
 
 fun summarizeWorkout(workout: Workout, templatesById: Map<String, ExerciseTemplate>, unit: WeightUnit, bodyWeightKg: Double?): WorkoutSummaryUi {
     val exerciseSets = workout.exercises.map { exercise ->
-        ExerciseSets(templatesById[exercise.exerciseTemplateId]?.type ?: ExerciseType.WEIGHT_REPS, exercise.sets.map { it.data })
+        val template = templatesById[exercise.exerciseTemplateId]
+        ExerciseSets(template?.type ?: ExerciseType.WEIGHT_REPS, exercise.sets.map { it.data }, template?.unilateral ?: false)
     }
     return WorkoutSummaryUi(
         id = workout.id,

@@ -43,7 +43,7 @@ abstract class MuskliDatabase : RoomDatabase() {
 
     companion object {
         const val NAME = "muskli.db"
-        const val VERSION = 3
+        const val VERSION = 4
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(connection: SQLiteConnection) {
@@ -61,8 +61,15 @@ abstract class MuskliDatabase : RoomDatabase() {
             }
         }
 
+        /** The unilateral flag (D-037). Existing rows are bilateral until a newer catalogue or the editor says otherwise. */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(connection: SQLiteConnection) {
+                connection.execSQL("ALTER TABLE `exercise_template` ADD COLUMN `unilateral` INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         /** Every schema change adds its migration here and a test in `MigrationTest` (TC-DATA-04). */
-        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
+        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
 
         /** Lives in the default database directory so Android Auto Backup includes it (D-024). */
         fun build(context: Context): MuskliDatabase =

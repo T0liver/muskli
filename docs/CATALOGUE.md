@@ -28,7 +28,7 @@ Top level:
 | `exercises` | array | Exercise objects, sorted by `id` |
 | `retiredIds` | string[] | Ids removed from `exercises`; never reused (section 4) |
 
-Exercise (all fields required, no others allowed in format 1):
+Exercise (fields required unless marked optional, no others allowed in format 1):
 
 | Field | Type | Rule |
 |---|---|---|
@@ -38,8 +38,11 @@ Exercise (all fields required, no others allowed in format 1):
 | `primaryMuscle` | enum | 20 MuscleGroup values (ARCHITECTURE §3) |
 | `secondaryMuscles` | enum[] | Unique, may be empty, must not contain `primaryMuscle` (D-013 counts each +0.5) |
 | `equipment` | enum | 9 Equipment values (ARCHITECTURE §3) |
+| `unilateral` | bool, optional | Trained one side at a time, so volume counts a `both` set twice (D-014, D-037). Absent means `false`; write it only when `true` (D-047) |
 
 There are no fields for descriptions, instructions, or media, which keeps license risk and scope down. The fields map one-to-one onto `exercise_template` (T-006), with `isCustom = false`.
+
+`unilateral` was added within format 1 (T-023) under the compatibility rule below: it is optional, and older builds ignore it and treat every exercise as bilateral.
 
 **Compatibility within format 1:** CI rejects unknown fields so contributions stay clean. The app parser must **ignore** unknown fields, so a later optional field can ship without breaking older builds. Anything older builds cannot safely ignore needs `formatVersion: 2` and a new `/v2/` path. That covers a new enum value, a removed or renamed field, or a field that becomes required.
 
@@ -95,6 +98,6 @@ Base: `https://t0liver.github.io/muskli/` (repo `T0liver/muskli`).
 
 ## 9. What T-010 and T-021 rely on
 - `formatVersion` gates parsing; `version` gates applying (strictly newer).
-- `id` is the upsert key. Fields map one-to-one onto `exercise_template`.
+- `id` is the upsert key. Fields map one-to-one onto `exercise_template`; a missing `unilateral` is stored as `false`.
 - Absent ids are archived when unreferenced and never hard-deleted when referenced (D-021). Custom exercises are never touched.
 - Sample: `catalogue/catalogue.json` (10 exercises, all 8 types), which T-010 copies into assets.

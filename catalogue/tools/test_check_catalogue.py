@@ -155,6 +155,12 @@ class Rule5SortedAndCanonicalTest(CheckerTest):
         doc["exercises"][0] = {"title": first["title"], **{k: v for k, v in first.items() if k != "title"}}
         self.assertFailsRule(5, dump(doc))
 
+    def test_optional_unilateral_goes_after_equipment(self):
+        lunge = {**exercise("dumbbell-lunge", "Dumbbell Lunge"), "unilateral": True}
+        self.assertPasses(dump(with_exercise(sample(), lunge)))
+        misplaced = {"unilateral": True, **exercise("dumbbell-lunge", "Dumbbell Lunge")}
+        self.assertFailsRule(5, dump(with_exercise(sample(), misplaced)))
+
     def test_top_level_keys_not_in_schema_order(self):
         doc = sample()
         reordered = {"version": doc["version"], **{k: v for k, v in doc.items() if k != "version"}}

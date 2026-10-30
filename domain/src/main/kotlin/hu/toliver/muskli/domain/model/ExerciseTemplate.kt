@@ -37,4 +37,6 @@ data class ExerciseTemplate(
     val archived: Boolean,
     val createdAtEpochMs: Long,
     val updatedAtEpochMs: Long,
+    /** Trained one side at a time, so volume counts a `both` set twice (D-014, D-026, D-037). */
+    val unilateral: Boolean = false,
 )

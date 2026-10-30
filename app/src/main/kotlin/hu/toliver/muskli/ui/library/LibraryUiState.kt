@@ -30,6 +30,7 @@ data class ExerciseEditorState(
     val primaryMuscle: MuscleGroup? = null,
     val secondaryMuscles: Set<MuscleGroup> = emptySet(),
     val equipment: Equipment? = null,
+    val unilateral: Boolean = false,
     /** Set after a save attempt with missing fields, so errors don't show before the user has tried. */
     val showErrors: Boolean = false,
 ) {
@@ -53,6 +54,7 @@ sealed interface LibraryEvent {
     data class EditorPrimaryMuscleChanged(val muscle: MuscleGroup) : LibraryEvent
     data class EditorSecondaryMuscleToggled(val muscle: MuscleGroup) : LibraryEvent
     data class EditorEquipmentChanged(val equipment: Equipment) : LibraryEvent
+    data class EditorUnilateralChanged(val unilateral: Boolean) : LibraryEvent
     data object EditorSave : LibraryEvent
     data object EditorArchive : LibraryEvent
     data object EditorDismiss : LibraryEvent

@@ -238,7 +238,9 @@ class WorkoutSessionViewModel @AssistedInject constructor(
     ): LiveWorkoutUiState.Active {
         val unit = settings.weightUnit
         val types = workout.exercises.map { templatesById[it.exerciseTemplateId]?.type ?: ExerciseType.WEIGHT_REPS }
-        val exerciseSets = workout.exercises.mapIndexed { i, exercise -> ExerciseSets(types[i], exercise.sets.map { it.data }) }
+        val exerciseSets = workout.exercises.mapIndexed { i, exercise ->
+            ExerciseSets(types[i], exercise.sets.map { it.data }, templatesById[exercise.exerciseTemplateId]?.unilateral ?: false)
+        }
         val volumeKg = sessionVolumeKg(exerciseSets, settings.bodyWeightKg)
         val now = clock.nowEpochMs()
         val elapsedS = (((workout.finishedAtEpochMs ?: now) - workout.startedAtEpochMs) / 1000).coerceAtLeast(0)

@@ -33,6 +33,8 @@ data class ExerciseJson(
     val archived: Boolean,
     val createdAtMs: Long,
     val updatedAtMs: Long,
+    /** Optional so files written before D-037 still import; absent means bilateral. */
+    val unilateral: Boolean = false,
 )
 
 @Serializable

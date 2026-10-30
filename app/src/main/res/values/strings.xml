@@ -37,6 +37,8 @@
     <string name="editor_primary_muscle">Primary muscle</string>
     <string name="editor_secondary_muscles">Secondary muscles</string>
     <string name="editor_equipment">Equipment</string>
+    <string name="editor_unilateral">Unilateral</string>
+    <string name="editor_unilateral_hint">One side at a time; volume counts both sides</string>
     <string name="editor_choose">Choose</string>
     <string name="editor_required">Required</string>
     <string name="editor_archive">Archive exercise</string>

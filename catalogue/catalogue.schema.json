@@ -59,7 +59,12 @@
           "uniqueItems": true,
           "items": { "$ref": "#/$defs/muscleGroup" }
         },
-        "equipment": { "$ref": "#/$defs/equipment" }
+        "equipment": { "$ref": "#/$defs/equipment" },
+        "unilateral": {
+          "description": "Trained one side at a time, so volume counts a set on both sides twice (D-014, D-037). Optional; absent means false, so write it only when true.",
+          "type": "boolean",
+          "default": false
+        }
       }
     },
     "exerciseType": {

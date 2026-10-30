@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -23,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import hu.toliver.muskli.R
@@ -108,6 +111,27 @@ fun ExerciseEditorScreen(state: ExerciseEditorState, onEvent: (LibraryEvent) -> 
                 error = state.showErrors && state.equipmentMissing,
                 onSelect = { onEvent(LibraryEvent.EditorEquipmentChanged(it)) },
             )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = Spacing.minTouchTarget)
+                    .toggleable(
+                        value = state.unilateral,
+                        role = Role.Switch,
+                        onValueChange = { onEvent(LibraryEvent.EditorUnilateralChanged(it)) },
+                    ),
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.editor_unilateral), style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        stringResource(R.string.editor_unilateral_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Switch(checked = state.unilateral, onCheckedChange = null)
+            }
             HorizontalDivider()
             Text(stringResource(R.string.editor_secondary_muscles), style = MaterialTheme.typography.titleSmall)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
@@ -210,6 +234,7 @@ private fun ExerciseEditorEditPreview() {
                 primaryMuscle = MuscleGroup.CHEST,
                 secondaryMuscles = setOf(MuscleGroup.SHOULDERS),
                 equipment = Equipment.MACHINE,
+                unilateral = true,
             ),
             onEvent = {},
         )
