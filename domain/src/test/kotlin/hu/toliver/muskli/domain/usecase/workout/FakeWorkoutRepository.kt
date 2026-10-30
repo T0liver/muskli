@@ -18,16 +18,22 @@ class FakeWorkoutRepository : WorkoutRepository {
 
     override fun observeActiveDraft(): Flow<Workout?> = workouts.map { activeDraft() }
 
-    override fun observeHistory(): Flow<List<Workout>> = error("not used")
+    override fun observeHistory(): Flow<List<Workout>> = workouts.map { all ->
+        all.values.filter { it.finishedAtEpochMs != null && it.deletedAtEpochMs == null }.sortedByDescending { it.startedAtEpochMs }
+    }
 
     override suspend fun save(workout: Workout) {
         writes++
         workouts.value = workouts.value + (workout.id to workout)
     }
 
-    override suspend fun softDelete(id: String, deletedAtEpochMs: Long) = error("not used")
+    override suspend fun softDelete(id: String, deletedAtEpochMs: Long) {
+        workouts.value[id]?.let { save(it.copy(deletedAtEpochMs = deletedAtEpochMs, updatedAtEpochMs = deletedAtEpochMs)) }
+    }
 
-    override suspend fun restore(id: String) = error("not used")
+    override suspend fun restore(id: String) {
+        workouts.value[id]?.let { save(it.copy(deletedAtEpochMs = null)) }
+    }
 
     /** Per template id, what [exerciseHistory] returns. */
     var history: Map<String, List<WorkoutExerciseRecord>> = emptyMap()

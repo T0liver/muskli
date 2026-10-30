@@ -19,13 +19,19 @@ import hu.toliver.muskli.domain.usecase.workout.AdjustRestTimerUseCase
 import hu.toliver.muskli.domain.usecase.workout.ChangeSetTypeUseCase
 import hu.toliver.muskli.domain.usecase.workout.CompleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.DeleteSetUseCase
+import hu.toliver.muskli.domain.usecase.workout.DeleteWorkoutUseCase
 import hu.toliver.muskli.domain.usecase.workout.EditSetValuesUseCase
 import hu.toliver.muskli.domain.usecase.workout.FinishRestTimerUseCase
+import hu.toliver.muskli.domain.usecase.workout.FinishWorkoutUseCase
+import hu.toliver.muskli.domain.usecase.workout.MarkSetCompletedUseCase
+import hu.toliver.muskli.domain.usecase.workout.PreviousSetsBeforeUseCase
 import hu.toliver.muskli.domain.usecase.workout.PreviousSetsUseCase
 import hu.toliver.muskli.domain.usecase.workout.RemoveExerciseUseCase
 import hu.toliver.muskli.domain.usecase.workout.ReorderExerciseUseCase
 import hu.toliver.muskli.domain.usecase.workout.ReplaceExerciseUseCase
+import hu.toliver.muskli.domain.usecase.workout.RestoreWorkoutUseCase
 import hu.toliver.muskli.domain.usecase.workout.SkipRestTimerUseCase
+import hu.toliver.muskli.domain.usecase.workout.StartPastWorkoutUseCase
 import hu.toliver.muskli.domain.usecase.workout.StartWorkoutUseCase
 import hu.toliver.muskli.domain.usecase.workout.UncompleteSetUseCase
 
@@ -95,4 +101,22 @@ object UseCaseModule {
 
     @Provides
     fun finishRestTimer(repository: WorkoutRepository) = FinishRestTimerUseCase(repository)
+
+    @Provides
+    fun finishWorkout(repository: WorkoutRepository, clock: Clock) = FinishWorkoutUseCase(repository, clock)
+
+    @Provides
+    fun deleteWorkout(repository: WorkoutRepository, clock: Clock) = DeleteWorkoutUseCase(repository, clock)
+
+    @Provides
+    fun restoreWorkout(repository: WorkoutRepository) = RestoreWorkoutUseCase(repository)
+
+    @Provides
+    fun startPastWorkout(repository: WorkoutRepository, ids: IdGenerator, clock: Clock) = StartPastWorkoutUseCase(repository, ids, clock)
+
+    @Provides
+    fun markSetCompleted(repository: WorkoutRepository, clock: Clock) = MarkSetCompletedUseCase(repository, clock)
+
+    @Provides
+    fun previousSetsBefore(repository: WorkoutRepository) = PreviousSetsBeforeUseCase(repository)
 }

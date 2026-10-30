@@ -51,7 +51,13 @@ class LiveWorkoutScreenTest {
                         picking = false
                     })
                 } else {
-                    LiveWorkoutRoute(viewModel = workout, onAddExercise = { picking = true }, onReplaceExercise = {})
+                    LiveWorkoutRoute(
+                        viewModel = workout,
+                        onAddExercise = { picking = true },
+                        onReplaceExercise = {},
+                        onFinish = {},
+                        onExerciseHistory = {},
+                    )
                 }
             }
         }
@@ -80,7 +86,7 @@ class LiveWorkoutScreenTest {
         workout.onEvent(LiveWorkoutEvent.ExercisesPicked(listOf("squat-barbell")))
         compose.setContent {
             MuskliTheme {
-                LiveWorkoutRoute(viewModel = workout, onAddExercise = {}, onReplaceExercise = {})
+                LiveWorkoutRoute(viewModel = workout, onAddExercise = {}, onReplaceExercise = {}, onFinish = {}, onExerciseHistory = {})
             }
         }
 
@@ -101,7 +107,7 @@ class LiveWorkoutScreenTest {
         workout.onEvent(LiveWorkoutEvent.SetTypeChosen(workouts.activeDraft!!.exercises[0].sets[2].id, SetType.DROPSET))
         compose.setContent {
             MuskliTheme {
-                LiveWorkoutRoute(viewModel = workout, onAddExercise = {}, onReplaceExercise = {})
+                LiveWorkoutRoute(viewModel = workout, onAddExercise = {}, onReplaceExercise = {}, onFinish = {}, onExerciseHistory = {})
             }
         }
 

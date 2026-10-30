@@ -18,16 +18,18 @@ import androidx.compose.ui.unit.dp
 import hu.toliver.muskli.R
 import hu.toliver.muskli.ui.theme.MuskliTheme
 
-/** Per-exercise actions from F-02 AC2. Anchor it in the same Box as the menu button. */
+/** Per-exercise actions from F-02 AC2, and the exercise's history (F-06 AC4). Anchor it in the same Box as the menu button. */
 @Composable
 fun ExerciseMenu(
     expanded: Boolean,
     onDismiss: () -> Unit,
+    onHistory: () -> Unit,
     onReorder: () -> Unit,
     onReplace: () -> Unit,
     onRemove: () -> Unit,
 ) {
     DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+        DropdownMenuItem(text = { Text(stringResource(R.string.menu_history)) }, onClick = onHistory)
         DropdownMenuItem(text = { Text(stringResource(R.string.menu_reorder)) }, onClick = onReorder)
         DropdownMenuItem(text = { Text(stringResource(R.string.menu_replace)) }, onClick = onReplace)
         DropdownMenuItem(
@@ -44,7 +46,7 @@ private fun ExerciseMenuPreview() {
     MuskliTheme {
         Surface {
             Box(Modifier.fillMaxWidth().height(240.dp), contentAlignment = Alignment.TopEnd) {
-                ExerciseMenu(expanded = true, onDismiss = {}, onReorder = {}, onReplace = {}, onRemove = {})
+                ExerciseMenu(expanded = true, onDismiss = {}, onHistory = {}, onReorder = {}, onReplace = {}, onRemove = {})
             }
         }
     }

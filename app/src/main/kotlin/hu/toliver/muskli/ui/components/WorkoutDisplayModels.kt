@@ -24,6 +24,7 @@ data class WorkoutSetUi(
 @Immutable
 data class WorkoutExerciseUi(
     val id: String,
+    val templateId: String,
     val name: String,
     val columns: List<SetColumn>,
     val sets: List<WorkoutSetUi>,

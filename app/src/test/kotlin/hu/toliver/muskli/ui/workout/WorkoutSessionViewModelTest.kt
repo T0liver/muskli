@@ -362,4 +362,57 @@ class WorkoutSessionViewModelTest {
         assertNull(vm.active.restTimer)
         assertNull(workouts.activeDraft!!.restTimer)
     }
+
+    private fun TestScope.editing(workouts: FakeWorkoutRepository, workoutId: String): WorkoutSessionViewModel =
+        workoutSessionViewModel(workouts, templates, settings, clock, editWorkoutId = workoutId)
+            .also { vm -> backgroundScope.launch { vm.uiState.collect {} } }
+
+    private fun pastWorkout(id: String, startedAt: Long, vararg exercises: WorkoutExercise) =
+        draft(*exercises).copy(id = id, startedAtEpochMs = startedAt, finishedAtEpochMs = startedAt + 2_700_000)
+
+    @Test
+    fun editModeShowsThePastWorkoutWithItsFixedDurationAndStartsNoRest() = runTest(dispatcher) {
+        val workouts = FakeWorkoutRepository(listOf(pastWorkout("p", TestClock.START_MS, exercise("e1", "squat-barbell", set("s1"), set("s2")))))
+        clock.now = TestClock.START_MS + 99_000_000
+
+        val vm = editing(workouts, "p")
+        assertTrue(vm.active.editing)
+        assertEquals("45:00", vm.active.duration)
+
+        vm.onEvent(LiveWorkoutEvent.CompletedChanged("s1", completed = true))
+
+        val stored = workouts.workouts.value.getValue("p")
+        assertTrue(stored.exercises[0].sets[0].data.completed)
+        assertNull(stored.restTimer)
+        assertNull(vm.active.restTimer)
+    }
+
+    @Test
+    fun editModePreviousComesFromTheSessionBeforeTheEditedWorkout() = runTest(dispatcher) {
+        val workouts = FakeWorkoutRepository(listOf(pastWorkout("p", 5_000_000L, exercise("e1", "squat-barbell", set("s1")))))
+        workouts.history.value = mapOf(
+            "squat-barbell" to listOf(
+                lastTime(done(60.0, 10), workoutId = "before", startedAt = 1_000_000L),
+                lastTime(done(70.0, 8), workoutId = "p", startedAt = 5_000_000L),
+                lastTime(done(80.0, 6), workoutId = "after", startedAt = 9_000_000L),
+            ),
+        )
+
+        val vm = editing(workouts, "p")
+
+        assertEquals(listOf("60", "10"), vm.active.exercises.single().sets.single().previous)
+    }
+
+    @Test
+    fun screenShownRereadsPreviousAfterHistoryWasEdited() = runTest(dispatcher) {
+        val workouts = twoSquatSets()
+        workouts.history.value = mapOf("squat-barbell" to listOf(lastTime(done(60.0, 10))))
+        val vm = subscribed(workouts)
+        assertEquals(listOf("60", "10"), vm.active.exercises.single().sets.first().previous)
+
+        workouts.history.value = mapOf("squat-barbell" to listOf(lastTime(done(65.0, 10))))
+        vm.onEvent(LiveWorkoutEvent.ScreenShown)
+
+        assertEquals(listOf("65", "10"), vm.active.exercises.single().sets.first().previous)
+    }
 }

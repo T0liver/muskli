@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
@@ -19,19 +20,25 @@ import hu.toliver.muskli.ui.components.WorkoutExerciseUi
 import hu.toliver.muskli.ui.components.WorkoutSetUi
 import hu.toliver.muskli.ui.theme.MuskliTheme
 
+/** The live workout, or a past workout in edit mode; [onFinish] opens the finish (or save) details. */
 @Composable
 fun LiveWorkoutRoute(
     viewModel: WorkoutSessionViewModel,
     onAddExercise: () -> Unit,
     onReplaceExercise: (workoutExerciseId: String) -> Unit,
+    onFinish: (workoutId: String) -> Unit,
+    onExerciseHistory: (exerciseTemplateId: String) -> Unit,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(viewModel) { viewModel.onEvent(LiveWorkoutEvent.ScreenShown) }
     when (val current = state) {
         is LiveWorkoutUiState.Active -> LiveWorkoutScreen(
             state = current,
             onEvent = viewModel::onEvent,
             onAddExercise = onAddExercise,
             onReplaceExercise = onReplaceExercise,
+            onFinish = { onFinish(current.workoutId) },
+            onExerciseHistory = onExerciseHistory,
         )
         // Only for the moment between "Start" and the draft's first emission.
         LiveWorkoutUiState.Loading, LiveWorkoutUiState.NoWorkout -> Surface(Modifier.fillMaxSize()) {}
@@ -44,9 +51,11 @@ fun LiveWorkoutScreen(
     onEvent: (LiveWorkoutEvent) -> Unit,
     onAddExercise: () -> Unit,
     onReplaceExercise: (workoutExerciseId: String) -> Unit,
+    onFinish: () -> Unit,
+    onExerciseHistory: (exerciseTemplateId: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (state.keepScreenAwake) KeepScreenOn()
+    if (state.keepScreenAwake && !state.editing) KeepScreenOn()
     LiveWorkoutContent(
         duration = state.duration,
         volume = stringResource(if (state.weightUnit == WeightUnit.LB) R.string.volume_lb else R.string.volume_kg, state.volume),
@@ -57,9 +66,13 @@ fun LiveWorkoutScreen(
         setTypeMenuForSetId = state.setTypeMenuFor,
         restTimer = state.restTimer,
         onDurationClick = {}, // TODO(T-026): edit start time
-        onFinish = {}, // TODO(T-016): finish flow
+        onFinish = onFinish,
         onMenuClick = { onEvent(LiveWorkoutEvent.ExerciseMenuClicked(it)) },
         onMenuDismiss = { onEvent(LiveWorkoutEvent.ExerciseMenuDismissed) },
+        onExerciseHistory = {
+            onEvent(LiveWorkoutEvent.ExerciseMenuDismissed)
+            onExerciseHistory(it)
+        },
         onReorder = { onEvent(LiveWorkoutEvent.ReorderClicked) },
         onReplace = {
             onEvent(LiveWorkoutEvent.ExerciseMenuDismissed)
@@ -78,6 +91,7 @@ fun LiveWorkoutScreen(
         onRestPlus15 = { onEvent(LiveWorkoutEvent.RestPlus15) },
         onRestSkip = { onEvent(LiveWorkoutEvent.RestSkipped) },
         modifier = modifier,
+        editing = state.editing,
     )
     if (state.reorderOpen) {
         ReorderDialog(
@@ -112,6 +126,7 @@ private fun LiveWorkoutScreenPreview() {
                 exercises = listOf(
                     WorkoutExerciseUi(
                         id = "squat",
+                        templateId = "back-squat",
                         name = "Back Squat",
                         columns = listOf(SetColumn.WEIGHT, SetColumn.REPS),
                         sets = listOf(
@@ -125,6 +140,8 @@ private fun LiveWorkoutScreenPreview() {
             onEvent = {},
             onAddExercise = {},
             onReplaceExercise = {},
+            onFinish = {},
+            onExerciseHistory = {},
         )
     }
 }

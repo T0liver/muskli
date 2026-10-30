@@ -16,6 +16,8 @@ import hu.toliver.muskli.domain.usecase.workout.ChangeSetTypeUseCase
 import hu.toliver.muskli.domain.usecase.workout.CompleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.DeleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.EditSetValuesUseCase
+import hu.toliver.muskli.domain.usecase.workout.MarkSetCompletedUseCase
+import hu.toliver.muskli.domain.usecase.workout.PreviousSetsBeforeUseCase
 import hu.toliver.muskli.domain.usecase.workout.PreviousSetsUseCase
 import hu.toliver.muskli.domain.usecase.workout.RemoveExerciseUseCase
 import hu.toliver.muskli.domain.usecase.workout.ReorderExerciseUseCase
@@ -39,7 +41,9 @@ class FakeWorkoutRepository(initial: List<Workout> = emptyList()) : WorkoutRepos
 
     override fun observeActiveDraft(): Flow<Workout?> = workouts.map { activeDraft }
 
-    override fun observeHistory(): Flow<List<Workout>> = error("not used")
+    override fun observeHistory(): Flow<List<Workout>> = workouts.map { all ->
+        all.values.filter { it.finishedAtEpochMs != null && it.deletedAtEpochMs == null }.sortedByDescending { it.startedAtEpochMs }
+    }
 
     override suspend fun save(workout: Workout) {
         workouts.value = workouts.value + (workout.id to workout)
@@ -54,9 +58,13 @@ class FakeWorkoutRepository(initial: List<Workout> = emptyList()) : WorkoutRepos
         return updated
     }
 
-    override suspend fun softDelete(id: String, deletedAtEpochMs: Long) = error("not used")
+    override suspend fun softDelete(id: String, deletedAtEpochMs: Long) {
+        workouts.value[id]?.let { save(it.copy(deletedAtEpochMs = deletedAtEpochMs)) }
+    }
 
-    override suspend fun restore(id: String) = error("not used")
+    override suspend fun restore(id: String) {
+        workouts.value[id]?.let { save(it.copy(deletedAtEpochMs = null)) }
+    }
 
     override suspend fun exerciseHistory(exerciseTemplateId: String): List<WorkoutExerciseRecord> =
         history.value[exerciseTemplateId].orEmpty()
@@ -90,10 +98,12 @@ fun workoutSessionViewModel(
     templates: ExerciseTemplateRepository,
     settings: SettingsRepository,
     clock: Clock = TestClock(),
+    editWorkoutId: String? = null,
 ): WorkoutSessionViewModel {
     var nextId = 0
     val ids = IdGenerator { "id${nextId++}" }
     return WorkoutSessionViewModel(
+        editWorkoutId = editWorkoutId,
         workouts = workouts,
         templates = templates,
         settingsRepository = settings,
@@ -112,5 +122,7 @@ fun workoutSessionViewModel(
         previousSets = PreviousSetsUseCase(workouts),
         adjustRest = AdjustRestTimerUseCase(workouts, clock),
         skipRest = SkipRestTimerUseCase(workouts, clock),
+        markSetCompleted = MarkSetCompletedUseCase(workouts, clock),
+        previousSetsBefore = PreviousSetsBeforeUseCase(workouts),
     )
 }

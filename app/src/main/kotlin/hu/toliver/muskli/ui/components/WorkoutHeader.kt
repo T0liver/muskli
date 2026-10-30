@@ -1,6 +1,7 @@
 package hu.toliver.muskli.ui.components
 
 import android.content.res.Configuration
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,7 +29,10 @@ import hu.toliver.muskli.R
 import hu.toliver.muskli.ui.theme.MuskliTheme
 import hu.toliver.muskli.ui.theme.Spacing
 
-/** Title bar, then the stopwatch (tap to edit start time, F-02 AC1), volume and completed sets (F-02 AC4). */
+/**
+ * Title bar, then the stopwatch (tap to edit start time, F-02 AC1), volume and completed sets (F-02 AC4).
+ * Editing a past workout swaps the title and the Finish label (T-016).
+ */
 @Composable
 fun WorkoutHeader(
     duration: String,
@@ -37,6 +41,8 @@ fun WorkoutHeader(
     onDurationClick: () -> Unit,
     onFinish: () -> Unit,
     modifier: Modifier = Modifier,
+    @StringRes title: Int = R.string.live_workout_title,
+    @StringRes finishLabel: Int = R.string.action_finish,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
@@ -47,7 +53,7 @@ fun WorkoutHeader(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(R.string.live_workout_title),
+                text = stringResource(title),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.weight(1f),
             )
@@ -56,7 +62,7 @@ fun WorkoutHeader(
                 shape = MaterialTheme.shapes.small,
                 modifier = Modifier.heightIn(min = Spacing.minTouchTarget),
             ) {
-                Text(stringResource(R.string.action_finish), style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(finishLabel), style = MaterialTheme.typography.labelLarge)
             }
         }
         Row(

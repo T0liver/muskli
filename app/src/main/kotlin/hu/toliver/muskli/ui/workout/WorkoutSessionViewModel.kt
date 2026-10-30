@@ -2,6 +2,9 @@ package hu.toliver.muskli.ui.workout
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import hu.toliver.muskli.domain.calc.ExerciseSets
 import hu.toliver.muskli.domain.calc.completedSetCount
@@ -27,6 +30,8 @@ import hu.toliver.muskli.domain.usecase.workout.ChangeSetTypeUseCase
 import hu.toliver.muskli.domain.usecase.workout.CompleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.DeleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.EditSetValuesUseCase
+import hu.toliver.muskli.domain.usecase.workout.MarkSetCompletedUseCase
+import hu.toliver.muskli.domain.usecase.workout.PreviousSetsBeforeUseCase
 import hu.toliver.muskli.domain.usecase.workout.PreviousSetsUseCase
 import hu.toliver.muskli.domain.usecase.workout.RemoveExerciseUseCase
 import hu.toliver.muskli.domain.usecase.workout.ReorderExerciseUseCase
@@ -55,15 +60,18 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.text.NumberFormat
-import javax.inject.Inject
 import kotlin.math.roundToLong
 
 /**
  * The live workout, built from the persisted draft (ARCHITECTURE §4). Every event writes through
  * a T-012 use case at once, so killing the app loses nothing (AC-03).
+ *
+ * With an [editWorkoutId] it edits that past workout with the same screen instead (T-016): no rest
+ * timer, a fixed duration, and PREVIOUS from the session before it.
  */
-@HiltViewModel
-class WorkoutSessionViewModel @Inject constructor(
+@HiltViewModel(assistedFactory = WorkoutSessionViewModel.Factory::class)
+class WorkoutSessionViewModel @AssistedInject constructor(
+    @Assisted private val editWorkoutId: String?,
     workouts: WorkoutRepository,
     templates: ExerciseTemplateRepository,
     settingsRepository: SettingsRepository,
@@ -82,8 +90,17 @@ class WorkoutSessionViewModel @Inject constructor(
     private val previousSets: PreviousSetsUseCase,
     private val adjustRest: AdjustRestTimerUseCase,
     private val skipRest: SkipRestTimerUseCase,
+    private val markSetCompleted: MarkSetCompletedUseCase,
+    private val previousSetsBefore: PreviousSetsBeforeUseCase,
 ) : ViewModel() {
-    private val draft: StateFlow<Draft> = workouts.observeActiveDraft()
+    @AssistedFactory
+    interface Factory {
+        fun create(editWorkoutId: String?): WorkoutSessionViewModel
+    }
+
+    private val editing = editWorkoutId != null
+
+    private val draft: StateFlow<Draft> = (if (editWorkoutId == null) workouts.observeActiveDraft() else workouts.observe(editWorkoutId))
         .map<Workout?, Draft> { Draft.Loaded(it) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, Draft.Loading)
     private val settings = settingsRepository.settings.stateIn(viewModelScope, SharingStarted.Eagerly, Settings())
@@ -115,20 +132,9 @@ class WorkoutSessionViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), LiveWorkoutUiState.Loading)
 
     init {
-        // History changes only when a workout is finished, so each template is read once per draft.
+        // Each template is read once per draft; history edited meanwhile is picked up on ScreenShown.
         viewModelScope.launch {
-            draft.collect { state ->
-                val workout = (state as? Draft.Loaded)?.workout ?: return@collect
-                if (previous.value.workoutId != workout.id) previous.value = PreviousCache(workout.id)
-                workout.exercises.map { it.exerciseTemplateId }.distinct()
-                    .filterNot { it in previous.value.byTemplate }
-                    .forEach { templateId ->
-                        val sets = previousSets(templateId)
-                        previous.update {
-                            if (it.workoutId == workout.id) it.copy(byTemplate = it.byTemplate + (templateId to sets)) else it
-                        }
-                    }
-            }
+            draft.collect { state -> (state as? Draft.Loaded)?.workout?.let { loadMissingPrevious(it) } }
         }
         // Typed text is in the old unit; show the stored values converted instead.
         viewModelScope.launch {
@@ -138,8 +144,32 @@ class WorkoutSessionViewModel @Inject constructor(
         }
     }
 
+    private suspend fun loadMissingPrevious(workout: Workout) {
+        if (previous.value.workoutId != workout.id) previous.value = PreviousCache(workout.id)
+        workout.exercises.map { it.exerciseTemplateId }.distinct()
+            .filterNot { it in previous.value.byTemplate }
+            .forEach { templateId ->
+                val sets = previousOf(templateId, workout)
+                previous.update {
+                    if (it.workoutId == workout.id) it.copy(byTemplate = it.byTemplate + (templateId to sets)) else it
+                }
+            }
+    }
+
+    // Swapped in at once rather than cleared first, so the column does not blink on every return.
+    private suspend fun reloadPrevious(workout: Workout) {
+        val byTemplate = workout.exercises.map { it.exerciseTemplateId }.distinct().associateWith { previousOf(it, workout) }
+        previous.update { if (it.workoutId == workout.id) it.copy(byTemplate = it.byTemplate + byTemplate) else it }
+    }
+
+    private suspend fun previousOf(templateId: String, workout: Workout): List<SetData?> =
+        if (editing) previousSetsBefore(templateId, workout) else previousSets(templateId)
+
     fun onEvent(event: LiveWorkoutEvent) {
         when (event) {
+            LiveWorkoutEvent.ScreenShown -> viewModelScope.launch {
+                (draft.value as? Draft.Loaded)?.workout?.let { reloadPrevious(it) }
+            }
             LiveWorkoutEvent.StartClicked -> write { startWorkout() }
             is LiveWorkoutEvent.ExercisesPicked -> edit { addExercises(it, event.templateIds) }
             is LiveWorkoutEvent.ReplacementPicked -> edit { replaceExercise(it, event.workoutExerciseId, event.templateId) }
@@ -163,7 +193,11 @@ class WorkoutSessionViewModel @Inject constructor(
             is LiveWorkoutEvent.ValueChanged -> valueChanged(event)
             // CompleteSet stores the rest in the draft; the alarm and service follow it (RestTimerSync).
             is LiveWorkoutEvent.CompletedChanged -> edit {
-                if (event.completed) completeSet(it, event.setId, settings.value.defaultRestSeconds) else uncompleteSet(it, event.setId)
+                when {
+                    !event.completed -> uncompleteSet(it, event.setId)
+                    editing -> markSetCompleted(it, event.setId)
+                    else -> completeSet(it, event.setId, settings.value.defaultRestSeconds)
+                }
             }
             LiveWorkoutEvent.RestMinus15 -> edit { adjustRest(it, -REST_STEP_S) }
             LiveWorkoutEvent.RestPlus15 -> edit { adjustRest(it, REST_STEP_S) }
@@ -207,8 +241,8 @@ class WorkoutSessionViewModel @Inject constructor(
         val exerciseSets = workout.exercises.mapIndexed { i, exercise -> ExerciseSets(types[i], exercise.sets.map { it.data }) }
         val volumeKg = sessionVolumeKg(exerciseSets, settings.bodyWeightKg)
         val now = clock.nowEpochMs()
-        val elapsedS = ((now - workout.startedAtEpochMs) / 1000).coerceAtLeast(0)
-        val restTimer = workout.restTimer?.takeIf { it.remainingMs(now) > 0 }?.let {
+        val elapsedS = (((workout.finishedAtEpochMs ?: now) - workout.startedAtEpochMs) / 1000).coerceAtLeast(0)
+        val restTimer = workout.restTimer?.takeIf { !editing && it.remainingMs(now) > 0 }?.let {
             // Rounded up, so a fresh 90 s rest reads 1:30 and 0:00 is never shown while resting.
             RestTimerUi(remaining = formatDuration((it.remainingMs(now) + 999) / 1000), progress = it.fractionLeft(now).toFloat())
         }
@@ -224,6 +258,7 @@ class WorkoutSessionViewModel @Inject constructor(
                 var workingSets = 0
                 WorkoutExerciseUi(
                     id = exercise.id,
+                    templateId = exercise.exerciseTemplateId,
                     name = templatesById[exercise.exerciseTemplateId]?.title.orEmpty(),
                     columns = columns,
                     sets = exercise.sets.mapIndexed { index, set ->
@@ -245,6 +280,7 @@ class WorkoutSessionViewModel @Inject constructor(
             exerciseMenuFor = local.exerciseMenuFor,
             setTypeMenuFor = local.setTypeMenuFor,
             reorderOpen = local.reorderOpen,
+            editing = editing,
         )
     }
 

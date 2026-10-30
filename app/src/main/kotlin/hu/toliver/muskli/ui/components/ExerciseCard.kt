@@ -40,6 +40,7 @@ fun ExerciseCard(
     setTypeMenuForSetId: String?,
     onMenuClick: () -> Unit,
     onMenuDismiss: () -> Unit,
+    onHistory: () -> Unit,
     onReorder: () -> Unit,
     onReplace: () -> Unit,
     onRemove: () -> Unit,
@@ -75,6 +76,7 @@ fun ExerciseCard(
                 ExerciseMenu(
                     expanded = menuExpanded,
                     onDismiss = onMenuDismiss,
+                    onHistory = onHistory,
                     onReorder = onReorder,
                     onReplace = onReplace,
                     onRemove = onRemove,
@@ -145,6 +147,7 @@ private fun ExerciseCardPreview() {
             ExerciseCard(
                 exercise = WorkoutExerciseUi(
                     id = "squat",
+                    templateId = "back-squat",
                     name = "Back Squat",
                     columns = listOf(SetColumn.WEIGHT, SetColumn.REPS),
                     sets = listOf(
@@ -158,6 +161,7 @@ private fun ExerciseCardPreview() {
                 setTypeMenuForSetId = null,
                 onMenuClick = {},
                 onMenuDismiss = {},
+                onHistory = {},
                 onReorder = {},
                 onReplace = {},
                 onRemove = {},

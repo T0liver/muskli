@@ -8,6 +8,7 @@
     <string name="home_start_workout">Start workout</string>
     <string name="home_workout_in_progress">Workout in progress</string>
     <string name="home_resume_workout">Resume</string>
+    <string name="home_history">History</string>
 
     <!-- Exercise library -->
     <string name="library_title">Exercises</string>
@@ -143,6 +144,7 @@
     <string name="action_add_set">Add set</string>
     <string name="action_add_exercise">Add exercise</string>
     <string name="cd_exercise_menu">Options for %1$s</string>
+    <string name="menu_history">History</string>
     <string name="menu_reorder">Reorder</string>
     <string name="menu_replace">Replace</string>
     <string name="menu_remove">Remove</string>
@@ -189,4 +191,53 @@
     <string name="rest_channel_alert_sound">Rest over: sound</string>
     <string name="rest_channel_alert_vibration">Rest over: vibration</string>
     <string name="rest_channel_alert_silent">Rest over: silent</string>
+
+    <!-- Finish and edit -->
+    <string name="edit_workout_title">Edit workout</string>
+    <string name="action_save">Save</string>
+    <string name="action_next">Next</string>
+    <string name="finish_title">Finish workout</string>
+    <string name="finish_title_edit">Save workout</string>
+    <string name="finish_name">Name</string>
+    <string name="workout_untitled">Workout</string>
+    <string name="finish_start">Start</string>
+    <string name="finish_duration">Duration</string>
+    <string name="finish_hours">Hours</string>
+    <string name="finish_minutes">Minutes</string>
+    <string name="finish_duration_invalid">Enter whole hours and 0–59 minutes</string>
+    <string name="finish_notes">Note</string>
+    <plurals name="finish_discard_sets_title">
+        <item quantity="one">Discard %1$d uncompleted set?</item>
+        <item quantity="other">Discard %1$d uncompleted sets?</item>
+    </plurals>
+    <string name="finish_discard_sets_body">Only completed sets are saved.</string>
+    <string name="finish_discard_sets_confirm">Discard and save</string>
+    <string name="finish_nothing_title">No completed sets</string>
+    <string name="finish_nothing_body">There is nothing to save. Discard this workout?</string>
+    <string name="finish_discard_workout">Discard workout</string>
+    <string name="finish_keep">Keep going</string>
+
+    <!-- History -->
+    <string name="history_title">History</string>
+    <string name="history_log_past">Log past</string>
+    <string name="history_empty">No finished workouts yet.</string>
+    <string name="history_deleted">Workout deleted</string>
+    <string name="history_stats">%1$s · %2$s · %3$s</string>
+    <plurals name="history_sets">
+        <item quantity="one">%1$d set</item>
+        <item quantity="other">%1$d sets</item>
+    </plurals>
+    <string name="action_undo">Undo</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_delete">Delete</string>
+    <string name="detail_missing">This workout was deleted.</string>
+    <string name="exercise_history_empty">Not done in a finished workout yet.</string>
+    <string name="duration_h_min">%1$d h %2$d min</string>
+    <string name="duration_min">%1$d min</string>
+    <string name="summary_added_kg">+%1$s kg</string>
+    <string name="summary_added_lb">+%1$s lb</string>
+    <string name="summary_assist_kg">−%1$s kg</string>
+    <string name="summary_assist_lb">−%1$s lb</string>
+    <string name="summary_km">%1$s km</string>
+    <string name="summary_m">%1$s m</string>
 </resources>

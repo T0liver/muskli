@@ -26,10 +26,14 @@ sealed interface LiveWorkoutUiState {
         val exerciseMenuFor: String? = null,
         val setTypeMenuFor: String? = null,
         val reorderOpen: Boolean = false,
+        /** Editing a past workout (T-016): the header saves instead of finishing. */
+        val editing: Boolean = false,
     ) : LiveWorkoutUiState
 }
 
 sealed interface LiveWorkoutEvent {
+    /** The screen came back into view; history may have been edited meanwhile, so PREVIOUS is re-read. */
+    data object ScreenShown : LiveWorkoutEvent
     data object StartClicked : LiveWorkoutEvent
     data class ExercisesPicked(val templateIds: List<String>) : LiveWorkoutEvent
     data class ReplacementPicked(val workoutExerciseId: String, val templateId: String) : LiveWorkoutEvent

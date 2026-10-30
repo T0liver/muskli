@@ -51,6 +51,7 @@ fun LiveWorkoutContent(
     onFinish: () -> Unit,
     onMenuClick: (exerciseId: String) -> Unit,
     onMenuDismiss: () -> Unit,
+    onExerciseHistory: (exerciseTemplateId: String) -> Unit,
     onReorder: (exerciseId: String) -> Unit,
     onReplace: (exerciseId: String) -> Unit,
     onRemove: (exerciseId: String) -> Unit,
@@ -66,6 +67,7 @@ fun LiveWorkoutContent(
     onRestPlus15: () -> Unit,
     onRestSkip: () -> Unit,
     modifier: Modifier = Modifier,
+    editing: Boolean = false,
 ) {
     Scaffold(
         modifier = modifier,
@@ -79,6 +81,8 @@ fun LiveWorkoutContent(
                 modifier = Modifier
                     .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
                     .padding(top = Spacing.xs),
+                title = if (editing) R.string.edit_workout_title else R.string.live_workout_title,
+                finishLabel = if (editing) R.string.action_save else R.string.action_finish,
             )
         },
         bottomBar = {
@@ -105,6 +109,7 @@ fun LiveWorkoutContent(
                         setTypeMenuForSetId = setTypeMenuForSetId,
                         onMenuClick = { onMenuClick(exercise.id) },
                         onMenuDismiss = onMenuDismiss,
+                        onHistory = { onExerciseHistory(exercise.templateId) },
                         onReorder = { onReorder(exercise.id) },
                         onReplace = { onReplace(exercise.id) },
                         onRemove = { onRemove(exercise.id) },
@@ -154,6 +159,7 @@ private val weightReps = listOf(SetColumn.WEIGHT, SetColumn.REPS)
 private fun previewExercises(completed: Boolean): List<WorkoutExerciseUi> = listOf(
     WorkoutExerciseUi(
         id = "bench",
+        templateId = "bench",
         name = "Bench Press (Barbell)",
         columns = weightReps,
         sets = listOf(
@@ -165,6 +171,7 @@ private fun previewExercises(completed: Boolean): List<WorkoutExerciseUi> = list
     ),
     WorkoutExerciseUi(
         id = "raise",
+        templateId = "raise",
         name = "Lateral Raise (Dumbbell)",
         columns = weightReps,
         sets = listOf(
@@ -175,6 +182,7 @@ private fun previewExercises(completed: Boolean): List<WorkoutExerciseUi> = list
     ),
     WorkoutExerciseUi(
         id = "row",
+        templateId = "row",
         name = "Bent-Over Row (Barbell)",
         columns = weightReps,
         sets = listOf(
@@ -205,6 +213,7 @@ private fun LiveWorkoutPreview(
             onFinish = {},
             onMenuClick = {},
             onMenuDismiss = {},
+            onExerciseHistory = {},
             onReorder = {},
             onReplace = {},
             onRemove = {},
