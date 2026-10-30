@@ -13,7 +13,7 @@ Status: **proposal v0.1.** Items marked *(open)* are decided in `docs/DECISIONS.
 | Persistence | Room (SQLite) | decided (D-002) |
 | Settings | Jetpack DataStore (Preferences) | proposed |
 | DI | Hilt | decided (D-006) |
-| Serialization | kotlinx.serialization (export/import) | proposed |
+| Serialization | kotlinx.serialization (export/import, `:data` only) | decided (D-034) |
 | Testing | JUnit, kotlin.test, Turbine (Flow), Compose UI tests, Room in-memory tests | proposed |
 | Build | Gradle Kotlin DSL, version catalog `gradle/libs.versions.toml` | proposed |
 | minSdk / targetSdk | minSdk 24 (D-007); targetSdk = latest stable | decided (D-007) |

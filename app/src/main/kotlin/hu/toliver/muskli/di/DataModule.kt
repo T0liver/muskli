@@ -12,17 +12,21 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import hu.toliver.muskli.data.SystemWallClock
 import hu.toliver.muskli.data.UuidIdGenerator
+import hu.toliver.muskli.data.backup.JsonBackupRepository
 import hu.toliver.muskli.data.db.MuskliDatabase
 import hu.toliver.muskli.data.repo.RoomExerciseTemplateRepository
 import hu.toliver.muskli.data.repo.RoomWorkoutRepository
 import hu.toliver.muskli.data.seed.BundledCatalogueLoader
 import hu.toliver.muskli.data.seed.CatalogueApplier
 import hu.toliver.muskli.data.settings.DataStoreSettingsRepository
+import hu.toliver.muskli.domain.repo.BackupRepository
 import hu.toliver.muskli.domain.repo.Clock
 import hu.toliver.muskli.domain.repo.ExerciseTemplateRepository
 import hu.toliver.muskli.domain.repo.IdGenerator
 import hu.toliver.muskli.domain.repo.SettingsRepository
 import hu.toliver.muskli.domain.repo.WorkoutRepository
+import hu.toliver.muskli.ui.backup.BackupDocuments
+import hu.toliver.muskli.ui.backup.ContentResolverBackupDocuments
 import javax.inject.Singleton
 
 @Module
@@ -53,6 +57,13 @@ object DataModule {
 
     @Provides
     fun settingsRepository(store: DataStore<Preferences>): SettingsRepository = DataStoreSettingsRepository(store)
+
+    @Provides
+    fun backupRepository(db: MuskliDatabase, settings: SettingsRepository, clock: Clock): BackupRepository =
+        JsonBackupRepository(db, settings, clock)
+
+    @Provides
+    fun backupDocuments(documents: ContentResolverBackupDocuments): BackupDocuments = documents
 
     @Provides
     fun bundledCatalogueLoader(@ApplicationContext context: Context, db: MuskliDatabase, clock: Clock) =

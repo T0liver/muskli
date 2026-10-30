@@ -8,6 +8,7 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
+import hu.toliver.muskli.data.db.dao.BackupDao
 import hu.toliver.muskli.data.db.dao.CatalogueMetaDao
 import hu.toliver.muskli.data.db.dao.ExerciseTemplateDao
 import hu.toliver.muskli.data.db.dao.WorkoutDao
@@ -37,6 +38,8 @@ abstract class MuskliDatabase : RoomDatabase() {
     abstract fun workoutDao(): WorkoutDao
 
     abstract fun catalogueMetaDao(): CatalogueMetaDao
+
+    abstract fun backupDao(): BackupDao
 
     companion object {
         const val NAME = "muskli.db"

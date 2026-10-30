@@ -1,6 +1,8 @@
 package hu.toliver.muskli.ui.settings
 
 import android.content.res.Configuration
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,15 +47,45 @@ import hu.toliver.muskli.R
 import hu.toliver.muskli.domain.calc.PreviousMode
 import hu.toliver.muskli.domain.settings.WeekStartDay
 import hu.toliver.muskli.domain.settings.WeightUnit
+import hu.toliver.muskli.ui.backup.BackupEvent
+import hu.toliver.muskli.ui.backup.BackupSection
+import hu.toliver.muskli.ui.backup.BackupUiState
+import hu.toliver.muskli.ui.backup.BackupViewModel
 import hu.toliver.muskli.ui.components.BackTopBar
 import hu.toliver.muskli.ui.theme.MuskliTheme
 import hu.toliver.muskli.ui.theme.Spacing
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
-fun SettingsRoute(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
+fun SettingsRoute(
+    onBack: () -> Unit,
+    viewModel: SettingsViewModel = hiltViewModel(),
+    backupViewModel: BackupViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    SettingsScreen(state = state, onEvent = viewModel::onEvent, onBack = onBack)
+    val backup by backupViewModel.uiState.collectAsStateWithLifecycle()
+    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(JSON_MIME)) { uri ->
+        uri?.let { backupViewModel.onEvent(BackupEvent.ExportTo(it.toString())) }
+    }
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let { backupViewModel.onEvent(BackupEvent.ImportPicked(it.toString())) }
+    }
+    val fileName = stringResource(R.string.backup_file_name, SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date()))
+    SettingsScreen(
+        state = state,
+        onEvent = viewModel::onEvent,
+        onBack = onBack,
+        backup = backup,
+        onExport = { exportLauncher.launch(fileName) },
+        // Some file managers label .json files as plain text or as unknown bytes.
+        onImport = { importLauncher.launch(arrayOf(JSON_MIME, "text/*", "application/octet-stream")) },
+        onBackupEvent = backupViewModel::onEvent,
+    )
 }
+
+private const val JSON_MIME = "application/json"
 
 @Composable
 fun SettingsScreen(
@@ -61,6 +93,10 @@ fun SettingsScreen(
     onEvent: (SettingsEvent) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    backup: BackupUiState = BackupUiState(),
+    onExport: () -> Unit = {},
+    onImport: () -> Unit = {},
+    onBackupEvent: (BackupEvent) -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier,
@@ -120,6 +156,10 @@ fun SettingsScreen(
                 keyboardType = KeyboardType.Decimal,
                 onValueChange = { onEvent(SettingsEvent.BodyWeightChanged(it)) },
             )
+
+            HorizontalDivider()
+            SectionTitle(R.string.settings_backup)
+            BackupSection(state = backup, onExport = onExport, onImport = onImport, onEvent = onBackupEvent)
         }
     }
 }

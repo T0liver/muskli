@@ -107,6 +107,35 @@
     <string name="settings_body_weight">Body weight (%1$s)</string>
     <string name="settings_body_weight_hint">Used for bodyweight exercise volume. Leave empty if unknown.</string>
     <string name="settings_body_weight_invalid">Enter a number above 0</string>
+    <string name="settings_backup">Backup</string>
+    <string name="backup_hint">One JSON file with all workouts, custom exercises, and settings.</string>
+    <string name="backup_export">Export to file</string>
+    <string name="backup_import">Import from file</string>
+    <string name="backup_file_name" translatable="false">muskli-backup-%1$s.json</string>
+    <string name="backup_import_confirm_title">Replace all data?</string>
+    <string name="backup_import_confirm_text">All workouts on this phone, including one in progress, and all custom exercises are replaced by the file. Settings are restored from it.</string>
+    <string name="backup_import_confirm_action">Replace</string>
+    <string name="backup_exported">Backup saved.</string>
+    <string name="backup_export_failed">Could not save the file.</string>
+    <string name="backup_read_failed">Could not read the file.</string>
+    <plurals name="backup_imported">
+        <item quantity="one">Imported %d workout.</item>
+        <item quantity="other">Imported %d workouts.</item>
+    </plurals>
+    <string name="backup_rejected_title">File not imported</string>
+    <string name="backup_rejected_text">Nothing was changed. Problems found:</string>
+    <string name="backup_problem_malformed">Not a Muskli backup, or damaged: %1$s</string>
+    <string name="backup_problem_unsupported_version">Made by a newer version of the app</string>
+    <string name="backup_problem_invalid_value">Invalid value at %1$s</string>
+    <string name="backup_problem_duplicate_id">Duplicate id at %1$s</string>
+    <string name="backup_problem_unknown_exercise">Unknown exercise at %1$s</string>
+    <string name="backup_problem_multiple_drafts">More than one workout in progress</string>
+    <string name="backup_problem_id_conflict">Custom exercise has a library exercise\'s id at %1$s</string>
+    <plurals name="backup_more_errors">
+        <item quantity="one">…and %d more</item>
+        <item quantity="other">…and %d more</item>
+    </plurals>
+    <string name="action_ok">OK</string>
     <string name="day_monday">Monday</string>
     <string name="day_tuesday">Tuesday</string>
     <string name="day_wednesday">Wednesday</string>
