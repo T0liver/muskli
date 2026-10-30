@@ -298,6 +298,8 @@ class ChangeStartTimeUseCase(
             when {
                 !workout.isDraft() -> workout
                 startedAtEpochMs > clock.nowEpochMs() -> workout.also { inFuture = true }
+                // The picker has minute precision, so confirming it unchanged must not drop the seconds.
+                sameMinute(startedAtEpochMs, workout.startedAtEpochMs) -> workout
                 else -> workout.copy(startedAtEpochMs = startedAtEpochMs, utcOffsetS = clock.utcOffsetS(startedAtEpochMs))
             }
         } ?: return null
@@ -309,6 +311,12 @@ class ChangeStartTimeUseCase(
     }
 
     private fun Workout.isDraft() = finishedAtEpochMs == null && deletedAtEpochMs == null
+
+    private fun sameMinute(a: Long, b: Long) = Math.floorDiv(a, MINUTE_MS) == Math.floorDiv(b, MINUTE_MS)
+
+    private companion object {
+        const val MINUTE_MS = 60_000L
+    }
 }
 
 /** [WorkoutRepository.update] that also stamps `updatedAt` when [edit] changed anything. */

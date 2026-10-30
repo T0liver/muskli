@@ -95,6 +95,18 @@ class ChangeStartTimeUseCaseTest {
     }
 
     @Test
+    fun `a start in the same minute keeps the stored seconds`() = runTest {
+        clock.now = 3_634_000L
+        val workout = draft()
+        clock.now = 4_000_000L
+        val writes = repo.writes
+
+        assertEquals(ChangeStartTimeResult.Changed(workout), changeStart(workout.id, 3_600_000L))
+        assertEquals(writes, repo.writes)
+        assertEquals(3_634_000L, stored(workout.id).startedAtEpochMs)
+    }
+
+    @Test
     fun `a finished or unknown workout is not changed`() = runTest {
         val finished = draft().copy(finishedAtEpochMs = 3_600_000L)
         repo.save(finished)
