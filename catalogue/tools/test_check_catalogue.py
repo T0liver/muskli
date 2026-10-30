@@ -16,7 +16,9 @@ sys.path.insert(0, str(TOOLS))
 
 import check_catalogue as cc  # noqa: E402
 
-SAMPLE_BYTES = cc.DEFAULT_FILE.read_bytes()
+# A frozen copy of the T-007 sample: the tests rely on its ids, titles and version 1, which
+# the real catalogue.json is free to change in content PRs.
+SAMPLE_BYTES = (TOOLS / "testdata" / "sample-catalogue.json").read_bytes()
 SCHEMA = json.loads(cc.DEFAULT_SCHEMA.read_text(encoding="utf-8"))
 UUID_ID = "abcdef01-2345-4789-abcd-ef0123456789"
 

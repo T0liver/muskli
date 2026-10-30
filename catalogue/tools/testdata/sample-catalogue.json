@@ -1,0 +1,107 @@
+{
+  "$schema": "https://t0liver.github.io/muskli/catalogue/v1/catalogue.schema.json",
+  "formatVersion": 1,
+  "version": 1,
+  "license": "CC0-1.0",
+  "exercises": [
+    {
+      "id": "barbell-back-squat",
+      "title": "Barbell Back Squat",
+      "type": "weight_reps",
+      "primaryMuscle": "quadriceps",
+      "secondaryMuscles": [
+        "glutes",
+        "hamstrings"
+      ],
+      "equipment": "barbell"
+    },
+    {
+      "id": "barbell-bench-press",
+      "title": "Barbell Bench Press",
+      "type": "weight_reps",
+      "primaryMuscle": "chest",
+      "secondaryMuscles": [
+        "shoulders",
+        "triceps"
+      ],
+      "equipment": "barbell"
+    },
+    {
+      "id": "barbell-deadlift",
+      "title": "Barbell Deadlift",
+      "type": "weight_reps",
+      "primaryMuscle": "hamstrings",
+      "secondaryMuscles": [
+        "glutes",
+        "lower_back",
+        "forearms"
+      ],
+      "equipment": "barbell"
+    },
+    {
+      "id": "dumbbell-farmers-walk",
+      "title": "Dumbbell Farmer's Walk",
+      "type": "short_distance_weight",
+      "primaryMuscle": "forearms",
+      "secondaryMuscles": [
+        "traps",
+        "abdominals"
+      ],
+      "equipment": "dumbbell"
+    },
+    {
+      "id": "hanging-knee-raise",
+      "title": "Hanging Knee Raise",
+      "type": "reps_only",
+      "primaryMuscle": "abdominals",
+      "secondaryMuscles": [],
+      "equipment": "none"
+    },
+    {
+      "id": "machine-assisted-pull-up",
+      "title": "Machine Assisted Pull-Up",
+      "type": "bodyweight_assisted_reps",
+      "primaryMuscle": "lats",
+      "secondaryMuscles": [
+        "biceps"
+      ],
+      "equipment": "machine"
+    },
+    {
+      "id": "plank",
+      "title": "Plank",
+      "type": "duration",
+      "primaryMuscle": "abdominals",
+      "secondaryMuscles": [],
+      "equipment": "none"
+    },
+    {
+      "id": "pull-up",
+      "title": "Pull-Up",
+      "type": "bodyweight_reps",
+      "primaryMuscle": "lats",
+      "secondaryMuscles": [
+        "biceps",
+        "upper_back"
+      ],
+      "equipment": "none"
+    },
+    {
+      "id": "rowing-machine",
+      "title": "Rowing Machine",
+      "type": "distance_duration",
+      "primaryMuscle": "cardio",
+      "secondaryMuscles": [],
+      "equipment": "machine"
+    },
+    {
+      "id": "weighted-plank",
+      "title": "Weighted Plank",
+      "type": "weight_duration",
+      "primaryMuscle": "abdominals",
+      "secondaryMuscles": [],
+      "equipment": "plate"
+    }
+  ],
+  "retiredIds": []
+}
