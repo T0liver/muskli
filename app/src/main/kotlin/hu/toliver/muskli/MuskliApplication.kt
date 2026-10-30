@@ -4,6 +4,8 @@ import android.app.Application
 import android.util.Log
 import dagger.hilt.android.HiltAndroidApp
 import hu.toliver.muskli.data.seed.BundledCatalogueLoader
+import hu.toliver.muskli.service.RestNotifications
+import hu.toliver.muskli.service.RestTimerSync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -13,6 +15,8 @@ import javax.inject.Inject
 @HiltAndroidApp
 class MuskliApplication : Application() {
     @Inject lateinit var bundledCatalogue: BundledCatalogueLoader
+
+    @Inject lateinit var restTimerSync: RestTimerSync
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -26,6 +30,9 @@ class MuskliApplication : Application() {
                 Log.w(TAG, "Bundled catalogue not applied", e)
             }
         }
+        RestNotifications.createChannels(this)
+        // From process start, so a rest still running after the process died is re-armed (AC-03).
+        appScope.launch { restTimerSync.run() }
     }
 
     private companion object {

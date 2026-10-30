@@ -11,6 +11,7 @@ import hu.toliver.muskli.domain.repo.SettingsRepository
 import hu.toliver.muskli.domain.repo.WorkoutRepository
 import hu.toliver.muskli.domain.usecase.workout.AddExercisesUseCase
 import hu.toliver.muskli.domain.usecase.workout.AddSetUseCase
+import hu.toliver.muskli.domain.usecase.workout.AdjustRestTimerUseCase
 import hu.toliver.muskli.domain.usecase.workout.ChangeSetTypeUseCase
 import hu.toliver.muskli.domain.usecase.workout.CompleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.DeleteSetUseCase
@@ -19,6 +20,7 @@ import hu.toliver.muskli.domain.usecase.workout.PreviousSetsUseCase
 import hu.toliver.muskli.domain.usecase.workout.RemoveExerciseUseCase
 import hu.toliver.muskli.domain.usecase.workout.ReorderExerciseUseCase
 import hu.toliver.muskli.domain.usecase.workout.ReplaceExerciseUseCase
+import hu.toliver.muskli.domain.usecase.workout.SkipRestTimerUseCase
 import hu.toliver.muskli.domain.usecase.workout.StartWorkoutUseCase
 import hu.toliver.muskli.domain.usecase.workout.UncompleteSetUseCase
 import kotlinx.coroutines.flow.Flow
@@ -108,5 +110,7 @@ fun workoutSessionViewModel(
         completeSet = CompleteSetUseCase(workouts, clock),
         uncompleteSet = UncompleteSetUseCase(workouts, clock),
         previousSets = PreviousSetsUseCase(workouts),
+        adjustRest = AdjustRestTimerUseCase(workouts, clock),
+        skipRest = SkipRestTimerUseCase(workouts, clock),
     )
 }

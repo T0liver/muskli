@@ -2,6 +2,7 @@ package hu.toliver.muskli.ui.workout
 
 import hu.toliver.muskli.domain.model.SetType
 import hu.toliver.muskli.domain.settings.WeightUnit
+import hu.toliver.muskli.ui.components.RestTimerUi
 import hu.toliver.muskli.ui.components.SetColumn
 import hu.toliver.muskli.ui.components.WorkoutExerciseUi
 
@@ -20,6 +21,8 @@ sealed interface LiveWorkoutUiState {
         val weightUnit: WeightUnit,
         val exercises: List<WorkoutExerciseUi>,
         val keepScreenAwake: Boolean,
+        /** Null when no rest is running; time left comes from the stored end and the clock. */
+        val restTimer: RestTimerUi? = null,
         val exerciseMenuFor: String? = null,
         val setTypeMenuFor: String? = null,
         val reorderOpen: Boolean = false,
@@ -43,4 +46,7 @@ sealed interface LiveWorkoutEvent {
     data object SetTypeMenuDismissed : LiveWorkoutEvent
     data class ValueChanged(val setId: String, val column: SetColumn, val text: String) : LiveWorkoutEvent
     data class CompletedChanged(val setId: String, val completed: Boolean) : LiveWorkoutEvent
+    data object RestMinus15 : LiveWorkoutEvent
+    data object RestPlus15 : LiveWorkoutEvent
+    data object RestSkipped : LiveWorkoutEvent
 }

@@ -56,6 +56,7 @@ Follow `research/04-data-model.md` section 4 (SQLite proposal), translated to Ro
 - `completed` and `completed_at` are in schema v1 (F-03/F-05). `partial_reps` and `rpe_target` stay out until a ticket adds them.
 - The database stays in the default app database directory so Android Auto Backup includes workouts (D-024). No backup-exclusion rules.
 - Schema v2 adds `catalogue_meta`, one row holding the applied catalogue version (D-028).
+- Schema v3 adds `workout.rest_ends_at` and `workout.rest_duration_s`, the live workout's running rest (D-032).
 
 ### Enums
 - SetType: `normal | warmup | dropset | failure`
@@ -66,13 +67,14 @@ Follow `research/04-data-model.md` section 4 (SQLite proposal), translated to Ro
 ## 4. Live workout design
 - A live workout is a **draft** row set in Room (`workout.endTime == null`). Every edit writes immediately (debounced where typing). At most one active draft.
 - `WorkoutSessionViewModel` exposes `StateFlow<LiveWorkoutUiState>` built from a Room Flow; events (`AddSet`, `CompleteSet`, `ChangeSetType`, ...) call use cases.
-- `CompleteSet` use case: marks set completed with `completed_at`, evaluates the rest-timer rule (pure function in `:domain`), returns an effect (`StartRestTimer(seconds)` or `None`). The ViewModel forwards the effect to the timer service.
+- `CompleteSet` use case: marks set completed with `completed_at`, evaluates the rest-timer rule (pure function in `:domain`), returns an effect (`StartRestTimer(seconds)` or `None`) and stores it in the draft in the same transaction (§5).
 - Finish: validates, sets `endTime`, keeps only completed sets (decision: discard or keep uncompleted sets? default **discard with confirmation**, D-011).
 
 ## 5. Rest timer (reliability matters)
 - Persist `restTimerEndsAtEpochMs` in the draft state. UI time left = `endsAt - now`, so it survives process death.
 - Alerts when the screen is off or the app is backgrounded: **D-015** — `specialUse` foreground service while the app was recently used, plus a `setAlarmClock` exact alarm as backup. **T-009** confirmed this on the owner's Samsung (Android 16): the service fired on time, and the service alone did not fire with the screen off. Set the alarm on every rest even while the service is running.
-- Notification actions: +15 s, skip.
+- Notification actions: −15 s, +15 s, skip; they call the same use cases as the in-app bar.
+- T-015 wiring (`:app/service/`): the stored rest is the single source of truth. `RestTimerSync` (started in `Application.onCreate`) arms the alarm and starts the service whenever it changes, which also re-arms after process death. `RestTimerService` follows the draft and stops itself when the rest is gone. Both the service and `RestAlarmReceiver` end in `FinishRestTimerUseCase`, a compare-and-clear, so only one of them alerts.
 
 ## 6. UI architecture
 - One `Screen` composable per route, stateless; ViewModel owns state. Reusable components in `ui/components/`.

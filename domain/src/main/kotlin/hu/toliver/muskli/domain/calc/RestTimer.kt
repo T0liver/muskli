@@ -1,5 +1,6 @@
 package hu.toliver.muskli.domain.calc
 
+import hu.toliver.muskli.domain.model.RestTimer
 import hu.toliver.muskli.domain.model.SetData
 import hu.toliver.muskli.domain.model.SetType
 
@@ -24,3 +25,10 @@ fun restTimerEffect(
     val seconds = exerciseRestS ?: defaultRestS ?: return RestEffect.None
     return if (seconds > 0) RestEffect.Start(seconds) else RestEffect.None
 }
+
+/** Time left at [nowEpochMs], never negative. */
+fun RestTimer.remainingMs(nowEpochMs: Long): Long = (endsAtEpochMs - nowEpochMs).coerceAtLeast(0)
+
+/** Share of the rest still to go at [nowEpochMs], from 1 (just started) to 0 (over). */
+fun RestTimer.fractionLeft(nowEpochMs: Long): Double =
+    (remainingMs(nowEpochMs).toDouble() / (durationS * 1_000L)).coerceIn(0.0, 1.0)

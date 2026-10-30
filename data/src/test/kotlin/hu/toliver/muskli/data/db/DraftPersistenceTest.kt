@@ -3,6 +3,7 @@ package hu.toliver.muskli.data.db
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import hu.toliver.muskli.domain.model.RestTimer
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -21,7 +22,7 @@ class DraftPersistenceTest {
 
     @Test
     fun `TC-DATA-02 draft survives recreating the database connection`() = runTest {
-        val draft = workout(id = "draft", finishedAt = null)
+        val draft = workout(id = "draft", finishedAt = null).copy(restTimer = RestTimer(endsAtEpochMs = 99_000L, durationS = 90))
         MuskliDatabase.build(context).run {
             listOf(benchPress, dumbbellRow).forEach { exerciseTemplateDao().upsert(it.toEntity(), it.secondaryMuscleEntities()) }
             val rows = draft.toRows()

@@ -1,5 +1,6 @@
 package hu.toliver.muskli.domain.calc
 
+import hu.toliver.muskli.domain.model.RestTimer
 import hu.toliver.muskli.domain.model.SetData
 import hu.toliver.muskli.domain.model.SetType
 import org.junit.jupiter.api.Test
@@ -71,5 +72,21 @@ class RestTimerTest {
             RestEffect.None,
             restTimerEffect(completed.copy(completed = false), nextNormal, exerciseRestS = 90, defaultRestS = 120),
         )
+    }
+
+    private val running = RestTimer(endsAtEpochMs = 100_000L, durationS = 90)
+
+    @Test
+    fun `time left is the end minus now, so it survives process death`() {
+        assertEquals(60_000L, running.remainingMs(nowEpochMs = 40_000L))
+        assertEquals(0L, running.remainingMs(nowEpochMs = 100_000L))
+        assertEquals(0L, running.remainingMs(nowEpochMs = 500_000L))
+    }
+
+    @Test
+    fun `fraction left is time left over the rest length, between 0 and 1`() {
+        assertEquals(0.5, running.fractionLeft(nowEpochMs = 55_000L))
+        assertEquals(1.0, running.fractionLeft(nowEpochMs = 0L))
+        assertEquals(0.0, running.fractionLeft(nowEpochMs = 200_000L))
     }
 }

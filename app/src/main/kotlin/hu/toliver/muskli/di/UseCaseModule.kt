@@ -15,14 +15,17 @@ import hu.toliver.muskli.domain.usecase.library.SearchExercisesUseCase
 import hu.toliver.muskli.domain.usecase.library.UnarchiveCustomExerciseUseCase
 import hu.toliver.muskli.domain.usecase.workout.AddExercisesUseCase
 import hu.toliver.muskli.domain.usecase.workout.AddSetUseCase
+import hu.toliver.muskli.domain.usecase.workout.AdjustRestTimerUseCase
 import hu.toliver.muskli.domain.usecase.workout.ChangeSetTypeUseCase
 import hu.toliver.muskli.domain.usecase.workout.CompleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.DeleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.EditSetValuesUseCase
+import hu.toliver.muskli.domain.usecase.workout.FinishRestTimerUseCase
 import hu.toliver.muskli.domain.usecase.workout.PreviousSetsUseCase
 import hu.toliver.muskli.domain.usecase.workout.RemoveExerciseUseCase
 import hu.toliver.muskli.domain.usecase.workout.ReorderExerciseUseCase
 import hu.toliver.muskli.domain.usecase.workout.ReplaceExerciseUseCase
+import hu.toliver.muskli.domain.usecase.workout.SkipRestTimerUseCase
 import hu.toliver.muskli.domain.usecase.workout.StartWorkoutUseCase
 import hu.toliver.muskli.domain.usecase.workout.UncompleteSetUseCase
 
@@ -83,4 +86,13 @@ object UseCaseModule {
 
     @Provides
     fun previousSets(repository: WorkoutRepository) = PreviousSetsUseCase(repository)
+
+    @Provides
+    fun adjustRestTimer(repository: WorkoutRepository, clock: Clock) = AdjustRestTimerUseCase(repository, clock)
+
+    @Provides
+    fun skipRestTimer(repository: WorkoutRepository, clock: Clock) = SkipRestTimerUseCase(repository, clock)
+
+    @Provides
+    fun finishRestTimer(repository: WorkoutRepository) = FinishRestTimerUseCase(repository)
 }

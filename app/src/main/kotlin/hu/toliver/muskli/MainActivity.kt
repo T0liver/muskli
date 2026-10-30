@@ -1,10 +1,15 @@
 package hu.toliver.muskli
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +43,8 @@ class MainActivity : ComponentActivity() {
                 var screen by rememberSaveable { mutableStateOf(Screen.HOME) }
                 var startChecked by rememberSaveable { mutableStateOf(false) }
                 var replacingExerciseId by rememberSaveable { mutableStateOf<String?>(null) }
+                // If denied, the in-app bar still counts down, but the screen-off alert cannot be shown.
+                val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
 
                 // A draft at app start means the app was closed or killed mid-workout: go straight back to it (AC-03).
                 LaunchedEffect(workoutState) {
@@ -55,6 +62,8 @@ class MainActivity : ComponentActivity() {
                     Screen.HOME -> HomeScreen(
                         workoutInProgress = workoutState is LiveWorkoutUiState.Active,
                         onStartWorkout = {
+                            // At workout start, before any set is logged (D-015).
+                            if (needsNotificationPermission()) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                             workout.onEvent(LiveWorkoutEvent.StartClicked)
                             screen = Screen.WORKOUT
                         },
@@ -89,4 +98,8 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    private fun needsNotificationPermission(): Boolean =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
 }

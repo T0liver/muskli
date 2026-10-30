@@ -9,6 +9,7 @@ import hu.toliver.muskli.data.db.entity.WorkoutSetEntity
 import hu.toliver.muskli.data.db.entity.WorkoutWithExercises
 import hu.toliver.muskli.domain.calc.WorkoutExerciseRecord
 import hu.toliver.muskli.domain.model.ExerciseTemplate
+import hu.toliver.muskli.domain.model.RestTimer
 import hu.toliver.muskli.domain.model.SetData
 import hu.toliver.muskli.domain.model.Workout
 import hu.toliver.muskli.domain.model.WorkoutExercise
@@ -88,6 +89,8 @@ fun Workout.toRows(): WorkoutRows {
         createdAt = createdAtEpochMs,
         updatedAt = updatedAtEpochMs,
         deletedAt = deletedAtEpochMs,
+        restEndsAt = restTimer?.endsAtEpochMs,
+        restDurationS = restTimer?.durationS,
     )
     return WorkoutRows(workoutRow, exerciseRows, setRows)
 }
@@ -113,6 +116,7 @@ fun WorkoutWithExercises.toDomain() = Workout(
             sets = row.sets.sortedBy { it.position }.map { it.toDomain() },
         )
     },
+    restTimer = workout.restEndsAt?.let { endsAt -> workout.restDurationS?.let { RestTimer(endsAt, it) } },
 )
 
 private fun WorkoutSetEntity.toDomain() = WorkoutSet(

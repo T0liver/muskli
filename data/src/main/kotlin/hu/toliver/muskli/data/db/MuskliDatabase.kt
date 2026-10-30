@@ -40,7 +40,7 @@ abstract class MuskliDatabase : RoomDatabase() {
 
     companion object {
         const val NAME = "muskli.db"
-        const val VERSION = 2
+        const val VERSION = 3
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(connection: SQLiteConnection) {
@@ -50,8 +50,16 @@ abstract class MuskliDatabase : RoomDatabase() {
             }
         }
 
+        /** The live workout's running rest (D-032). */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(connection: SQLiteConnection) {
+                connection.execSQL("ALTER TABLE `workout` ADD COLUMN `rest_ends_at` INTEGER")
+                connection.execSQL("ALTER TABLE `workout` ADD COLUMN `rest_duration_s` INTEGER")
+            }
+        }
+
         /** Every schema change adds its migration here and a test in `MigrationTest` (TC-DATA-04). */
-        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2)
+        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
 
         /** Lives in the default database directory so Android Auto Backup includes it (D-024). */
         fun build(context: Context): MuskliDatabase =

@@ -15,6 +15,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import hu.toliver.muskli.domain.model.SetData
+import hu.toliver.muskli.domain.model.SetType
 import hu.toliver.muskli.ui.library.FakeExerciseTemplateRepository
 import hu.toliver.muskli.ui.library.LibraryMode
 import hu.toliver.muskli.ui.library.LibraryScreen
@@ -89,5 +90,28 @@ class LiveWorkoutScreenTest {
 
         compose.onNodeWithContentDescription("Complete set 2").assertIsOn()
         compose.onNodeWithText("640 kg").assertExists()
+    }
+
+    @Test
+    fun completingASetShowsTheRestBarAndSkipHidesItButNotBeforeADropSet() {
+        workouts.history.value = mapOf("squat-barbell" to listOf(lastTime(done(80.0, 8), done(80.0, 8), done(60.0, 8))))
+        val workout = workoutSessionViewModel(workouts, templates, FakeSettingsRepository())
+        workout.onEvent(LiveWorkoutEvent.StartClicked)
+        workout.onEvent(LiveWorkoutEvent.ExercisesPicked(listOf("squat-barbell")))
+        workout.onEvent(LiveWorkoutEvent.SetTypeChosen(workouts.activeDraft!!.exercises[0].sets[2].id, SetType.DROPSET))
+        compose.setContent {
+            MuskliTheme {
+                LiveWorkoutRoute(viewModel = workout, onAddExercise = {}, onReplaceExercise = {})
+            }
+        }
+
+        compose.onNodeWithText("Skip").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Complete set 1").performClick()
+        compose.onNodeWithText("1:30").assertExists()
+        compose.onNodeWithText("Skip").performClick()
+        compose.onNodeWithText("Skip").assertDoesNotExist()
+
+        compose.onNodeWithContentDescription("Complete set 2").performClick()
+        compose.onNodeWithText("Skip").assertDoesNotExist()
     }
 }

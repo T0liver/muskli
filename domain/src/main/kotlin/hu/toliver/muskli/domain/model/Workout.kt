@@ -16,6 +16,17 @@ data class Workout(
     val updatedAtEpochMs: Long,
     val deletedAtEpochMs: Long?,
     val exercises: List<WorkoutExercise>,
+    /** The running rest of the live workout, null when none (ARCHITECTURE §5). */
+    val restTimer: RestTimer? = null,
+)
+
+/**
+ * A rest stored as its end time, so time left is derived from the clock and survives process
+ * death. [durationS] is the full length after ±15 s adjustments; it only drives progress.
+ */
+data class RestTimer(
+    val endsAtEpochMs: Long,
+    val durationS: Int,
 )
 
 /** [restSeconds]: null falls back to the default rest, 0 turns rest off (see `restTimerEffect`). */

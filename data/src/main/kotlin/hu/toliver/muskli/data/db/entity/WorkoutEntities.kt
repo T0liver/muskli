@@ -21,6 +21,8 @@ data class WorkoutEntity(
     @ColumnInfo(name = "created_at") val createdAt: Long,
     @ColumnInfo(name = "updated_at") val updatedAt: Long,
     @ColumnInfo(name = "deleted_at") val deletedAt: Long?,
+    @ColumnInfo(name = "rest_ends_at") val restEndsAt: Long? = null,
+    @ColumnInfo(name = "rest_duration_s") val restDurationS: Int? = null,
 )
 
 @Entity(

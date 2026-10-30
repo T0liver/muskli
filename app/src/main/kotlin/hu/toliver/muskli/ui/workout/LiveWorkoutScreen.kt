@@ -55,7 +55,7 @@ fun LiveWorkoutScreen(
         weightUnit = state.weightUnit,
         menuExpandedForExerciseId = state.exerciseMenuFor,
         setTypeMenuForSetId = state.setTypeMenuFor,
-        restTimer = null, // TODO(T-015): rest timer state
+        restTimer = state.restTimer,
         onDurationClick = {}, // TODO(T-026): edit start time
         onFinish = {}, // TODO(T-016): finish flow
         onMenuClick = { onEvent(LiveWorkoutEvent.ExerciseMenuClicked(it)) },
@@ -74,9 +74,9 @@ fun LiveWorkoutScreen(
         onDeleteSet = { onEvent(LiveWorkoutEvent.SetDeleted(it)) },
         onAddSet = { onEvent(LiveWorkoutEvent.AddSetClicked(it)) },
         onAddExercise = onAddExercise,
-        onRestMinus15 = {},
-        onRestPlus15 = {},
-        onRestSkip = {},
+        onRestMinus15 = { onEvent(LiveWorkoutEvent.RestMinus15) },
+        onRestPlus15 = { onEvent(LiveWorkoutEvent.RestPlus15) },
+        onRestSkip = { onEvent(LiveWorkoutEvent.RestSkipped) },
         modifier = modifier,
     )
     if (state.reorderOpen) {

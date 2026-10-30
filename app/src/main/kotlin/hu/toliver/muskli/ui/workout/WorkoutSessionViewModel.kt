@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import hu.toliver.muskli.domain.calc.ExerciseSets
 import hu.toliver.muskli.domain.calc.completedSetCount
+import hu.toliver.muskli.domain.calc.fractionLeft
 import hu.toliver.muskli.domain.calc.kgToLb
+import hu.toliver.muskli.domain.calc.remainingMs
 import hu.toliver.muskli.domain.calc.sessionVolumeKg
 import hu.toliver.muskli.domain.model.ExerciseTemplate
 import hu.toliver.muskli.domain.model.ExerciseType
@@ -20,6 +22,7 @@ import hu.toliver.muskli.domain.settings.Settings
 import hu.toliver.muskli.domain.settings.WeightUnit
 import hu.toliver.muskli.domain.usecase.workout.AddExercisesUseCase
 import hu.toliver.muskli.domain.usecase.workout.AddSetUseCase
+import hu.toliver.muskli.domain.usecase.workout.AdjustRestTimerUseCase
 import hu.toliver.muskli.domain.usecase.workout.ChangeSetTypeUseCase
 import hu.toliver.muskli.domain.usecase.workout.CompleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.DeleteSetUseCase
@@ -29,8 +32,10 @@ import hu.toliver.muskli.domain.usecase.workout.RemoveExerciseUseCase
 import hu.toliver.muskli.domain.usecase.workout.ReorderExerciseUseCase
 import hu.toliver.muskli.domain.usecase.workout.ReplaceExerciseUseCase
 import hu.toliver.muskli.domain.usecase.workout.SetValues
+import hu.toliver.muskli.domain.usecase.workout.SkipRestTimerUseCase
 import hu.toliver.muskli.domain.usecase.workout.StartWorkoutUseCase
 import hu.toliver.muskli.domain.usecase.workout.UncompleteSetUseCase
+import hu.toliver.muskli.ui.components.RestTimerUi
 import hu.toliver.muskli.ui.components.SetColumn
 import hu.toliver.muskli.ui.components.WorkoutExerciseUi
 import hu.toliver.muskli.ui.components.WorkoutSetUi
@@ -75,6 +80,8 @@ class WorkoutSessionViewModel @Inject constructor(
     private val completeSet: CompleteSetUseCase,
     private val uncompleteSet: UncompleteSetUseCase,
     private val previousSets: PreviousSetsUseCase,
+    private val adjustRest: AdjustRestTimerUseCase,
+    private val skipRest: SkipRestTimerUseCase,
 ) : ViewModel() {
     private val draft: StateFlow<Draft> = workouts.observeActiveDraft()
         .map<Workout?, Draft> { Draft.Loaded(it) }
@@ -154,10 +161,13 @@ class WorkoutSessionViewModel @Inject constructor(
             }
             LiveWorkoutEvent.SetTypeMenuDismissed -> local.update { it.copy(setTypeMenuFor = null) }
             is LiveWorkoutEvent.ValueChanged -> valueChanged(event)
-            // The rest effect is ignored until the timer exists (T-015).
+            // CompleteSet stores the rest in the draft; the alarm and service follow it (RestTimerSync).
             is LiveWorkoutEvent.CompletedChanged -> edit {
                 if (event.completed) completeSet(it, event.setId, settings.value.defaultRestSeconds) else uncompleteSet(it, event.setId)
             }
+            LiveWorkoutEvent.RestMinus15 -> edit { adjustRest(it, -REST_STEP_S) }
+            LiveWorkoutEvent.RestPlus15 -> edit { adjustRest(it, REST_STEP_S) }
+            LiveWorkoutEvent.RestSkipped -> edit { skipRest(it) }
         }
     }
 
@@ -196,7 +206,12 @@ class WorkoutSessionViewModel @Inject constructor(
         val types = workout.exercises.map { templatesById[it.exerciseTemplateId]?.type ?: ExerciseType.WEIGHT_REPS }
         val exerciseSets = workout.exercises.mapIndexed { i, exercise -> ExerciseSets(types[i], exercise.sets.map { it.data }) }
         val volumeKg = sessionVolumeKg(exerciseSets, settings.bodyWeightKg)
-        val elapsedS = ((clock.nowEpochMs() - workout.startedAtEpochMs) / 1000).coerceAtLeast(0)
+        val now = clock.nowEpochMs()
+        val elapsedS = ((now - workout.startedAtEpochMs) / 1000).coerceAtLeast(0)
+        val restTimer = workout.restTimer?.takeIf { it.remainingMs(now) > 0 }?.let {
+            // Rounded up, so a fresh 90 s rest reads 1:30 and 0:00 is never shown while resting.
+            RestTimerUi(remaining = formatDuration((it.remainingMs(now) + 999) / 1000), progress = it.fractionLeft(now).toFloat())
+        }
         return LiveWorkoutUiState.Active(
             workoutId = workout.id,
             duration = formatDuration(elapsedS),
@@ -226,6 +241,7 @@ class WorkoutSessionViewModel @Inject constructor(
                 )
             },
             keepScreenAwake = settings.keepScreenAwake,
+            restTimer = restTimer,
             exerciseMenuFor = local.exerciseMenuFor,
             setTypeMenuFor = local.setTypeMenuFor,
             reorderOpen = local.reorderOpen,
@@ -257,5 +273,6 @@ class WorkoutSessionViewModel @Inject constructor(
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
         const val TICK_MS = 1_000L
+        const val REST_STEP_S = 15
     }
 }

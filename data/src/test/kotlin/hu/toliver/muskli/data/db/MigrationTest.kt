@@ -97,4 +97,28 @@ class MigrationTest {
             room.close()
         }
     }
+
+    @Test
+    fun `TC-DATA-04 migration 2 to 3 keeps the draft and starts it with no running rest`() = runTest {
+        helper.createDatabase(2).apply {
+            execSQL(
+                "INSERT INTO workout (id, title, notes, start_time, utc_offset_s, end_time, created_at, updated_at, deleted_at) " +
+                    "VALUES ('draft', '', NULL, 10, 0, NULL, 10, 10, NULL)",
+            )
+            close()
+        }
+
+        helper.runMigrationsAndValidate(3, listOf(MuskliDatabase.MIGRATION_2_3)).close()
+
+        val room = Room.databaseBuilder(context, MuskliDatabase::class.java, dbName)
+            .addMigrations(*MuskliDatabase.MIGRATIONS)
+            .build()
+        try {
+            val draft = room.workoutDao().observeActiveDraft().first()!!.toDomain()
+            assertEquals("draft", draft.id)
+            assertNull(draft.restTimer)
+        } finally {
+            room.close()
+        }
+    }
 }

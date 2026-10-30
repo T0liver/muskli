@@ -3,7 +3,9 @@ package hu.toliver.muskli.domain.usecase.workout
 import hu.toliver.muskli.domain.calc.PreviousMode
 import hu.toliver.muskli.domain.calc.RestEffect
 import hu.toliver.muskli.domain.calc.previousSets
+import hu.toliver.muskli.domain.calc.remainingMs
 import hu.toliver.muskli.domain.calc.restTimerEffect
+import hu.toliver.muskli.domain.model.RestTimer
 import hu.toliver.muskli.domain.model.SetData
 import hu.toliver.muskli.domain.model.SetType
 import hu.toliver.muskli.domain.model.Workout
@@ -195,26 +197,72 @@ class EditSetValuesUseCase(
  * the following set in plain workout order: the rest of this exercise, then the next exercise's
  * first set; superset round order waits for the supersets UI. [defaultRestS] is the settings
  * default. An already completed or unknown set changes nothing and starts no timer.
+ *
+ * The effect is stored in the same transaction: Start replaces the running rest, None cancels it,
+ * so nothing fires during a drop set (D-032).
  */
 class CompleteSetUseCase(
     private val repository: WorkoutRepository,
     private val clock: Clock,
 ) {
     suspend operator fun invoke(workoutId: String, setId: String, defaultRestS: Int?): RestEffect {
-        var newlyCompleted = false
-        val workout = repository.edit(workoutId, clock) { current ->
-            current.mapSet(setId) { set ->
-                if (set.data.completed) return@mapSet set
-                newlyCompleted = true
-                set.copy(data = set.data.copy(completed = true), completedAtEpochMs = clock.nowEpochMs())
-            }
-        } ?: return RestEffect.None
-        if (!newlyCompleted) return RestEffect.None
+        var effect: RestEffect = RestEffect.None
+        repository.edit(workoutId, clock) { current ->
+            val now = clock.nowEpochMs()
+            val inOrder = current.exercises.flatMap { exercise -> exercise.sets.map { exercise to it } }
+            val index = inOrder.indexOfFirst { (_, set) -> set.id == setId }
+            if (index < 0 || inOrder[index].second.data.completed) return@edit current
+            val (exercise, set) = inOrder[index]
+            val completed = set.data.copy(completed = true)
+            effect = restTimerEffect(completed, inOrder.getOrNull(index + 1)?.second?.data, exercise.restSeconds, defaultRestS)
+            val rest = (effect as? RestEffect.Start)?.let { RestTimer(now + it.seconds * 1_000L, it.seconds) }
+            current.mapSet(setId) { it.copy(data = completed, completedAtEpochMs = now) }.copy(restTimer = rest)
+        }
+        return effect
+    }
+}
 
-        val inOrder = workout.exercises.flatMap { exercise -> exercise.sets.map { exercise to it } }
-        val index = inOrder.indexOfFirst { (_, set) -> set.id == setId }
-        val (exercise, completed) = inOrder[index]
-        return restTimerEffect(completed.data, inOrder.getOrNull(index + 1)?.second?.data, exercise.restSeconds, defaultRestS)
+/**
+ * Moves the end of the running rest by [deltaS] (±15 s from the bar or the notification). When
+ * nothing is left after a minus, the rest ends silently, like skip (D-032). No running rest, or
+ * one already over, changes nothing.
+ */
+class AdjustRestTimerUseCase(
+    private val repository: WorkoutRepository,
+    private val clock: Clock,
+) {
+    suspend operator fun invoke(workoutId: String, deltaS: Int): Workout? =
+        repository.edit(workoutId, clock) { workout ->
+            val rest = workout.restTimer ?: return@edit workout
+            val now = clock.nowEpochMs()
+            if (rest.remainingMs(now) == 0L) return@edit workout
+            val endsAt = rest.endsAtEpochMs + deltaS * 1_000L
+            workout.copy(restTimer = if (endsAt <= now) null else RestTimer(endsAt, rest.durationS + deltaS))
+        }
+}
+
+class SkipRestTimerUseCase(
+    private val repository: WorkoutRepository,
+    private val clock: Clock,
+) {
+    suspend operator fun invoke(workoutId: String): Workout? =
+        repository.edit(workoutId, clock) { it.copy(restTimer = null) }
+}
+
+/**
+ * Called by whichever of the service and the alarm fires first for the rest ending at
+ * [endsAtEpochMs]. Clears it and returns true only if that rest is still the stored one, so the
+ * other path, a moved end, or a skipped rest does not alert again.
+ */
+class FinishRestTimerUseCase(private val repository: WorkoutRepository) {
+    suspend operator fun invoke(workoutId: String, endsAtEpochMs: Long): Boolean {
+        var finished = false
+        repository.update(workoutId) { workout ->
+            if (workout.restTimer?.endsAtEpochMs != endsAtEpochMs) return@update workout
+            finished = true
+            workout.copy(restTimer = null)
+        }
+        return finished
     }
 }
 

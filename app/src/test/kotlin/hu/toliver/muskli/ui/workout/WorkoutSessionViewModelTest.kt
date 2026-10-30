@@ -1,6 +1,7 @@
 package hu.toliver.muskli.ui.workout
 
 import hu.toliver.muskli.domain.model.ExerciseType
+import hu.toliver.muskli.domain.model.RestTimer
 import hu.toliver.muskli.domain.model.SetData
 import hu.toliver.muskli.domain.model.SetType
 import hu.toliver.muskli.domain.model.Workout
@@ -8,6 +9,7 @@ import hu.toliver.muskli.domain.model.WorkoutExercise
 import hu.toliver.muskli.domain.model.WorkoutSet
 import hu.toliver.muskli.domain.settings.Settings
 import hu.toliver.muskli.domain.settings.WeightUnit
+import hu.toliver.muskli.ui.components.RestTimerUi
 import hu.toliver.muskli.ui.components.SetColumn
 import hu.toliver.muskli.ui.library.FakeExerciseTemplateRepository
 import hu.toliver.muskli.ui.library.sampleLibrary
@@ -17,6 +19,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -290,5 +293,73 @@ class WorkoutSessionViewModelTest {
         settings.setKeepScreenAwake(false)
 
         assertEquals(false, vm.active.keepScreenAwake)
+    }
+
+    private fun twoSquatSets(secondType: SetType = SetType.NORMAL) = FakeWorkoutRepository(
+        listOf(draft(exercise("e1", "squat-barbell", set("s1", SetData(weightKg = 100.0, reps = 5)), set("s2", SetData(type = secondType))))),
+    )
+
+    @Test
+    fun completingASetShowsTheRestBarCountingDownFromTheClock() = runTest(dispatcher) {
+        val workouts = twoSquatSets()
+        val vm = subscribed(workouts)
+        assertNull(vm.active.restTimer)
+
+        vm.onEvent(LiveWorkoutEvent.CompletedChanged("s1", completed = true))
+        assertEquals(RestTimerUi(remaining = "1:30", progress = 1f), vm.active.restTimer)
+
+        clock.now += 45_000
+        advanceTimeBy(1_001)
+        assertEquals(RestTimerUi(remaining = "0:45", progress = 0.5f), vm.active.restTimer)
+    }
+
+    @Test
+    fun ac05CompletingTheSetBeforeADropSetShowsNoRestBar() = runTest(dispatcher) {
+        val workouts = twoSquatSets(secondType = SetType.DROPSET)
+        val vm = subscribed(workouts)
+
+        vm.onEvent(LiveWorkoutEvent.CompletedChanged("s1", completed = true))
+
+        assertNull(vm.active.restTimer)
+        assertNull(workouts.activeDraft!!.restTimer)
+    }
+
+    @Test
+    fun ac03TheRestBarAfterARestartShowsTheTimeLeftFromTheStoredEnd() = runTest(dispatcher) {
+        val workouts = FakeWorkoutRepository(
+            listOf(draft(exercise("e1", "squat-barbell", set("s1"))).copy(restTimer = RestTimer(TestClock.START_MS + 90_000, 90))),
+        )
+        clock.now = TestClock.START_MS + 60_000
+
+        val vm = subscribed(workouts)
+
+        assertEquals("0:30", vm.active.restTimer?.remaining)
+    }
+
+    @Test
+    fun aRestThatEndedWhileTheAppWasDeadShowsNoBar() = runTest(dispatcher) {
+        val workouts = FakeWorkoutRepository(
+            listOf(draft(exercise("e1", "squat-barbell", set("s1"))).copy(restTimer = RestTimer(TestClock.START_MS + 90_000, 90))),
+        )
+        clock.now = TestClock.START_MS + 200_000
+
+        assertNull(subscribed(workouts).active.restTimer)
+    }
+
+    @Test
+    fun theBarAdjustsBy15SecondsAndSkips() = runTest(dispatcher) {
+        val workouts = twoSquatSets()
+        val vm = subscribed(workouts)
+        vm.onEvent(LiveWorkoutEvent.CompletedChanged("s1", completed = true))
+
+        vm.onEvent(LiveWorkoutEvent.RestPlus15)
+        assertEquals("1:45", vm.active.restTimer?.remaining)
+        vm.onEvent(LiveWorkoutEvent.RestMinus15)
+        vm.onEvent(LiveWorkoutEvent.RestMinus15)
+        assertEquals("1:15", vm.active.restTimer?.remaining)
+
+        vm.onEvent(LiveWorkoutEvent.RestSkipped)
+        assertNull(vm.active.restTimer)
+        assertNull(workouts.activeDraft!!.restTimer)
     }
 }
