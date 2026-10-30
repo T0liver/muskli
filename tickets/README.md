@@ -28,5 +28,7 @@ Rules and prompts: `docs/WORKFLOW.md`. Use `TEMPLATE.md` for new tickets. WIP li
 | T-020 | SPIKE | Hevy export format + importer plan |
 | T-021 | BUILD | Catalogue full sync (GitHub Pages, after T-010) |
 | T-022 | BUILD | Catalogue CI checks and Pages publish (D-025) |
+| T-033 | BUILD | Routines: model, storage, start a workout from one |
+| T-034 | UI | Routines UI: list, editor, start |
 
 REVIEW sessions pick up BUILD/UI tickets sitting in `review/` (findings go into that ticket's Handoff log; blockers become new tickets in `todo/`). VERIFY sessions pick up tickets in `verify/`.
