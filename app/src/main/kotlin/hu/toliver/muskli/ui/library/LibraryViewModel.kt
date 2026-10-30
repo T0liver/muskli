@@ -81,6 +81,7 @@ class LibraryViewModel @Inject constructor(
                     primaryMuscle = template.primaryMuscle,
                     secondaryMuscles = template.secondaryMuscles,
                     equipment = template.equipment,
+                    unilateral = template.unilateral,
                 )
             }
             is LibraryEvent.EditorTitleChanged -> editor.update { it?.copy(title = event.title) }
@@ -92,6 +93,7 @@ class LibraryViewModel @Inject constructor(
                 it?.copy(secondaryMuscles = if (event.muscle in it.secondaryMuscles) it.secondaryMuscles - event.muscle else it.secondaryMuscles + event.muscle)
             }
             is LibraryEvent.EditorEquipmentChanged -> editor.update { it?.copy(equipment = event.equipment) }
+            is LibraryEvent.EditorUnilateralChanged -> editor.update { it?.copy(unilateral = event.unilateral) }
             LibraryEvent.EditorSave -> save()
             LibraryEvent.EditorArchive -> archive()
             LibraryEvent.EditorDismiss -> editor.value = null
@@ -106,7 +108,7 @@ class LibraryViewModel @Inject constructor(
             editor.value = form.copy(showErrors = true)
             return
         }
-        val input = CustomExerciseInput(form.title, form.type, primary, form.secondaryMuscles, equipment)
+        val input = CustomExerciseInput(form.title, form.type, primary, form.secondaryMuscles, equipment, form.unilateral)
         viewModelScope.launch {
             if (form.editingId == null) {
                 // A new exercise made from the picker is almost always the one the user wants to add.

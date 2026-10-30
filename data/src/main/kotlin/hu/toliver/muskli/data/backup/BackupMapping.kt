@@ -31,6 +31,7 @@ internal fun ExerciseTemplateWithMuscles.toJson() = ExerciseJson(
     archived = template.archived,
     createdAtMs = template.createdAt,
     updatedAtMs = template.updatedAt,
+    unilateral = template.unilateral,
 )
 
 internal fun WorkoutWithExercises.toJson() = WorkoutJson(
@@ -135,6 +136,7 @@ internal fun BackupFile.validate(): Pair<ValidBackup?, List<ImportError>> {
                 archived = json.archived,
                 createdAt = json.createdAtMs,
                 updatedAt = json.updatedAtMs,
+                unilateral = json.unilateral,
             )
             secondary.toSet().forEach { muscles += ExerciseTemplateSecondaryMuscleEntity(json.id, it) }
         }

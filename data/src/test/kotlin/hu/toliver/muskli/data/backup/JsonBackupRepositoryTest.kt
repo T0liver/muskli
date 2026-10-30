@@ -193,6 +193,27 @@ class JsonBackupRepositoryTest {
         assertEquals(emptyList<Any>(), target.backupDao().allWorkouts())
     }
 
+    @Test
+    fun `the unilateral flag round-trips and a file without it imports as bilateral (D-037)`() = runTest {
+        val source = newDb()
+        source.addTemplates(benchPress, dumbbellRow.copy(unilateral = true))
+        RoomWorkoutRepository(source).save(workout("w1"))
+        val exported = JsonBackupRepository(source, FakeSettings(Settings()), clock).export()
+        val unilateralKey = Regex(""",\s*"unilateral": true""")
+        assertEquals(1, unilateralKey.findAll(exported).count())
+
+        val target = newDb()
+        assertTrue(JsonBackupRepository(target, FakeSettings(Settings()), clock).import(exported) is ImportResult.Imported)
+        assertEquals(
+            mapOf(benchPress.id to false, dumbbellRow.id to true),
+            target.exerciseTemplateDao().getAll().associate { it.template.id to it.template.unilateral },
+        )
+
+        val olderFile = newDb()
+        assertTrue(JsonBackupRepository(olderFile, FakeSettings(Settings()), clock).import(exported.replace(unilateralKey, "")) is ImportResult.Imported)
+        assertEquals(false, olderFile.exerciseTemplateDao().get(dumbbellRow.id)?.template?.unilateral)
+    }
+
     private fun ImportResult.problems() = (this as ImportResult.Rejected).errors.map { it.problem }
 
     private class FakeSettings(initial: Settings) : SettingsRepository {

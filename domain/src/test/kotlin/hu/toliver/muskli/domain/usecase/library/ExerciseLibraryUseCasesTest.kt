@@ -94,6 +94,17 @@ class ExerciseLibraryUseCasesTest {
     }
 
     @Test
+    fun `create and edit store the unilateral flag (D-037)`() = runTest {
+        assertTrue(create(input.copy(unilateral = true)).unilateral)
+        assertTrue(repo.get("custom-0")!!.unilateral)
+
+        val edited = edit("custom-0", input.copy(unilateral = false))
+
+        assertFalse(edited!!.unilateral)
+        assertFalse(repo.get("custom-0")!!.unilateral)
+    }
+
+    @Test
     fun `edit refuses a published exercise`() = runTest {
         assertNull(edit(published.id, input))
         assertEquals(published, repo.get(published.id))

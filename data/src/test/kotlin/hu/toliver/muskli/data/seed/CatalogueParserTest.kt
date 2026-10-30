@@ -53,6 +53,14 @@ class CatalogueParserTest {
     }
 
     @Test
+    fun `the optional unilateral flag is read and defaults to false (D-037)`() {
+        val lunge = squat.replace("\"equipment\": \"barbell\"", "\"equipment\": \"barbell\",\n  \"unilateral\": true")
+
+        assertEquals(listOf(true), CatalogueParser.parse(file(exercise = lunge)).exercises.map { it.unilateral })
+        assertEquals(listOf(false), CatalogueParser.parse(file(exercise = squat)).exercises.map { it.unilateral })
+    }
+
+    @Test
     fun `unknown fields are ignored`() {
         val withExtra = squat.replace("\"equipment\"", "\"aliases\": [\"squat\"], \"equipment\"")
 

@@ -138,6 +138,23 @@ class WorkoutSessionViewModelTest {
     }
 
     @Test
+    fun headerVolumeCountsBothSidesOfAUnilateralExerciseOnly() = runTest(dispatcher) {
+        templates.upsert(sampleLibrary.first().copy(id = "lunge", title = "Lunge", unilateral = true))
+        val workouts = FakeWorkoutRepository(
+            listOf(
+                draft(
+                    exercise("e1", "squat-barbell", set("s1", SetData(weightKg = 100.0, reps = 5, completed = true))),
+                    exercise("e2", "lunge", set("s2", SetData(weightKg = 20.0, reps = 10, completed = true))),
+                ),
+            ),
+        )
+
+        val vm = subscribed(workouts)
+
+        assertEquals("900", vm.active.volume)
+    }
+
+    @Test
     fun typedValuesAreStoredInKgAndShownAsTyped() = runTest(dispatcher) {
         settings.settings.value = Settings(weightUnit = WeightUnit.LB)
         val workouts = FakeWorkoutRepository(listOf(draft(exercise("e1", "squat-barbell", set("s1")))))

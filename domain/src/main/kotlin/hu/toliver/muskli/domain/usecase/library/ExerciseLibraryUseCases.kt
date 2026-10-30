@@ -19,6 +19,7 @@ data class CustomExerciseInput(
     val primaryMuscle: MuscleGroup,
     val secondaryMuscles: Set<MuscleGroup>,
     val equipment: Equipment,
+    val unilateral: Boolean = false,
 )
 
 class SearchExercisesUseCase(private val repository: ExerciseTemplateRepository) {
@@ -99,5 +100,6 @@ private fun CustomExerciseInput.applyTo(template: ExerciseTemplate): ExerciseTem
         primaryMuscle = primaryMuscle,
         secondaryMuscles = secondaryMuscles - primaryMuscle,
         equipment = equipment,
+        unilateral = unilateral,
     )
 }

@@ -141,6 +141,24 @@ class LibraryViewModelTest {
     }
 
     @Test
+    fun unilateralToggleIsLoadedAndSaved() = runTest(dispatcher) {
+        repo.templates.value += "c1" to template("c1", "Cable Fly", equipment = Equipment.MACHINE, custom = true)
+        val vm = subscribed()
+
+        vm.onEvent(LibraryEvent.EditClicked("c1"))
+        assertFalse(vm.uiState.value.editor!!.unilateral)
+        vm.onEvent(LibraryEvent.EditorUnilateralChanged(true))
+        vm.onEvent(LibraryEvent.EditorSave)
+        assertTrue(repo.templates.value.getValue("c1").unilateral)
+
+        vm.onEvent(LibraryEvent.EditClicked("c1"))
+        assertTrue(vm.uiState.value.editor!!.unilateral)
+        vm.onEvent(LibraryEvent.EditorUnilateralChanged(false))
+        vm.onEvent(LibraryEvent.EditorSave)
+        assertFalse(repo.templates.value.getValue("c1").unilateral)
+    }
+
+    @Test
     fun choosingPrimaryMuscleDropsItFromSecondaries() = runTest(dispatcher) {
         val vm = subscribed()
 

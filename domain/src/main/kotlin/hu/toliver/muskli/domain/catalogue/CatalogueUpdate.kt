@@ -22,6 +22,8 @@ data class CatalogueExercise(
     val primaryMuscle: MuscleGroup,
     val secondaryMuscles: Set<MuscleGroup>,
     val equipment: Equipment,
+    /** Optional in the file; absent means false (docs/CATALOGUE.md §2). */
+    val unilateral: Boolean = false,
 )
 
 fun CatalogueExercise.toTemplate(nowEpochMs: Long) = ExerciseTemplate(
@@ -35,6 +37,7 @@ fun CatalogueExercise.toTemplate(nowEpochMs: Long) = ExerciseTemplate(
     archived = false,
     createdAtEpochMs = nowEpochMs,
     updatedAtEpochMs = nowEpochMs,
+    unilateral = unilateral,
 )
 
 /** What applying a bundle writes, in one transaction together with [version]. */
