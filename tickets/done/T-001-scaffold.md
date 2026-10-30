@@ -20,7 +20,7 @@ An empty but healthy Android project: three modules, version catalog, test tooli
 
 ## Acceptance criteria
 - [x] `./gradlew :domain:test` passes.
-- [x] `./gradlew assembleDebug` builds; app installs and shows the placeholder. (Emulator verified; owner's phone not yet.)
+- [x] `./gradlew assembleDebug` builds; app installs and launches. (Verified 2026-10-30 on emulator medium_phone, Android 16 (API 36). Owner override: emulator pass replaces the owner's phone.)
 - [x] `:domain` has no Android imports (verified).
 - [x] AGENTS.md commands section updated to reality.
 
@@ -28,6 +28,28 @@ An empty but healthy Android project: three modules, version catalog, test tooli
 Run the commands above; install on the owner's phone or an emulator.
 
 ## Handoff log
+### 2026-10-30 — VERIFY
+**Pass.** All four acceptance criteria pass. Commit `e80fda7ac9a4227ac003878e23399f76840aa035` on branch `t-001-scaffold` (fast-forwarded onto `main`). Device: emulator medium_phone, Android 16 (API 36). Owner override 2026-10-30: an emulator pass replaces the owner's phone.
+
+**Per criterion:**
+- `./gradlew :domain:test` — PASS. In this run the task was UP-TO-DATE (inputs unchanged since the last successful execution on this commit). Report `domain/build/test-results/test`: 143 tests, 0 failures, 0 errors, 0 skipped.
+- `./gradlew assembleDebug` builds; app installs and launches — PASS. `assembleDebug` was UP-TO-DATE; `app/build/outputs/apk/debug/app-debug.apk` is present. `adb install -r` reported Success. Launcher activity from the manifest is `hu.toliver.muskli/.MainActivity`. It stayed in the foreground in light (pid 13807) and dark (pid 13932); `topResumedActivity` was `MainActivity` both times. Crash buffer empty both times; no `FATAL EXCEPTION` or `AndroidRuntime` lines. The current home screen (the original placeholder is gone) shows the title Muskli plus Start workout, History, Exercise library, and Settings.
+- `:domain` has no Android imports — PASS. Search of `domain/` for `android.`, `androidx.`, and `com.android`: 0 matches.
+- AGENTS.md commands section — PASS. The documented `:domain:test`, `testDebugUnitTest`, `assembleDebug`, and `lintDebug` commands completed in one `.\gradlew.bat` invocation (`BUILD SUCCESSFUL in 57s`; 129 tasks: 7 executed, 122 up-to-date). `testDebugUnitTest` reports: `:app` 77 tests (executed this run), `:data` 43 tests (task UP-TO-DATE), 0 failures. `lintDebug`: `:app` 0 errors and 1 warning (`NewerVersionAvailable`, JUnit BOM 5.14.4 vs 6.1.3; stay on JUnit 5 per the existing decision); `:data` no issues. Report path `app/build/reports/lint-results-debug.html` matches the comment. `adb install -r app/build/outputs/apk/debug/app-debug.apk` matches the documented install line and succeeded. `connectedDebugAndroidTest` was not re-run; it remains the documented instrumented-test command.
+
+**Screenshots** (under `build/verify/`, git-ignored, not committed):
+- `build/verify/t001-light.png` — light mode (`cmd uimode night no`): white home screen, Muskli title, orange Start workout, outlined History / Exercise library / Settings.
+- `build/verify/t001-dark.png` — dark mode (`cmd uimode night yes`): black home screen, same controls, lighter orange Start workout.
+
+**Commands and results:**
+- `$env:JAVA_TOOL_OPTIONS = "-Djavax.net.ssl.trustStoreType=Windows-ROOT"; .\gradlew.bat :domain:test testDebugUnitTest assembleDebug lintDebug --console=plain` → BUILD SUCCESSFUL in 57s.
+- `adb devices -l` → `emulator-5554 device` (`sdk_gphone64_x86_64`). `getprop ro.build.version.release` → 16; `ro.build.version.sdk` → 36; `emu avd name` → `medium_phone`.
+- `adb install -r app/build/outputs/apk/debug/app-debug.apk` → Success.
+- Light: `adb shell cmd uimode night no`, `am force-stop hu.toliver.muskli`, `am start -n hu.toliver.muskli/.MainActivity`, `screencap` to `/sdcard/t001-light.png`, `adb pull` to `build/verify/t001-light.png`. No fatal log lines.
+- Dark: same sequence with `cmd uimode night yes` and `t001-dark.png`. No fatal log lines.
+
+**Left:** none. Moved to `tickets/done/`.
+
 ### 2026-10-29 — REVIEW
 Owner review: no findings (Blocker / Should-fix / Nit: none). Moved to `verify/`. Remaining check is the phone install already noted below; the emulator run stands.
 
