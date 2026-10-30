@@ -76,7 +76,7 @@ Each feature lists acceptance criteria (AC). Test IDs refer to `docs/TEST-CASES.
 - AC2: Import is safe: validates, reports errors, never partially applies.
 
 ### F-09 Hevy data import
-- AC1: Import workouts and custom exercises from the owner's Hevy export (format TBD, ticket T-018 starts with a SPIKE on the actual file).
+- AC1: Import workouts and custom exercises from the owner's Hevy export (CSV; format, mapping, and rules in `docs/HEVY-IMPORT.md`, D-040..D-045).
 - AC2: Unmapped exercises are listed for manual mapping, not dropped silently.
 
 ## 6. Next (Phase 2: not now)

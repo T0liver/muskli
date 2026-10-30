@@ -137,6 +137,34 @@ Streak = consecutive calendar weeks with at least one workout, week start config
 | TC-DATA-06 | Import file with a bad record | Nothing applied, error report |
 | TC-DATA-07 | Foreign keys: removing a workout removes its exercises and sets | true |
 
+## TC-HEVY: Hevy CSV import (docs/HEVY-IMPORT.md, D-040..D-045)
+Fixtures: `domain/src/test/resources/hevy/` (HEVY-IMPORT §8). Unless stated, the fake clock has a fixed offset of +3600 s.
+
+| ID | Case | Expected |
+|---|---|---|
+| TC-HEVY-01 | Parse the workout fixture | Exactly the values in HEVY-IMPORT §8: 2 workouts in file order, 5 + 4 exercise occurrences, 14 sets, all completed, `completedAtEpochMs` null, side BOTH, 2 sets with RPE |
+| TC-HEVY-02 | CSV syntax: `""` inside quotes, comma inside quotes, line break inside quotes (CRLF and LF), CRLF and LF record ends, UTF-8 BOM, no final newline | Fields read correctly; line breaks inside a field become `\n`; BOM ignored |
+| TC-HEVY-03 | Header handling: columns reordered; an extra unknown column; `exercise_title` column missing | Same result as the fixture; extra column ignored; missing column rejects the file (MISSING_COLUMN, record 1) |
+| TC-HEVY-04 | Same exercise twice in one workout (`set_index` back to 0) | Two separate occurrences in file order |
+| TC-HEVY-05 | One file with: unknown `set_type`, bad date, negative weight, `reps` `5.5`, end before start, a record with 13 fields | Rejected; one error per problem with its record number and column; no workouts returned |
+| TC-HEVY-06 | DST gap: `29 Mar 2026, 02:30`, clock +3600 before `1774746000000` and +7200 from it | `1774747800000` (moved forward by the gap) |
+| TC-HEVY-07 | DST overlap: `25 Oct 2026, 02:30`, clock +7200 before `1792890000000` and +3600 from it | `1792888200000` (earliest occurrence) |
+| TC-HEVY-08 | `5 Mar 2026, 07:00` vs `05 Mar 2026, 07:00`; `5 Mär 2026, 07:00`; `5 Mar 2026, 7:00 PM` | First two equal; the others rejected (INVALID_DATE) |
+| TC-HEVY-09 | Parse the measurement fixture; a measurement file with no `weight_kg` value | Latest body weight 80.4 kg at `1772350200000`; no body weight |
+| TC-HEVY-10 | File kind: workout header; measurement header; a Muskli backup JSON; an empty file | Workouts; measurements; NOT_HEVY_EXPORT; NOT_HEVY_EXPORT |
+| TC-HEVY-11 | Match the fixture titles against the 10 exercises of catalogue version 1 | Plank, Rowing Machine exact; Bench Press (Barbell), Pull Up, Farmers Walk (Dumbbell) normalised to `barbell-bench-press`, `pull-up`, `dumbbell-farmers-walk`; the other 3 unmatched |
+| TC-HEVY-12 | Two non-archived templates with the same token multiset; one archived and one not | Unmatched with both as candidates; the non-archived one |
+| TC-HEVY-13 | Custom "Pull Up" and catalogue "Pull-Up", Hevy title "pull up" | Exact match to the custom one |
+| TC-HEVY-14 | Type inference, one case per rule 1-8 in HEVY-IMPORT §3; equipment from `(Barbell)`, `(Cable)`, `(Band)`, no token with and without weight | Rule's type; BARBELL, MACHINE, RESISTANCE_BAND, OTHER, NONE |
+| TC-HEVY-15 | Plan with every unmatched title as "create custom" | 3 new custom templates (title = Hevy title, primary OTHER, no secondary, inferred type and equipment, ids from IdGenerator); every set references an existing or new template |
+| TC-HEVY-16 | Plan with Lateral Raise (Dumbbell) mapped to an existing template and Pull Up re-mapped | No custom for it; sets use the chosen templates |
+| TC-HEVY-17 | Existing workouts started at `1773507900000 + 37000` (same minute), and a soft-deleted one at `1773295200000` | Both fixture workouts skipped as duplicates; with the existing start one minute later, "Push, heavy" is imported |
+| TC-HEVY-18 | Plan summary for the fixture on an empty phone | 2 in file, 2 new, 0 duplicates, 14 sets, 2 RPE values dropped, 3 new custom exercises, first and last start |
+| TC-HEVY-19 | An unmatched title used only by duplicate workouts | No custom exercise created for it |
+| TC-HEVY-20 | Apply the plan into a database with an existing finished workout and a draft | Existing rows unchanged; new workouts read back equal to the plan; new customs present; a failure injected after the first insert writes nothing |
+| TC-HEVY-21 | Apply the fixture twice | Second time: 0 new, 2 duplicates, 0 new custom exercises |
+| TC-HEVY-22 | Apply with "set body weight 80.4" checked; unchecked | Settings body weight 80.4 kg; unchanged |
+
 ## AC: manual acceptance scenarios (owner's phone, VERIFY tickets)
 | ID | Scenario | Pass criteria |
 |---|---|---|
@@ -146,5 +174,5 @@ Streak = consecutive calendar weeks with at least one workout, week start config
 | AC-04 | **Airplane mode**: full workout offline | Works |
 | AC-05 | **Drop set**: complete a set before a drop set | No rest timer starts |
 | AC-06 | **Backup**: export, wipe app data, import | Everything back |
-| AC-07 | **Hevy import** (once built): import real export | Counts match Hevy (workouts, sets), unmapped exercises listed |
+| AC-07 | **Hevy import** (once built, T-040): import real export | Counts match Hevy (workouts, sets), unmapped exercises listed; importing the same file again adds nothing |
 | AC-08 | **Speed**: cold start to ready-to-log | Under 2 s (measured) |
