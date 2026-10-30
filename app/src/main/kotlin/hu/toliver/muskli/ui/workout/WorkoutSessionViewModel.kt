@@ -27,6 +27,8 @@ import hu.toliver.muskli.domain.usecase.workout.AddExercisesUseCase
 import hu.toliver.muskli.domain.usecase.workout.AddSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.AdjustRestTimerUseCase
 import hu.toliver.muskli.domain.usecase.workout.ChangeSetTypeUseCase
+import hu.toliver.muskli.domain.usecase.workout.ChangeStartTimeResult
+import hu.toliver.muskli.domain.usecase.workout.ChangeStartTimeUseCase
 import hu.toliver.muskli.domain.usecase.workout.CompleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.DeleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.EditSetValuesUseCase
@@ -92,6 +94,7 @@ class WorkoutSessionViewModel @AssistedInject constructor(
     private val skipRest: SkipRestTimerUseCase,
     private val markSetCompleted: MarkSetCompletedUseCase,
     private val previousSetsBefore: PreviousSetsBeforeUseCase,
+    private val changeStartTime: ChangeStartTimeUseCase,
 ) : ViewModel() {
     @AssistedFactory
     interface Factory {
@@ -202,6 +205,18 @@ class WorkoutSessionViewModel @AssistedInject constructor(
             LiveWorkoutEvent.RestMinus15 -> edit { adjustRest(it, -REST_STEP_S) }
             LiveWorkoutEvent.RestPlus15 -> edit { adjustRest(it, REST_STEP_S) }
             LiveWorkoutEvent.RestSkipped -> edit { skipRest(it) }
+            // A past workout's start is set in its save step (D-033), so the stopwatch only edits the live draft.
+            LiveWorkoutEvent.DurationClicked -> if (!editing) local.update { it.copy(startPickerOpen = true) }
+            is LiveWorkoutEvent.StartPicked -> {
+                local.update { it.copy(startPickerOpen = false) }
+                edit { workoutId ->
+                    if (changeStartTime(workoutId, event.epochMs) == ChangeStartTimeResult.InFuture) {
+                        local.update { it.copy(startInFutureShown = true) }
+                    }
+                }
+            }
+            LiveWorkoutEvent.StartPickerDismissed -> local.update { it.copy(startPickerOpen = false) }
+            LiveWorkoutEvent.StartInFutureDismissed -> local.update { it.copy(startInFutureShown = false) }
         }
     }
 
@@ -283,6 +298,9 @@ class WorkoutSessionViewModel @AssistedInject constructor(
             setTypeMenuFor = local.setTypeMenuFor,
             reorderOpen = local.reorderOpen,
             editing = editing,
+            startedAtEpochMs = workout.startedAtEpochMs,
+            startPickerOpen = local.startPickerOpen,
+            startInFutureShown = local.startInFutureShown,
         )
     }
 
@@ -306,6 +324,8 @@ class WorkoutSessionViewModel @AssistedInject constructor(
         val exerciseMenuFor: String? = null,
         val setTypeMenuFor: String? = null,
         val reorderOpen: Boolean = false,
+        val startPickerOpen: Boolean = false,
+        val startInFutureShown: Boolean = false,
     )
 
     private companion object {

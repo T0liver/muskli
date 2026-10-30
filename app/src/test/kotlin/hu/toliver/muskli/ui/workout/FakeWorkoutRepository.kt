@@ -13,6 +13,7 @@ import hu.toliver.muskli.domain.usecase.workout.AddExercisesUseCase
 import hu.toliver.muskli.domain.usecase.workout.AddSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.AdjustRestTimerUseCase
 import hu.toliver.muskli.domain.usecase.workout.ChangeSetTypeUseCase
+import hu.toliver.muskli.domain.usecase.workout.ChangeStartTimeUseCase
 import hu.toliver.muskli.domain.usecase.workout.CompleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.DeleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.EditSetValuesUseCase
@@ -124,5 +125,6 @@ fun workoutSessionViewModel(
         skipRest = SkipRestTimerUseCase(workouts, clock),
         markSetCompleted = MarkSetCompletedUseCase(workouts, clock),
         previousSetsBefore = PreviousSetsBeforeUseCase(workouts),
+        changeStartTime = ChangeStartTimeUseCase(workouts, clock),
     )
 }

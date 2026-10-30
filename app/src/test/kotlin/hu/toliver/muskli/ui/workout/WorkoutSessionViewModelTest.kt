@@ -25,6 +25,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -431,5 +432,58 @@ class WorkoutSessionViewModelTest {
         vm.onEvent(LiveWorkoutEvent.ScreenShown)
 
         assertEquals(listOf("65", "10"), vm.active.exercises.single().sets.first().previous)
+    }
+
+    @Test
+    fun tappingTheStopwatchOpensThePickerAtTheCurrentStart() = runTest(dispatcher) {
+        val vm = subscribed(FakeWorkoutRepository(listOf(draft())))
+
+        vm.onEvent(LiveWorkoutEvent.DurationClicked)
+
+        assertTrue(vm.active.startPickerOpen)
+        assertEquals(TestClock.START_MS, vm.active.startedAtEpochMs)
+        vm.onEvent(LiveWorkoutEvent.StartPickerDismissed)
+        assertFalse(vm.active.startPickerOpen)
+    }
+
+    @Test
+    fun anEarlierStartIsStoredAndTheStopwatchFollowsIt() = runTest(dispatcher) {
+        val workouts = FakeWorkoutRepository(listOf(draft()))
+        clock.now = TestClock.START_MS + 60_000
+        val vm = subscribed(workouts)
+        assertEquals("1:00", vm.active.duration)
+
+        vm.onEvent(LiveWorkoutEvent.DurationClicked)
+        vm.onEvent(LiveWorkoutEvent.StartPicked(TestClock.START_MS - 3_540_000))
+
+        assertEquals(TestClock.START_MS - 3_540_000, workouts.activeDraft!!.startedAtEpochMs)
+        assertEquals("1:00:00", vm.active.duration)
+        assertFalse(vm.active.startPickerOpen)
+        assertFalse(vm.active.startInFutureShown)
+    }
+
+    @Test
+    fun aStartInTheFutureIsRejectedWithAMessage() = runTest(dispatcher) {
+        val workouts = FakeWorkoutRepository(listOf(draft()))
+        clock.now = TestClock.START_MS + 60_000
+        val vm = subscribed(workouts)
+
+        vm.onEvent(LiveWorkoutEvent.DurationClicked)
+        vm.onEvent(LiveWorkoutEvent.StartPicked(clock.now + 60_000))
+
+        assertEquals(TestClock.START_MS, workouts.activeDraft!!.startedAtEpochMs)
+        assertTrue(vm.active.startInFutureShown)
+        vm.onEvent(LiveWorkoutEvent.StartInFutureDismissed)
+        assertFalse(vm.active.startInFutureShown)
+    }
+
+    @Test
+    fun editModeDoesNotOpenTheStartPicker() = runTest(dispatcher) {
+        val workouts = FakeWorkoutRepository(listOf(pastWorkout("p", TestClock.START_MS)))
+        val vm = editing(workouts, "p")
+
+        vm.onEvent(LiveWorkoutEvent.DurationClicked)
+
+        assertFalse(vm.active.startPickerOpen)
     }
 }
