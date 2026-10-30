@@ -64,6 +64,8 @@ dependencies {
     api(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
+    // api: :app creates the DataStore instance for Hilt.
+    api(libs.androidx.datastore.preferences)
 
     testImplementation(libs.junit4)
     testImplementation(libs.kotlinx.coroutines.test)

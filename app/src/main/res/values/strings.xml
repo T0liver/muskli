@@ -1,6 +1,36 @@
 <resources>
     <string name="app_name">Muskli</string>
-    <string name="placeholder_message">Muskli</string>
+    <string name="cd_back">Back</string>
+
+    <!-- Home -->
+    <string name="home_settings">Settings</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_units">Units</string>
+    <string name="unit_kg">kg</string>
+    <string name="unit_lb">lb</string>
+    <string name="settings_default_rest">Default rest timer</string>
+    <string name="settings_rest_seconds">Rest (seconds)</string>
+    <string name="settings_rest_invalid">Enter a whole number of seconds above 0</string>
+    <string name="settings_previous">Previous values</string>
+    <string name="settings_previous_anywhere">Last time anywhere</string>
+    <string name="settings_previous_routine">Last time in this routine</string>
+    <string name="settings_previous_routine_unavailable">Available once routines exist</string>
+    <string name="settings_keep_awake">Keep screen awake during a workout</string>
+    <string name="settings_sound">Rest timer sound</string>
+    <string name="settings_vibration">Rest timer vibration</string>
+    <string name="settings_week_start">Week starts on</string>
+    <string name="settings_body_weight">Body weight (%1$s)</string>
+    <string name="settings_body_weight_hint">Used for bodyweight exercise volume. Leave empty if unknown.</string>
+    <string name="settings_body_weight_invalid">Enter a number above 0</string>
+    <string name="day_monday">Monday</string>
+    <string name="day_tuesday">Tuesday</string>
+    <string name="day_wednesday">Wednesday</string>
+    <string name="day_thursday">Thursday</string>
+    <string name="day_friday">Friday</string>
+    <string name="day_saturday">Saturday</string>
+    <string name="day_sunday">Sunday</string>
 
     <!-- Live workout -->
     <string name="live_workout_title">Workout</string>
