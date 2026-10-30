@@ -18,6 +18,9 @@ import hu.toliver.muskli.data.repo.RoomExerciseTemplateRepository
 import hu.toliver.muskli.data.repo.RoomWorkoutRepository
 import hu.toliver.muskli.data.seed.BundledCatalogueLoader
 import hu.toliver.muskli.data.seed.CatalogueApplier
+import hu.toliver.muskli.data.seed.CatalogueHttpSource
+import hu.toliver.muskli.data.seed.CatalogueSync
+import hu.toliver.muskli.data.seed.HttpCatalogueSource
 import hu.toliver.muskli.data.settings.DataStoreSettingsRepository
 import hu.toliver.muskli.domain.repo.BackupRepository
 import hu.toliver.muskli.domain.repo.Clock
@@ -66,6 +69,15 @@ object DataModule {
     fun backupDocuments(documents: ContentResolverBackupDocuments): BackupDocuments = documents
 
     @Provides
-    fun bundledCatalogueLoader(@ApplicationContext context: Context, db: MuskliDatabase, clock: Clock) =
-        BundledCatalogueLoader(context, CatalogueApplier(db, clock))
+    fun catalogueApplier(db: MuskliDatabase, clock: Clock) = CatalogueApplier(db, clock)
+
+    @Provides
+    fun bundledCatalogueLoader(@ApplicationContext context: Context, applier: CatalogueApplier) =
+        BundledCatalogueLoader(context, applier)
+
+    @Provides
+    fun catalogueHttpSource(): CatalogueHttpSource = HttpCatalogueSource()
+
+    @Provides
+    fun catalogueSync(source: CatalogueHttpSource, applier: CatalogueApplier) = CatalogueSync(source, applier)
 }
