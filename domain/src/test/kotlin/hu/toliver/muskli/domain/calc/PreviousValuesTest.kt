@@ -95,4 +95,33 @@ class PreviousValuesTest {
         )
         assertEquals(set(80.0, 8), anywhere(history, 0))
     }
+
+    private fun allAnywhere(history: List<WorkoutExerciseRecord>) =
+        previousSets(history, PreviousMode.ANYWHERE, routineId = null)
+
+    @Test
+    fun `previousSets lists the last session by raw index, warm-ups included`() {
+        val history = listOf(
+            record("old", 1_000, set(50.0, 10), set(70.0, 8), set(70.0, 8)),
+            record("last", 2_000, set(40.0, 10, SetType.WARMUP), set(100.0, 5)),
+        )
+        assertEquals(listOf(set(40.0, 10, SetType.WARMUP), set(100.0, 5)), allAnywhere(history))
+    }
+
+    @Test
+    fun `previousSets keeps an uncompleted slot as null and is empty without history`() {
+        val history = listOf(record("last", 2_000, set(60.0, 10), set(70.0, 8, completed = false), set(80.0, 8)))
+        assertEquals(listOf(set(60.0, 10), null, set(80.0, 8)), allAnywhere(history))
+        assertEquals(emptyList(), allAnywhere(emptyList()))
+    }
+
+    @Test
+    fun `previousSets ignores drafts and uses the first occurrence`() {
+        val history = listOf(
+            record("last", 2_000, set(60.0, 12), position = 4),
+            record("last", 2_000, set(80.0, 8), position = 1),
+            record("draft", 3_000, set(90.0, 8), finished = false),
+        )
+        assertEquals(listOf(set(80.0, 8)), allAnywhere(history))
+    }
 }

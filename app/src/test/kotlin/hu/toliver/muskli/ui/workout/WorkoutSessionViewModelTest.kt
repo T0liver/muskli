@@ -222,6 +222,65 @@ class WorkoutSessionViewModelTest {
         assertEquals(listOf("Bench Press (Barbell)"), names())
     }
 
+    private val WorkoutSessionViewModel.previousColumn get() = active.exercises[0].sets.map { it.previous }
+
+    @Test
+    fun tcPrev01And02PreviousMatchesTheSamePositionAndIsEmptyBeyondIt() = runTest(dispatcher) {
+        val workouts = FakeWorkoutRepository(listOf(draft()))
+        workouts.history.value = mapOf(
+            "squat-barbell" to listOf(
+                lastTime(done(50.0, 10), done(70.0, 8), done(70.0, 8), workoutId = "older", startedAt = 500L),
+                lastTime(done(60.0, 10), done(80.0, 8)),
+            ),
+        )
+        val vm = subscribed(workouts)
+
+        vm.onEvent(LiveWorkoutEvent.ExercisesPicked(listOf("squat-barbell")))
+        vm.onEvent(LiveWorkoutEvent.AddSetClicked(vm.active.exercises[0].id))
+
+        assertEquals(listOf(listOf("60", "10"), listOf("80", "8"), null), vm.previousColumn)
+    }
+
+    @Test
+    fun tcPrev04NoHistoryMeansNoPreviousAndOneEmptySet() = runTest(dispatcher) {
+        val workouts = FakeWorkoutRepository(listOf(draft()))
+        val vm = subscribed(workouts)
+
+        vm.onEvent(LiveWorkoutEvent.ExercisesPicked(listOf("squat-barbell")))
+
+        assertEquals(listOf(null), vm.previousColumn)
+        assertEquals(listOf("", ""), vm.active.exercises[0].sets[0].values)
+    }
+
+    @Test
+    fun prefilledSetsShowLastTimeInTheFieldsAndStartUncompleted() = runTest(dispatcher) {
+        settings.settings.value = Settings(weightUnit = WeightUnit.LB)
+        val workouts = FakeWorkoutRepository(listOf(draft()))
+        workouts.history.value = mapOf("squat-barbell" to listOf(lastTime(done(40.0, 10, SetType.WARMUP), done(100.0, 5))))
+        val vm = subscribed(workouts)
+
+        vm.onEvent(LiveWorkoutEvent.ExercisesPicked(listOf("squat-barbell")))
+
+        val sets = vm.active.exercises[0].sets
+        assertEquals(listOf(SetType.WARMUP, SetType.NORMAL), sets.map { it.type })
+        assertEquals(listOf(listOf("88.18", "10"), listOf("220.46", "5")), sets.map { it.values })
+        assertEquals(sets.map { it.values }, vm.previousColumn)
+        assertEquals(listOf(false, false), sets.map { it.completed })
+        assertEquals(0, vm.active.completedSets)
+    }
+
+    @Test
+    fun previousValuesAreReadAgainForTheNextDraft() = runTest(dispatcher) {
+        val workouts = FakeWorkoutRepository(listOf(draft(exercise("e1", "squat-barbell", set("s1")))))
+        val vm = subscribed(workouts)
+        assertEquals(listOf(null), vm.previousColumn)
+
+        workouts.history.value = mapOf("squat-barbell" to listOf(lastTime(done(100.0, 5))))
+        workouts.workouts.value = mapOf("w2" to draft(exercise("e2", "squat-barbell", set("s2"))).copy(id = "w2"))
+
+        assertEquals(listOf(listOf("100", "5")), vm.previousColumn)
+    }
+
     @Test
     fun keepAwakeFollowsTheSetting() = runTest(dispatcher) {
         val workouts = FakeWorkoutRepository(listOf(draft()))

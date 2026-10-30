@@ -9,6 +9,7 @@ import hu.toliver.muskli.domain.calc.kgToLb
 import hu.toliver.muskli.domain.calc.sessionVolumeKg
 import hu.toliver.muskli.domain.model.ExerciseTemplate
 import hu.toliver.muskli.domain.model.ExerciseType
+import hu.toliver.muskli.domain.model.SetData
 import hu.toliver.muskli.domain.model.SetType
 import hu.toliver.muskli.domain.model.Workout
 import hu.toliver.muskli.domain.repo.Clock
@@ -23,6 +24,7 @@ import hu.toliver.muskli.domain.usecase.workout.ChangeSetTypeUseCase
 import hu.toliver.muskli.domain.usecase.workout.CompleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.DeleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.EditSetValuesUseCase
+import hu.toliver.muskli.domain.usecase.workout.PreviousSetsUseCase
 import hu.toliver.muskli.domain.usecase.workout.RemoveExerciseUseCase
 import hu.toliver.muskli.domain.usecase.workout.ReorderExerciseUseCase
 import hu.toliver.muskli.domain.usecase.workout.ReplaceExerciseUseCase
@@ -72,12 +74,14 @@ class WorkoutSessionViewModel @Inject constructor(
     private val editSetValues: EditSetValuesUseCase,
     private val completeSet: CompleteSetUseCase,
     private val uncompleteSet: UncompleteSetUseCase,
+    private val previousSets: PreviousSetsUseCase,
 ) : ViewModel() {
     private val draft: StateFlow<Draft> = workouts.observeActiveDraft()
         .map<Workout?, Draft> { Draft.Loaded(it) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, Draft.Loading)
     private val settings = settingsRepository.settings.stateIn(viewModelScope, SharingStarted.Eagerly, Settings())
     private val local = MutableStateFlow(Local())
+    private val previous = MutableStateFlow(PreviousCache())
 
     // Edits run one at a time in tap order: each replaces whole values, so a later write must not
     // be overtaken by an earlier one.
@@ -91,19 +95,34 @@ class WorkoutSessionViewModel @Inject constructor(
     }
 
     val uiState: StateFlow<LiveWorkoutUiState> = combine(
-        draft,
+        combine(draft, previous, ::Pair),
         templates.observeAll().map { all -> all.associateBy(ExerciseTemplate::id) },
         settingsRepository.settings,
         local,
         ticks,
-    ) { draft, templatesById, settings, local, _ ->
+    ) { (draft, previous), templatesById, settings, local, _ ->
         when (draft) {
             Draft.Loading -> LiveWorkoutUiState.Loading
-            is Draft.Loaded -> draft.workout?.let { toUiState(it, templatesById, settings, local) } ?: LiveWorkoutUiState.NoWorkout
+            is Draft.Loaded -> draft.workout?.let { toUiState(it, templatesById, settings, local, previous) } ?: LiveWorkoutUiState.NoWorkout
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), LiveWorkoutUiState.Loading)
 
     init {
+        // History changes only when a workout is finished, so each template is read once per draft.
+        viewModelScope.launch {
+            draft.collect { state ->
+                val workout = (state as? Draft.Loaded)?.workout ?: return@collect
+                if (previous.value.workoutId != workout.id) previous.value = PreviousCache(workout.id)
+                workout.exercises.map { it.exerciseTemplateId }.distinct()
+                    .filterNot { it in previous.value.byTemplate }
+                    .forEach { templateId ->
+                        val sets = previousSets(templateId)
+                        previous.update {
+                            if (it.workoutId == workout.id) it.copy(byTemplate = it.byTemplate + (templateId to sets)) else it
+                        }
+                    }
+            }
+        }
         // Typed text is in the old unit; show the stored values converted instead.
         viewModelScope.launch {
             settingsRepository.settings.map { it.weightUnit }.distinctUntilChanged().drop(1).collect {
@@ -171,6 +190,7 @@ class WorkoutSessionViewModel @Inject constructor(
         templatesById: Map<String, ExerciseTemplate>,
         settings: Settings,
         local: Local,
+        previous: PreviousCache,
     ): LiveWorkoutUiState.Active {
         val unit = settings.weightUnit
         val types = workout.exercises.map { templatesById[it.exerciseTemplateId]?.type ?: ExerciseType.WEIGHT_REPS }
@@ -185,19 +205,20 @@ class WorkoutSessionViewModel @Inject constructor(
             weightUnit = unit,
             exercises = workout.exercises.mapIndexed { i, exercise ->
                 val columns = columnsFor(types[i])
+                val lastTime = previous.byTemplate[exercise.exerciseTemplateId].orEmpty()
                 var workingSets = 0
                 WorkoutExerciseUi(
                     id = exercise.id,
                     name = templatesById[exercise.exerciseTemplateId]?.title.orEmpty(),
                     columns = columns,
-                    sets = exercise.sets.map { set ->
+                    sets = exercise.sets.mapIndexed { index, set ->
                         // Warm-ups show a marker and do not take a set number.
                         if (set.data.type != SetType.WARMUP) workingSets++
                         WorkoutSetUi(
                             id = set.id,
                             number = if (set.data.type == SetType.WARMUP) workingSets + 1 else workingSets,
                             type = set.data.type,
-                            previous = null,
+                            previous = lastTime.getOrNull(index)?.let { prev -> columns.map { it.format(prev, unit) } },
                             values = columns.map { local.textEdits[FieldKey(set.id, it)] ?: it.format(set.data, unit) },
                             completed = set.data.completed,
                         )
@@ -218,6 +239,12 @@ class WorkoutSessionViewModel @Inject constructor(
     }
 
     private data class FieldKey(val setId: String, val column: SetColumn)
+
+    /** Last time's sets per template, for the draft [workoutId] only. */
+    private data class PreviousCache(
+        val workoutId: String? = null,
+        val byTemplate: Map<String, List<SetData?>> = emptyMap(),
+    )
 
     /** Screen-only state. [textEdits] holds exactly what was typed, so a field never reformats under the cursor. */
     private data class Local(

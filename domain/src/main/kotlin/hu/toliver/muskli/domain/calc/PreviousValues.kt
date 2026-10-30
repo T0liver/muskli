@@ -27,12 +27,22 @@ fun previousFor(
     setIndex: Int,
     mode: PreviousMode,
     routineId: String?,
-): SetData? {
+): SetData? = previousSets(history, mode, routineId).getOrNull(setIndex)
+
+/**
+ * Every position of the last session at once, by the same rules as [previousFor]: index i is
+ * `previousFor(history, i, ...)`, and the size is that session's set count. Empty without history.
+ */
+fun previousSets(
+    history: List<WorkoutExerciseRecord>,
+    mode: PreviousMode,
+    routineId: String?,
+): List<SetData?> {
     if (mode == PreviousMode.ROUTINE_SCOPED) TODO("T-024: routine-scoped previous values (TC-PREV-03)")
     val finished = history.filter { it.workoutFinishedAtEpochMs != null && it.workoutDeletedAtEpochMs == null }
-    val lastWorkoutId = finished.maxByOrNull { it.workoutStartedAtEpochMs }?.workoutId ?: return null
+    val lastWorkoutId = finished.maxByOrNull { it.workoutStartedAtEpochMs }?.workoutId ?: return emptyList()
     val occurrence = finished
         .filter { it.workoutId == lastWorkoutId }
         .minBy { it.positionInWorkout }
-    return occurrence.sets.getOrNull(setIndex)?.takeIf { it.completed }
+    return occurrence.sets.map { set -> set.takeIf { it.completed } }
 }

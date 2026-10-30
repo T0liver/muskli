@@ -19,6 +19,7 @@ import hu.toliver.muskli.domain.usecase.workout.ChangeSetTypeUseCase
 import hu.toliver.muskli.domain.usecase.workout.CompleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.DeleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.EditSetValuesUseCase
+import hu.toliver.muskli.domain.usecase.workout.PreviousSetsUseCase
 import hu.toliver.muskli.domain.usecase.workout.RemoveExerciseUseCase
 import hu.toliver.muskli.domain.usecase.workout.ReorderExerciseUseCase
 import hu.toliver.muskli.domain.usecase.workout.ReplaceExerciseUseCase
@@ -79,4 +80,7 @@ object UseCaseModule {
 
     @Provides
     fun uncompleteSet(repository: WorkoutRepository, clock: Clock) = UncompleteSetUseCase(repository, clock)
+
+    @Provides
+    fun previousSets(repository: WorkoutRepository) = PreviousSetsUseCase(repository)
 }

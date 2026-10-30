@@ -207,10 +207,12 @@ private fun SetTypeMenu(expanded: Boolean, onChosen: (SetType) -> Unit, onDismis
 
 @Composable
 private fun RowScope.PreviousText(previous: List<String>?) {
+    val none = stringResource(R.string.previous_none)
+    val parts = previous?.map { it.ifEmpty { none } }
     val text = when {
-        previous.isNullOrEmpty() -> stringResource(R.string.previous_none)
-        previous.size == 2 -> stringResource(R.string.previous_value, previous[0], previous[1])
-        else -> previous.first()
+        parts.isNullOrEmpty() -> none
+        parts.size == 2 -> stringResource(R.string.previous_value, parts[0], parts[1])
+        else -> parts.first()
     }
     Text(
         text = text,

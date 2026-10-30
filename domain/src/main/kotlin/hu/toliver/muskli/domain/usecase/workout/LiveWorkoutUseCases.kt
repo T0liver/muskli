@@ -1,6 +1,8 @@
 package hu.toliver.muskli.domain.usecase.workout
 
+import hu.toliver.muskli.domain.calc.PreviousMode
 import hu.toliver.muskli.domain.calc.RestEffect
+import hu.toliver.muskli.domain.calc.previousSets
 import hu.toliver.muskli.domain.calc.restTimerEffect
 import hu.toliver.muskli.domain.model.SetData
 import hu.toliver.muskli.domain.model.SetType
@@ -58,17 +60,33 @@ class StartWorkoutUseCase(
     }
 }
 
-/** Appends the templates in the given order, each with one empty normal set. */
+/**
+ * Appends the templates in the given order. An exercise done before starts with last time's sets
+ * (count, types, values), uncompleted and aligned like the PREVIOUS column (D-019); a slot
+ * without a previous value becomes an empty normal set. Otherwise one empty normal set (D-029).
+ */
 class AddExercisesUseCase(
     private val repository: WorkoutRepository,
     private val ids: IdGenerator,
     private val clock: Clock,
 ) {
     suspend operator fun invoke(workoutId: String, templateIds: List<String>): Workout? {
-        val added = templateIds.map { newExercise(it, ids) }
+        val added = templateIds.map { templateId ->
+            val prefill = repository.lastTime(templateId).map { it?.copy(completed = false) ?: SetData() }
+            newExercise(templateId, ids, prefill)
+        }
         return repository.edit(workoutId, clock) { it.copy(exercises = it.exercises + added) }
     }
 }
+
+/** The PREVIOUS column of one exercise: last time's sets by raw index, null where there is none (D-019). */
+class PreviousSetsUseCase(private val repository: WorkoutRepository) {
+    suspend operator fun invoke(exerciseTemplateId: String): List<SetData?> = repository.lastTime(exerciseTemplateId)
+}
+
+// "Anywhere" only: routine-scoped previous values need routines (T-024).
+private suspend fun WorkoutRepository.lastTime(templateId: String): List<SetData?> =
+    previousSets(exerciseHistory(templateId), PreviousMode.ANYWHERE, routineId = null)
 
 /**
  * Swaps the template at the same position. Old sets are dropped (their values may not fit the new
@@ -217,7 +235,7 @@ private suspend fun WorkoutRepository.edit(workoutId: String, clock: Clock, edit
         if (edited == current) current else edited.copy(updatedAtEpochMs = clock.nowEpochMs())
     }
 
-private fun newExercise(templateId: String, ids: IdGenerator): WorkoutExercise {
+private fun newExercise(templateId: String, ids: IdGenerator, prefill: List<SetData> = emptyList()): WorkoutExercise {
     val id = ids.newId()
     return WorkoutExercise(
         id = id,
@@ -225,11 +243,13 @@ private fun newExercise(templateId: String, ids: IdGenerator): WorkoutExercise {
         supersetGroup = null,
         notes = null,
         restSeconds = null,
-        sets = listOf(emptySet(ids)),
+        sets = prefill.ifEmpty { listOf(SetData(type = SetType.NORMAL)) }.map { newSet(ids, it) },
     )
 }
 
-private fun emptySet(ids: IdGenerator) = WorkoutSet(id = ids.newId(), data = SetData(type = SetType.NORMAL), completedAtEpochMs = null)
+private fun emptySet(ids: IdGenerator) = newSet(ids, SetData(type = SetType.NORMAL))
+
+private fun newSet(ids: IdGenerator, data: SetData) = WorkoutSet(id = ids.newId(), data = data, completedAtEpochMs = null)
 
 private fun Workout.mapExercise(id: String, transform: (WorkoutExercise) -> WorkoutExercise) =
     copy(exercises = exercises.map { if (it.id == id) transform(it) else it })

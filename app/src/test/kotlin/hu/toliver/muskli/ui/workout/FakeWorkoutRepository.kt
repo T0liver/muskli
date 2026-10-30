@@ -1,6 +1,8 @@
 package hu.toliver.muskli.ui.workout
 
 import hu.toliver.muskli.domain.calc.WorkoutExerciseRecord
+import hu.toliver.muskli.domain.model.SetData
+import hu.toliver.muskli.domain.model.SetType
 import hu.toliver.muskli.domain.model.Workout
 import hu.toliver.muskli.domain.repo.Clock
 import hu.toliver.muskli.domain.repo.ExerciseTemplateRepository
@@ -13,6 +15,7 @@ import hu.toliver.muskli.domain.usecase.workout.ChangeSetTypeUseCase
 import hu.toliver.muskli.domain.usecase.workout.CompleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.DeleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.EditSetValuesUseCase
+import hu.toliver.muskli.domain.usecase.workout.PreviousSetsUseCase
 import hu.toliver.muskli.domain.usecase.workout.RemoveExerciseUseCase
 import hu.toliver.muskli.domain.usecase.workout.ReorderExerciseUseCase
 import hu.toliver.muskli.domain.usecase.workout.ReplaceExerciseUseCase
@@ -57,6 +60,19 @@ class FakeWorkoutRepository(initial: List<Workout> = emptyList()) : WorkoutRepos
         history.value[exerciseTemplateId].orEmpty()
 }
 
+/** One finished past workout in which the exercise had [sets]. */
+fun lastTime(vararg sets: SetData, workoutId: String = "past", startedAt: Long = 1_000L) = WorkoutExerciseRecord(
+    workoutId = workoutId,
+    workoutStartedAtEpochMs = startedAt,
+    workoutFinishedAtEpochMs = startedAt + 3_600_000,
+    workoutDeletedAtEpochMs = null,
+    positionInWorkout = 0,
+    sets = sets.toList(),
+)
+
+fun done(weightKg: Double, reps: Int, type: SetType = SetType.NORMAL) =
+    SetData(type = type, weightKg = weightKg, reps = reps, completed = true)
+
 class TestClock(var now: Long = START_MS) : Clock {
     override fun nowEpochMs() = now
 
@@ -91,5 +107,6 @@ fun workoutSessionViewModel(
         editSetValues = EditSetValuesUseCase(workouts, clock),
         completeSet = CompleteSetUseCase(workouts, clock),
         uncompleteSet = UncompleteSetUseCase(workouts, clock),
+        previousSets = PreviousSetsUseCase(workouts),
     )
 }

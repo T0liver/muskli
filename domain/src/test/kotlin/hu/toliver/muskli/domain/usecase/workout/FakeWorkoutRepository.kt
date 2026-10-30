@@ -29,7 +29,11 @@ class FakeWorkoutRepository : WorkoutRepository {
 
     override suspend fun restore(id: String) = error("not used")
 
-    override suspend fun exerciseHistory(exerciseTemplateId: String): List<WorkoutExerciseRecord> = error("not used")
+    /** Per template id, what [exerciseHistory] returns. */
+    var history: Map<String, List<WorkoutExerciseRecord>> = emptyMap()
+
+    override suspend fun exerciseHistory(exerciseTemplateId: String): List<WorkoutExerciseRecord> =
+        history[exerciseTemplateId].orEmpty()
 
     override suspend fun startDraftUnlessActive(draft: Workout): Workout = activeDraft() ?: draft.also { save(it) }
 

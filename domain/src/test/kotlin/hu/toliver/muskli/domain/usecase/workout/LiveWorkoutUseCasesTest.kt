@@ -2,6 +2,7 @@ package hu.toliver.muskli.domain.usecase.workout
 
 import hu.toliver.muskli.domain.TestClock
 import hu.toliver.muskli.domain.calc.RestEffect
+import hu.toliver.muskli.domain.calc.WorkoutExerciseRecord
 import hu.toliver.muskli.domain.model.SetData
 import hu.toliver.muskli.domain.model.SetType
 import hu.toliver.muskli.domain.model.Workout
@@ -272,6 +273,65 @@ class LiveWorkoutUseCasesTest {
         val set = stored(workout.id).exercises[0].sets[0]
         assertEquals(false, set.data.completed)
         assertNull(set.completedAtEpochMs)
+    }
+
+    private fun lastTime(workoutId: String, startedAt: Long, vararg sets: SetData, finished: Boolean = true) = WorkoutExerciseRecord(
+        workoutId = workoutId,
+        workoutStartedAtEpochMs = startedAt,
+        workoutFinishedAtEpochMs = if (finished) startedAt + 3_600_000 else null,
+        workoutDeletedAtEpochMs = null,
+        positionInWorkout = 0,
+        sets = sets.toList(),
+    )
+
+    private fun done(type: SetType, weightKg: Double, reps: Int) = SetData(type, weightKg = weightKg, reps = reps, completed = true)
+
+    @Test
+    fun `adding an exercise done before prefills count, types and values from last time, uncompleted`() = runTest {
+        repo.history = mapOf(
+            "bench" to listOf(
+                lastTime("old", 1_000, done(SetType.NORMAL, 50.0, 10)),
+                lastTime("last", 2_000, done(SetType.WARMUP, 40.0, 10), done(SetType.NORMAL, 100.0, 5), done(SetType.FAILURE, 100.0, 3)),
+            ),
+        )
+
+        val workout = startWith("bench", "row")
+
+        assertEquals(
+            listOf(
+                SetData(SetType.WARMUP, weightKg = 40.0, reps = 10),
+                SetData(SetType.NORMAL, weightKg = 100.0, reps = 5),
+                SetData(SetType.FAILURE, weightKg = 100.0, reps = 3),
+            ),
+            workout.exercises[0].sets.map { it.data },
+        )
+        assertEquals(listOf(null, null, null), workout.exercises[0].sets.map { it.completedAtEpochMs })
+        assertEquals(listOf(SetData()), workout.exercises[1].sets.map { it.data })
+        assertEquals(workout.exercises.flatMap { it.sets }.map { it.id }.distinct().size, 4)
+        assertEquals(workout, stored(workout.id))
+    }
+
+    @Test
+    fun `prefill skips drafts and keeps an uncompleted slot as an empty set`() = runTest {
+        repo.history = mapOf(
+            "bench" to listOf(
+                lastTime("last", 2_000, done(SetType.NORMAL, 80.0, 8), SetData(weightKg = 85.0, reps = 6)),
+                lastTime("draft", 3_000, done(SetType.NORMAL, 90.0, 8), finished = false),
+            ),
+        )
+
+        val workout = startWith("bench")
+
+        assertEquals(listOf(SetData(weightKg = 80.0, reps = 8), SetData()), workout.exercises[0].sets.map { it.data })
+    }
+
+    @Test
+    fun `previous sets come from the last finished workout by raw index`() = runTest {
+        repo.history = mapOf("bench" to listOf(lastTime("last", 2_000, done(SetType.WARMUP, 40.0, 10), done(SetType.NORMAL, 100.0, 5))))
+        val previousSets = PreviousSetsUseCase(repo)
+
+        assertEquals(listOf(done(SetType.WARMUP, 40.0, 10), done(SetType.NORMAL, 100.0, 5)), previousSets("bench"))
+        assertEquals(emptyList(), previousSets("row"))
     }
 
     @Test
