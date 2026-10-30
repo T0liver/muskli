@@ -71,7 +71,7 @@ The checker is a small script in the repo, `catalogue/tools/check_catalogue.py` 
 ## 6. Branch, merge, and publish flow
 1. Add or edit exercises on a branch, then open a PR into **`catalogue`**. CI runs section 5.
 2. To release, open a PR from `catalogue` into **`main`**. CI runs section 5 again against `main`.
-3. A push to `main` that touches `catalogue/**` triggers the **Pages workflow** (GitHub Actions source, not a `gh-pages` branch). It re-runs the checks, fetches the live `catalogue.json`, and fails if the new `version` is not greater (a 404 on the first deploy is fine). It then copies the two files into `_site/catalogue/v1/` and deploys with `actions/upload-pages-artifact` and `actions/deploy-pages`.
+3. A push to `main` that touches `catalogue/**` triggers the **Pages workflow** (GitHub Actions source, not a `gh-pages` branch). It re-runs the checks, fetches the live `catalogue.json`, and fails if the new `version` is not greater (a 404 on the first deploy is fine; a byte-identical file may redeploy, D-046). It then copies the two files into `_site/catalogue/v1/` and deploys with `actions/upload-pages-artifact` and `actions/deploy-pages`.
 4. The app build bundles `catalogue/catalogue.json` from the same commit, so bundled version ≤ published version. T-010 wires this as a Gradle copy or an assets source directory, with no hand-maintained second copy.
 
 ## 7. Published URL layout
