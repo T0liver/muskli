@@ -1,11 +1,11 @@
 package hu.toliver.muskli.domain.usecase.library
 
+import hu.toliver.muskli.domain.TestClock
 import hu.toliver.muskli.domain.library.ExerciseFilter
 import hu.toliver.muskli.domain.model.Equipment
 import hu.toliver.muskli.domain.model.ExerciseTemplate
 import hu.toliver.muskli.domain.model.ExerciseType
 import hu.toliver.muskli.domain.model.MuscleGroup
-import hu.toliver.muskli.domain.repo.Clock
 import hu.toliver.muskli.domain.repo.IdGenerator
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -17,8 +17,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ExerciseLibraryUseCasesTest {
-    private var now = 1_000L
-    private val clock = Clock { now }
+    private val clock = TestClock(now = 1_000L)
     private var nextId = 0
     private val ids = IdGenerator { "custom-${nextId++}" }
 
@@ -82,7 +81,7 @@ class ExerciseLibraryUseCasesTest {
     @Test
     fun `edit updates a custom exercise and keeps its creation time`() = runTest {
         create(input)
-        now = 5_000L
+        clock.now = 5_000L
 
         val edited = edit("custom-0", input.copy(title = "Pec Deck", type = ExerciseType.REPS_ONLY, secondaryMuscles = emptySet()))
 
@@ -102,7 +101,7 @@ class ExerciseLibraryUseCasesTest {
     @Test
     fun `archive hides a custom exercise without deleting it`() = runTest {
         create(input)
-        now = 7_000L
+        clock.now = 7_000L
 
         assertTrue(archive("custom-0"))
 

@@ -14,6 +14,7 @@ import hu.toliver.muskli.data.db.workout
 import hu.toliver.muskli.domain.catalogue.CatalogueBundle
 import hu.toliver.muskli.domain.catalogue.CatalogueExercise
 import hu.toliver.muskli.domain.model.ExerciseTemplate
+import hu.toliver.muskli.domain.repo.Clock
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -28,7 +29,14 @@ class CatalogueLoaderTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val db = Room.inMemoryDatabaseBuilder(context, MuskliDatabase::class.java).allowMainThreadQueries().build()
     private var now = 1_000L
-    private val applier = CatalogueApplier(db) { now }
+    private val applier = CatalogueApplier(
+        db,
+        object : Clock {
+            override fun nowEpochMs() = now
+
+            override fun utcOffsetS(epochMs: Long) = 0
+        },
+    )
     private val loader = BundledCatalogueLoader(context, applier)
     private val dao = db.exerciseTemplateDao()
 

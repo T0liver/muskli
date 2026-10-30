@@ -16,6 +16,16 @@ interface WorkoutRepository {
     /** Writes the workout with all its exercises and sets, replacing what was stored for it. */
     suspend fun save(workout: Workout)
 
+    /** In one transaction: the active draft if there is one, otherwise [draft] saved. Keeps drafts to at most one. */
+    suspend fun startDraftUnlessActive(draft: Workout): Workout
+
+    /**
+     * Reads, transforms, and writes the workout in one transaction, so concurrent edits cannot
+     * overwrite each other. Nothing is written when [transform] returns an equal workout.
+     * Returns the result, or null when [id] does not exist.
+     */
+    suspend fun update(id: String, transform: (Workout) -> Workout): Workout?
+
     suspend fun softDelete(id: String, deletedAtEpochMs: Long)
 
     suspend fun restore(id: String)

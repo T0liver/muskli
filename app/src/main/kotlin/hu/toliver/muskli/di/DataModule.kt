@@ -10,11 +10,13 @@ import hu.toliver.muskli.data.SystemWallClock
 import hu.toliver.muskli.data.UuidIdGenerator
 import hu.toliver.muskli.data.db.MuskliDatabase
 import hu.toliver.muskli.data.repo.RoomExerciseTemplateRepository
+import hu.toliver.muskli.data.repo.RoomWorkoutRepository
 import hu.toliver.muskli.data.seed.BundledCatalogueLoader
 import hu.toliver.muskli.data.seed.CatalogueApplier
 import hu.toliver.muskli.domain.repo.Clock
 import hu.toliver.muskli.domain.repo.ExerciseTemplateRepository
 import hu.toliver.muskli.domain.repo.IdGenerator
+import hu.toliver.muskli.domain.repo.WorkoutRepository
 import javax.inject.Singleton
 
 @Module
@@ -33,6 +35,9 @@ object DataModule {
     @Provides
     fun exerciseTemplateRepository(db: MuskliDatabase): ExerciseTemplateRepository =
         RoomExerciseTemplateRepository(db.exerciseTemplateDao())
+
+    @Provides
+    fun workoutRepository(db: MuskliDatabase): WorkoutRepository = RoomWorkoutRepository(db)
 
     @Provides
     fun bundledCatalogueLoader(@ApplicationContext context: Context, db: MuskliDatabase, clock: Clock) =

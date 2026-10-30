@@ -18,8 +18,16 @@ abstract class WorkoutDao {
     abstract fun observe(id: String): Flow<WorkoutWithExercises?>
 
     @Transaction
+    @Query("SELECT * FROM workout WHERE id = :id")
+    abstract suspend fun get(id: String): WorkoutWithExercises?
+
+    @Transaction
     @Query("SELECT * FROM workout WHERE end_time IS NULL AND deleted_at IS NULL ORDER BY start_time DESC LIMIT 1")
     abstract fun observeActiveDraft(): Flow<WorkoutWithExercises?>
+
+    @Transaction
+    @Query("SELECT * FROM workout WHERE end_time IS NULL AND deleted_at IS NULL ORDER BY start_time DESC LIMIT 1")
+    abstract suspend fun activeDraft(): WorkoutWithExercises?
 
     @Transaction
     @Query("SELECT * FROM workout WHERE end_time IS NOT NULL AND deleted_at IS NULL ORDER BY start_time DESC")
