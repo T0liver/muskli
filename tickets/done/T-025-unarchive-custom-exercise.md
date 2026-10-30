@@ -37,3 +37,4 @@ Owner asked for this on 2026-10-30, after T-011. SPEC F-01 AC3 says archive and 
   - **Tests:** domain: restore returns the same id to search with its muscle and equipment filter, and refuses published, missing, and already-active ids. ViewModel: the chip lists only archived custom exercises, restore puts that id back into search, a catalogue id is refused.
   - **Commands:** `.\gradlew.bat :domain:test testDebugUnitTest assembleDebug lintDebug` BUILD SUCCESSFUL, 0 failures. Lint: only the existing junit-bom `NewerVersionAvailable` (D-016). On `medium_phone`: the Archived chip showed the previously archived "Landmine Press" with Restore; after Restore, searching "landm" listed it under All exercises.
   - **Left:** nothing in scope. `SPEC.md` was not edited.
+- 2026-10-30: Owner review: no findings (Blocker / Should-fix / Nit: none). Moved to `done/`.

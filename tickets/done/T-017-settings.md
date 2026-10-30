@@ -30,3 +30,4 @@ Settings screen backed by DataStore with typed accessors: units, default rest, p
   - **Commands:** `.\gradlew.bat :domain:test testDebugUnitTest assembleDebug lintDebug`: BUILD SUCCESSFUL, 0 failures. Lint: only the existing `NewerVersionAvailable` for junit-bom (D-016). On the `medium_phone` emulator: defaults shown, then lb + sound off + 176 lb survived `am force-stop` and relaunch; switching to kg showed 79.8; dark mode checked.
   - **Gotchas:** the DataStore test runs under Robolectric. On the plain JVM, `Build.VERSION.SDK_INT` is 0, so DataStore falls back to `File.renameTo`, which cannot replace an existing file on Windows and fails the second write. Keep-awake and sound/vibration are only stored; T-013 and T-015 apply them.
   - **Left:** nothing in scope.
+- 2026-10-30: Owner review: no findings (Blocker / Should-fix / Nit: none). Moved to `done/`.

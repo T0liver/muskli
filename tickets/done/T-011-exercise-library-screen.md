@@ -29,4 +29,5 @@ Library screen with search, filters, recents, create/edit custom exercise form, 
   - **Commands:** `.\gradlew.bat :domain:test testDebugUnitTest assembleDebug lintDebug`: BUILD SUCCESSFUL, 0 failures (`:app` 23 tests). Lint: only the existing junit-bom `NewerVersionAvailable` (D-016). On the `medium_phone` emulator with the bundled catalogue: library in dark mode; created "Landmine Press" (shoulders, barbell, triceps secondary), found it by "landm", edited and archived it at font scale 1.5; it disappeared from results.
   - **Not checked on a device:** recents (no workout can be logged until T-013) and the picker (not reachable from home); both are covered by the tests above.
   - **Gotchas:** `app/src/test/resources/robolectric.properties` sets `application=android.app.Application`, so Robolectric tests don't start Hilt and the catalogue loader. LazyColumn keys are prefixed by section because an exercise can be in both Recent and All.
-  - **Left:** nothing in scope. There is no un-archive UI; nothing asked for it.
+  - **Left:** nothing in scope. There is no un-archive UI; nothing asked for it. Un-archive became T-025.
+- 2026-10-30: Owner review: no findings (Blocker / Should-fix / Nit: none). Moved to `done/`.
