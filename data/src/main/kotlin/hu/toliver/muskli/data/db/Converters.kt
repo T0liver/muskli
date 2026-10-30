@@ -35,6 +35,6 @@ class Converters {
 
 private fun Enum<*>.toDb(): String = name.lowercase()
 
-private inline fun <reified E : Enum<E>> String.toEnum(): E =
+internal inline fun <reified E : Enum<E>> String.toEnum(): E =
     enumValues<E>().firstOrNull { it.name.lowercase() == this }
         ?: throw IllegalArgumentException("Unknown ${E::class.simpleName} value '$this'")

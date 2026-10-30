@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -69,6 +70,29 @@ class MigrationTest {
         try {
             val set = room.workoutDao().observe("w1").first()!!.toDomain().exercises.single().sets.single()
             assertEquals(80.0, set.data.weightKg)
+        } finally {
+            room.close()
+        }
+    }
+
+    @Test
+    fun `TC-DATA-04 migration 1 to 2 keeps the library and starts with no catalogue version`() = runTest {
+        helper.createDatabase(1).apply {
+            execSQL(
+                "INSERT INTO exercise_template (id, title, exercise_type, primary_muscle, equipment, is_custom, archived, created_at, updated_at) " +
+                    "VALUES ('my-fly', 'My fly', 'weight_reps', 'chest', 'machine', 1, 0, 1, 1)",
+            )
+            close()
+        }
+
+        helper.runMigrationsAndValidate(2, listOf(MuskliDatabase.MIGRATION_1_2)).close()
+
+        val room = Room.databaseBuilder(context, MuskliDatabase::class.java, dbName)
+            .addMigrations(*MuskliDatabase.MIGRATIONS)
+            .build()
+        try {
+            assertEquals("My fly", room.exerciseTemplateDao().get("my-fly")?.toDomain()?.title)
+            assertNull(room.catalogueMetaDao().version())
         } finally {
             room.close()
         }

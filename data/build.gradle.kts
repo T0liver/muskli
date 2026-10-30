@@ -31,10 +31,37 @@ room {
     schemaDirectory("$projectDir/schemas")
 }
 
+/** Copies only the catalogue file, not the schema or tools beside it, so the APK carries the published bytes. */
+abstract class CopyBundledCatalogue : DefaultTask() {
+    @get:InputFile
+    abstract val catalogue: RegularFileProperty
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun copy() {
+        val out = outputDir.get().asFile
+        out.deleteRecursively()
+        catalogue.get().asFile.copyTo(out.resolve("catalogue/catalogue.json"))
+    }
+}
+
+val copyBundledCatalogue = tasks.register<CopyBundledCatalogue>("copyBundledCatalogue") {
+    catalogue.set(rootProject.layout.projectDirectory.file("catalogue/catalogue.json"))
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.sources.assets?.addGeneratedSourceDirectory(copyBundledCatalogue, CopyBundledCatalogue::outputDir)
+    }
+}
+
 dependencies {
     implementation(project(":domain"))
 
-    implementation(libs.androidx.room.runtime)
+    // api: :app provides MuskliDatabase through Hilt, which needs RoomDatabase on its classpath.
+    api(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 

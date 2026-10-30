@@ -17,8 +17,36 @@ abstract class ExerciseTemplateDao {
     abstract fun observeAll(): Flow<List<ExerciseTemplateWithMuscles>>
 
     @Transaction
+    @Query("SELECT * FROM exercise_template")
+    abstract suspend fun getAll(): List<ExerciseTemplateWithMuscles>
+
+    @Transaction
     @Query("SELECT * FROM exercise_template WHERE id = :id")
     abstract suspend fun get(id: String): ExerciseTemplateWithMuscles?
+
+    @Transaction
+    @Query(
+        """
+        SELECT t.* FROM exercise_template t
+        JOIN (
+            SELECT we.exercise_template_id AS template_id, MAX(w.start_time) AS last_used
+            FROM workout_exercise we JOIN workout w ON w.id = we.workout_id
+            WHERE w.deleted_at IS NULL
+            GROUP BY we.exercise_template_id
+        ) recent ON recent.template_id = t.id
+        WHERE t.archived = 0
+        ORDER BY recent.last_used DESC, t.title
+        LIMIT :limit
+        """,
+    )
+    abstract fun observeRecentlyUsed(limit: Int): Flow<List<ExerciseTemplateWithMuscles>>
+
+    /** Templates any workout points at, soft-deleted workouts included, since those can be restored. */
+    @Query("SELECT DISTINCT exercise_template_id FROM workout_exercise")
+    abstract suspend fun referencedTemplateIds(): List<String>
+
+    @Query("UPDATE exercise_template SET archived = 1, updated_at = :updatedAt WHERE id IN (:ids)")
+    abstract suspend fun archive(ids: List<String>, updatedAt: Long)
 
     @Transaction
     open suspend fun upsert(

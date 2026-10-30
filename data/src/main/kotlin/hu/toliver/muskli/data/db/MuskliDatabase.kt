@@ -6,8 +6,12 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
+import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.execSQL
+import hu.toliver.muskli.data.db.dao.CatalogueMetaDao
 import hu.toliver.muskli.data.db.dao.ExerciseTemplateDao
 import hu.toliver.muskli.data.db.dao.WorkoutDao
+import hu.toliver.muskli.data.db.entity.CatalogueMetaEntity
 import hu.toliver.muskli.data.db.entity.ExerciseTemplateEntity
 import hu.toliver.muskli.data.db.entity.ExerciseTemplateSecondaryMuscleEntity
 import hu.toliver.muskli.data.db.entity.WorkoutEntity
@@ -21,6 +25,7 @@ import hu.toliver.muskli.data.db.entity.WorkoutSetEntity
         WorkoutEntity::class,
         WorkoutExerciseEntity::class,
         WorkoutSetEntity::class,
+        CatalogueMetaEntity::class,
     ],
     version = MuskliDatabase.VERSION,
     exportSchema = true,
@@ -31,12 +36,22 @@ abstract class MuskliDatabase : RoomDatabase() {
 
     abstract fun workoutDao(): WorkoutDao
 
+    abstract fun catalogueMetaDao(): CatalogueMetaDao
+
     companion object {
         const val NAME = "muskli.db"
-        const val VERSION = 1
+        const val VERSION = 2
+
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(connection: SQLiteConnection) {
+                connection.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `catalogue_meta` (`id` INTEGER NOT NULL, `version` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+                )
+            }
+        }
 
         /** Every schema change adds its migration here and a test in `MigrationTest` (TC-DATA-04). */
-        val MIGRATIONS: Array<Migration> = emptyArray()
+        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2)
 
         /** Lives in the default database directory so Android Auto Backup includes it (D-024). */
         fun build(context: Context): MuskliDatabase =
