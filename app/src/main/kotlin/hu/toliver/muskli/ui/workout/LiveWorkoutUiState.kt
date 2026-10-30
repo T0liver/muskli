@@ -28,6 +28,10 @@ sealed interface LiveWorkoutUiState {
         val reorderOpen: Boolean = false,
         /** Editing a past workout (T-016): the header saves instead of finishing. */
         val editing: Boolean = false,
+        /** The picker opens at the current start; it changes the start of the live draft only. */
+        val startedAtEpochMs: Long = 0L,
+        val startPickerOpen: Boolean = false,
+        val startInFutureShown: Boolean = false,
     ) : LiveWorkoutUiState
 }
 
@@ -53,4 +57,10 @@ sealed interface LiveWorkoutEvent {
     data object RestMinus15 : LiveWorkoutEvent
     data object RestPlus15 : LiveWorkoutEvent
     data object RestSkipped : LiveWorkoutEvent
+
+    /** The stopwatch was tapped (F-02 AC1). */
+    data object DurationClicked : LiveWorkoutEvent
+    data class StartPicked(val epochMs: Long) : LiveWorkoutEvent
+    data object StartPickerDismissed : LiveWorkoutEvent
+    data object StartInFutureDismissed : LiveWorkoutEvent
 }

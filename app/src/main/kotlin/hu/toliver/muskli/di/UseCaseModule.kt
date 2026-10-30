@@ -17,6 +17,7 @@ import hu.toliver.muskli.domain.usecase.workout.AddExercisesUseCase
 import hu.toliver.muskli.domain.usecase.workout.AddSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.AdjustRestTimerUseCase
 import hu.toliver.muskli.domain.usecase.workout.ChangeSetTypeUseCase
+import hu.toliver.muskli.domain.usecase.workout.ChangeStartTimeUseCase
 import hu.toliver.muskli.domain.usecase.workout.CompleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.DeleteSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.DeleteWorkoutUseCase
@@ -119,4 +120,7 @@ object UseCaseModule {
 
     @Provides
     fun previousSetsBefore(repository: WorkoutRepository) = PreviousSetsBeforeUseCase(repository)
+
+    @Provides
+    fun changeStartTime(repository: WorkoutRepository, clock: Clock) = ChangeStartTimeUseCase(repository, clock)
 }

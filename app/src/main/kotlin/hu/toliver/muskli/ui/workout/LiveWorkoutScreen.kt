@@ -1,7 +1,11 @@
 package hu.toliver.muskli.ui.workout
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -14,6 +18,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import hu.toliver.muskli.R
 import hu.toliver.muskli.domain.model.SetType
 import hu.toliver.muskli.domain.settings.WeightUnit
+import hu.toliver.muskli.ui.components.DateTimePickerDialogs
 import hu.toliver.muskli.ui.components.ReorderDialog
 import hu.toliver.muskli.ui.components.SetColumn
 import hu.toliver.muskli.ui.components.WorkoutExerciseUi
@@ -65,7 +70,7 @@ fun LiveWorkoutScreen(
         menuExpandedForExerciseId = state.exerciseMenuFor,
         setTypeMenuForSetId = state.setTypeMenuFor,
         restTimer = state.restTimer,
-        onDurationClick = {}, // TODO(T-026): edit start time
+        onDurationClick = { onEvent(LiveWorkoutEvent.DurationClicked) },
         onFinish = onFinish,
         onMenuClick = { onEvent(LiveWorkoutEvent.ExerciseMenuClicked(it)) },
         onMenuDismiss = { onEvent(LiveWorkoutEvent.ExerciseMenuDismissed) },
@@ -100,6 +105,26 @@ fun LiveWorkoutScreen(
             onDismiss = { onEvent(LiveWorkoutEvent.ReorderDismissed) },
         )
     }
+    if (state.startPickerOpen) {
+        DateTimePickerDialogs(
+            initialEpochMs = state.startedAtEpochMs,
+            onPicked = { onEvent(LiveWorkoutEvent.StartPicked(it)) },
+            onDismiss = { onEvent(LiveWorkoutEvent.StartPickerDismissed) },
+        )
+    }
+    if (state.startInFutureShown) {
+        StartInFutureDialog(onDismiss = { onEvent(LiveWorkoutEvent.StartInFutureDismissed) })
+    }
+}
+
+@Composable
+private fun StartInFutureDialog(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_ok)) } },
+        title = { Text(stringResource(R.string.start_in_future_title)) },
+        text = { Text(stringResource(R.string.start_in_future_body)) },
+    )
 }
 
 /** The keep-awake setting (F-02 AC5), applied only while this screen is shown. */
@@ -143,5 +168,14 @@ private fun LiveWorkoutScreenPreview() {
             onFinish = {},
             onExerciseHistory = {},
         )
+    }
+}
+
+@Preview(name = "Start in the future")
+@Preview(name = "Start in the future: dark", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun StartInFutureDialogPreview() {
+    MuskliTheme {
+        StartInFutureDialog(onDismiss = {})
     }
 }

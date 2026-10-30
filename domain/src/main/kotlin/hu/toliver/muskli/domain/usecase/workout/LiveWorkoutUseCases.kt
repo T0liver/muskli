@@ -276,6 +276,41 @@ class UncompleteSetUseCase(
         }
 }
 
+sealed interface ChangeStartTimeResult {
+    data class Changed(val workout: Workout) : ChangeStartTimeResult
+
+    /** The picked start is after now; nothing was written. */
+    data object InFuture : ChangeStartTimeResult
+}
+
+/**
+ * Moves the start of the live draft, and so its duration (F-02 AC1). The offset is taken at the
+ * new start, like [StartWorkoutUseCase]. Sets and the running rest keep their absolute times
+ * (D-048). Returns null when the workout is unknown or no longer a draft.
+ */
+class ChangeStartTimeUseCase(
+    private val repository: WorkoutRepository,
+    private val clock: Clock,
+) {
+    suspend operator fun invoke(workoutId: String, startedAtEpochMs: Long): ChangeStartTimeResult? {
+        var inFuture = false
+        val stored = repository.edit(workoutId, clock) { workout ->
+            when {
+                !workout.isDraft() -> workout
+                startedAtEpochMs > clock.nowEpochMs() -> workout.also { inFuture = true }
+                else -> workout.copy(startedAtEpochMs = startedAtEpochMs, utcOffsetS = clock.utcOffsetS(startedAtEpochMs))
+            }
+        } ?: return null
+        return when {
+            !stored.isDraft() -> null
+            inFuture -> ChangeStartTimeResult.InFuture
+            else -> ChangeStartTimeResult.Changed(stored)
+        }
+    }
+
+    private fun Workout.isDraft() = finishedAtEpochMs == null && deletedAtEpochMs == null
+}
+
 /** [WorkoutRepository.update] that also stamps `updatedAt` when [edit] changed anything. */
 private suspend fun WorkoutRepository.edit(workoutId: String, clock: Clock, edit: (Workout) -> Workout): Workout? =
     update(workoutId) { current ->
