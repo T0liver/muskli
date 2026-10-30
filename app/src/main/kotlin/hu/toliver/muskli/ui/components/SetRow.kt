@@ -1,6 +1,7 @@
 package hu.toliver.muskli.ui.components
 
 import android.content.res.Configuration
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +17,8 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -38,6 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import hu.toliver.muskli.R
 import hu.toliver.muskli.domain.model.SetType
+import hu.toliver.muskli.domain.settings.WeightUnit
 import hu.toliver.muskli.ui.theme.MuskliTheme
 import hu.toliver.muskli.ui.theme.SetValueTextStyle
 import hu.toliver.muskli.ui.theme.Spacing
@@ -47,7 +51,7 @@ private const val PREVIOUS_WEIGHT = 1.4f
 private const val VALUE_WEIGHT = 1f
 
 @Composable
-fun SetTableHeader(weightColumnLabel: String, modifier: Modifier = Modifier) {
+fun SetTableHeader(columns: List<SetColumn>, weightUnit: WeightUnit, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -57,8 +61,7 @@ fun SetTableHeader(weightColumnLabel: String, modifier: Modifier = Modifier) {
     ) {
         HeaderText(stringResource(R.string.column_set), Modifier.size(width = Spacing.minTouchTarget, height = Spacing.xl))
         HeaderText(stringResource(R.string.column_previous), Modifier.weight(PREVIOUS_WEIGHT))
-        HeaderText(weightColumnLabel, Modifier.weight(VALUE_WEIGHT))
-        HeaderText(stringResource(R.string.column_reps), Modifier.weight(VALUE_WEIGHT))
+        columns.forEach { HeaderText(stringResource(it.labelRes(weightUnit)), Modifier.weight(VALUE_WEIGHT)) }
         Box(Modifier.size(width = Spacing.minTouchTarget, height = Spacing.xl), contentAlignment = Alignment.Center) {
             Icon(
                 painter = painterResource(R.drawable.ic_check),
@@ -84,19 +87,23 @@ private fun HeaderText(text: String, modifier: Modifier) {
 }
 
 /**
- * One set: SET | PREVIOUS | weight | REPS | check. Pre-filled values sit in the fields as real
- * values, so logging a set as planned is a single tap on the check.
+ * One set: SET | PREVIOUS | the exercise's value columns | check. Pre-filled values sit in the
+ * fields as real values, so logging a set as planned is a single tap on the check. Tapping the
+ * set number opens the type menu (F-03 AC3).
  */
 @Composable
 fun SetRow(
     set: WorkoutSetUi,
+    columns: List<SetColumn>,
+    typeMenuExpanded: Boolean,
     onSetTypeClick: () -> Unit,
-    onWeightChange: (String) -> Unit,
-    onRepsChange: (String) -> Unit,
+    onSetTypeChosen: (SetType) -> Unit,
+    onSetTypeMenuDismiss: () -> Unit,
+    onValueChange: (column: SetColumn, value: String) -> Unit,
     onCompletedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val rowColor = if (set.completed) MuskliTheme.workoutColors.completedRow else Color.Transparent
+    val rowColor = if (set.completed) MuskliTheme.workoutColors.completedRow else MaterialTheme.colorScheme.surface
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -105,26 +112,47 @@ fun SetRow(
         horizontalArrangement = Arrangement.spacedBy(Spacing.s),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        SetTypeCell(number = set.number, type = set.type, onClick = onSetTypeClick)
-        PreviousText(set.previousWeight, set.previousReps)
-        SetValueField(
-            value = set.weight,
-            onValueChange = onWeightChange,
-            keyboardType = KeyboardType.Decimal,
-            completed = set.completed,
-            contentDescription = stringResource(R.string.cd_weight, set.number),
-            modifier = Modifier.weight(VALUE_WEIGHT),
-        )
-        SetValueField(
-            value = set.reps,
-            onValueChange = onRepsChange,
-            keyboardType = KeyboardType.Number,
-            completed = set.completed,
-            contentDescription = stringResource(R.string.cd_reps, set.number),
-            modifier = Modifier.weight(VALUE_WEIGHT),
-        )
+        Box {
+            SetTypeCell(number = set.number, type = set.type, onClick = onSetTypeClick)
+            SetTypeMenu(expanded = typeMenuExpanded, onChosen = onSetTypeChosen, onDismiss = onSetTypeMenuDismiss)
+        }
+        PreviousText(set.previous)
+        columns.forEachIndexed { index, column ->
+            SetValueField(
+                value = set.values.getOrElse(index) { "" },
+                onValueChange = { onValueChange(column, it) },
+                keyboardType = if (column == SetColumn.REPS || column == SetColumn.DURATION) KeyboardType.Number else KeyboardType.Decimal,
+                completed = set.completed,
+                contentDescription = stringResource(column.descriptionRes(), set.number),
+                modifier = Modifier.weight(VALUE_WEIGHT),
+            )
+        }
         CompleteButton(number = set.number, completed = set.completed, onCompletedChange = onCompletedChange)
     }
+}
+
+@StringRes
+private fun SetColumn.labelRes(unit: WeightUnit): Int {
+    val lb = unit == WeightUnit.LB
+    return when (this) {
+        SetColumn.WEIGHT -> if (lb) R.string.column_lb else R.string.column_kg
+        SetColumn.ADDED_WEIGHT -> if (lb) R.string.column_plus_lb else R.string.column_plus_kg
+        SetColumn.ASSISTANCE -> if (lb) R.string.column_minus_lb else R.string.column_minus_kg
+        SetColumn.REPS -> R.string.column_reps
+        SetColumn.DURATION -> R.string.column_time
+        SetColumn.DISTANCE_KM -> R.string.column_km
+        SetColumn.DISTANCE_M -> R.string.column_m
+    }
+}
+
+@StringRes
+private fun SetColumn.descriptionRes(): Int = when (this) {
+    SetColumn.WEIGHT -> R.string.cd_weight
+    SetColumn.ADDED_WEIGHT -> R.string.cd_added_weight
+    SetColumn.ASSISTANCE -> R.string.cd_assistance
+    SetColumn.REPS -> R.string.cd_reps
+    SetColumn.DURATION -> R.string.cd_duration
+    SetColumn.DISTANCE_KM, SetColumn.DISTANCE_M -> R.string.cd_distance
 }
 
 @Composable
@@ -164,11 +192,25 @@ private fun SetTypeCell(number: Int, type: SetType, onClick: () -> Unit) {
 }
 
 @Composable
-private fun RowScope.PreviousText(weight: String?, reps: String?) {
-    val text = if (weight != null && reps != null) {
-        stringResource(R.string.previous_value, weight, reps)
-    } else {
-        stringResource(R.string.previous_none)
+private fun SetTypeMenu(expanded: Boolean, onChosen: (SetType) -> Unit, onDismiss: () -> Unit) {
+    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+        listOf(
+            SetType.NORMAL to R.string.set_type_menu_normal,
+            SetType.WARMUP to R.string.set_type_menu_warmup,
+            SetType.DROPSET to R.string.set_type_menu_dropset,
+            SetType.FAILURE to R.string.set_type_menu_failure,
+        ).forEach { (type, label) ->
+            DropdownMenuItem(text = { Text(stringResource(label)) }, onClick = { onChosen(type) })
+        }
+    }
+}
+
+@Composable
+private fun RowScope.PreviousText(previous: List<String>?) {
+    val text = when {
+        previous.isNullOrEmpty() -> stringResource(R.string.previous_none)
+        previous.size == 2 -> stringResource(R.string.previous_value, previous[0], previous[1])
+        else -> previous.first()
     }
     Text(
         text = text,
@@ -236,19 +278,40 @@ private fun CompleteButton(number: Int, completed: Boolean, onCompletedChange: (
 @Preview(name = "Set rows: dark", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun SetRowPreview() {
+    val weightReps = listOf(SetColumn.WEIGHT, SetColumn.REPS)
     MuskliTheme {
         Surface {
             Column {
-                SetTableHeader(weightColumnLabel = stringResource(R.string.column_kg))
+                SetTableHeader(columns = weightReps, weightUnit = WeightUnit.KG)
                 listOf(
-                    WorkoutSetUi("1", 1, SetType.WARMUP, "40", "10", "40", "10", completed = true),
-                    WorkoutSetUi("2", 1, SetType.NORMAL, "80", "8", "80", "8", completed = true),
-                    WorkoutSetUi("3", 2, SetType.NORMAL, "80", "8", "80", "8", completed = false),
-                    WorkoutSetUi("4", 3, SetType.DROPSET, "60", "10", "60", "10", completed = false),
-                    WorkoutSetUi("5", 4, SetType.FAILURE, null, null, "", "", completed = false),
+                    WorkoutSetUi("1", 1, SetType.WARMUP, listOf("40", "10"), listOf("40", "10"), completed = true),
+                    WorkoutSetUi("2", 1, SetType.NORMAL, listOf("80", "8"), listOf("80", "8"), completed = true),
+                    WorkoutSetUi("3", 2, SetType.NORMAL, listOf("80", "8"), listOf("80", "8"), completed = false),
+                    WorkoutSetUi("4", 3, SetType.DROPSET, listOf("60", "10"), listOf("60", "10"), completed = false),
+                    WorkoutSetUi("5", 4, SetType.FAILURE, null, listOf("", ""), completed = false),
                 ).forEach { set ->
-                    SetRow(set = set, onSetTypeClick = {}, onWeightChange = {}, onRepsChange = {}, onCompletedChange = {})
+                    SetRow(
+                        set = set,
+                        columns = weightReps,
+                        typeMenuExpanded = false,
+                        onSetTypeClick = {},
+                        onSetTypeChosen = {},
+                        onSetTypeMenuDismiss = {},
+                        onValueChange = { _, _ -> },
+                        onCompletedChange = {},
+                    )
                 }
+                SetTableHeader(columns = listOf(SetColumn.DURATION), weightUnit = WeightUnit.KG)
+                SetRow(
+                    set = WorkoutSetUi("6", 1, SetType.NORMAL, listOf("1:30"), listOf("1:30"), completed = false),
+                    columns = listOf(SetColumn.DURATION),
+                    typeMenuExpanded = false,
+                    onSetTypeClick = {},
+                    onSetTypeChosen = {},
+                    onSetTypeMenuDismiss = {},
+                    onValueChange = { _, _ -> },
+                    onCompletedChange = {},
+                )
             }
         }
     }

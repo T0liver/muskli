@@ -5,6 +5,9 @@
     <!-- Home -->
     <string name="home_settings">Settings</string>
     <string name="home_library">Exercise library</string>
+    <string name="home_start_workout">Start workout</string>
+    <string name="home_workout_in_progress">Workout in progress</string>
+    <string name="home_resume_workout">Resume</string>
 
     <!-- Exercise library -->
     <string name="library_title">Exercises</string>
@@ -119,6 +122,7 @@
     <string name="stat_sets">Sets</string>
     <string name="cd_edit_duration">Duration %1$s. Edit start time</string>
     <string name="volume_kg">%1$s kg</string>
+    <string name="volume_lb">%1$s lb</string>
     <string name="live_workout_empty_title">No exercises yet</string>
     <string name="live_workout_empty_body">Add an exercise to start logging.</string>
 
@@ -126,7 +130,15 @@
     <string name="column_set">SET</string>
     <string name="column_previous">PREVIOUS</string>
     <string name="column_kg">KG</string>
+    <string name="column_lb">LB</string>
+    <string name="column_plus_kg">+KG</string>
+    <string name="column_plus_lb">+LB</string>
+    <string name="column_minus_kg">−KG</string>
+    <string name="column_minus_lb">−LB</string>
     <string name="column_reps">REPS</string>
+    <string name="column_time">TIME</string>
+    <string name="column_km">KM</string>
+    <string name="column_m">M</string>
     <string name="cd_column_completed">Completed</string>
     <string name="action_add_set">Add set</string>
     <string name="action_add_exercise">Add exercise</string>
@@ -134,6 +146,10 @@
     <string name="menu_reorder">Reorder</string>
     <string name="menu_replace">Replace</string>
     <string name="menu_remove">Remove</string>
+    <string name="reorder_title">Reorder exercises</string>
+    <string name="cd_move_up">Move %1$s up</string>
+    <string name="cd_move_down">Move %1$s down</string>
+    <string name="action_done">Done</string>
 
     <!-- Set row -->
     <string name="previous_none">–</string>
@@ -145,10 +161,19 @@
     <string name="set_type_warmup">warm-up</string>
     <string name="set_type_dropset">drop set</string>
     <string name="set_type_failure">failure</string>
+    <string name="set_type_menu_normal">Normal set</string>
+    <string name="set_type_menu_warmup">Warm-up</string>
+    <string name="set_type_menu_dropset">Drop set</string>
+    <string name="set_type_menu_failure">Failure</string>
     <string name="cd_set_type">Set %1$d, %2$s. Change type</string>
     <string name="cd_weight">Weight, set %1$d</string>
+    <string name="cd_added_weight">Added weight, set %1$d</string>
+    <string name="cd_assistance">Assistance, set %1$d</string>
     <string name="cd_reps">Reps, set %1$d</string>
+    <string name="cd_duration">Time, set %1$d</string>
+    <string name="cd_distance">Distance, set %1$d</string>
     <string name="cd_complete_set">Complete set %1$d</string>
+    <string name="action_delete_set">Delete set</string>
 
     <!-- Rest timer -->
     <string name="rest_timer_label">Rest</string>

@@ -32,6 +32,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -60,6 +61,8 @@ fun LibraryRoute(
     viewModel: LibraryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // The ViewModel outlives one pick (activity scope), so the next "Add exercise" starts empty.
+    DisposableEffect(viewModel) { onDispose { viewModel.onEvent(LibraryEvent.SelectionCleared) } }
     LibraryScreen(state = state, mode = mode, onEvent = viewModel::onEvent, onBack = onBack, onPicked = onPicked)
 }
 

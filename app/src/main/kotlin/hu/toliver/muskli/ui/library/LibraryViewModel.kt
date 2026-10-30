@@ -70,6 +70,7 @@ class LibraryViewModel @Inject constructor(
             is LibraryEvent.ShowArchivedChanged -> browse.update { it.copy(showArchived = event.show) }
             is LibraryEvent.RestoreClicked -> viewModelScope.launch { unarchiveCustom(event.id) }
             is LibraryEvent.SelectionToggled -> selection.update { if (event.id in it) it - event.id else it + event.id }
+            LibraryEvent.SelectionCleared -> selection.value = emptyList()
             LibraryEvent.CreateClicked -> editor.value = ExerciseEditorState()
             is LibraryEvent.EditClicked -> viewModelScope.launch {
                 val template = repository.get(event.id)?.takeIf { it.isCustom } ?: return@launch

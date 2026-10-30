@@ -46,3 +46,8 @@ fun sessionVolumeKg(
         .filter { it.completed && (includeWarmUps || it.type != SetType.WARMUP) }
         .sumOf { setVolumeKg(it, exercise.type, bodyweightKg, exercise.unilateral) }
 }
+
+/** Completed sets across exercises, with the same warm-up rule as [sessionVolumeKg] (D-010). */
+fun completedSetCount(exercises: List<ExerciseSets>, includeWarmUps: Boolean = false): Int = exercises.sumOf { exercise ->
+    exercise.sets.count { it.completed && (includeWarmUps || it.type != SetType.WARMUP) }
+}

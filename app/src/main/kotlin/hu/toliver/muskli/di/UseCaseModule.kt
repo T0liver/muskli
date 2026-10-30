@@ -7,11 +7,23 @@ import dagger.hilt.components.SingletonComponent
 import hu.toliver.muskli.domain.repo.Clock
 import hu.toliver.muskli.domain.repo.ExerciseTemplateRepository
 import hu.toliver.muskli.domain.repo.IdGenerator
+import hu.toliver.muskli.domain.repo.WorkoutRepository
 import hu.toliver.muskli.domain.usecase.library.ArchiveCustomExerciseUseCase
 import hu.toliver.muskli.domain.usecase.library.CreateCustomExerciseUseCase
 import hu.toliver.muskli.domain.usecase.library.EditCustomExerciseUseCase
 import hu.toliver.muskli.domain.usecase.library.SearchExercisesUseCase
 import hu.toliver.muskli.domain.usecase.library.UnarchiveCustomExerciseUseCase
+import hu.toliver.muskli.domain.usecase.workout.AddExercisesUseCase
+import hu.toliver.muskli.domain.usecase.workout.AddSetUseCase
+import hu.toliver.muskli.domain.usecase.workout.ChangeSetTypeUseCase
+import hu.toliver.muskli.domain.usecase.workout.CompleteSetUseCase
+import hu.toliver.muskli.domain.usecase.workout.DeleteSetUseCase
+import hu.toliver.muskli.domain.usecase.workout.EditSetValuesUseCase
+import hu.toliver.muskli.domain.usecase.workout.RemoveExerciseUseCase
+import hu.toliver.muskli.domain.usecase.workout.ReorderExerciseUseCase
+import hu.toliver.muskli.domain.usecase.workout.ReplaceExerciseUseCase
+import hu.toliver.muskli.domain.usecase.workout.StartWorkoutUseCase
+import hu.toliver.muskli.domain.usecase.workout.UncompleteSetUseCase
 
 // :domain has no javax.inject, so use cases are constructed here.
 @Module
@@ -34,4 +46,37 @@ object UseCaseModule {
     @Provides
     fun unarchiveCustomExercise(repository: ExerciseTemplateRepository, clock: Clock) =
         UnarchiveCustomExerciseUseCase(repository, clock)
+
+    @Provides
+    fun startWorkout(repository: WorkoutRepository, ids: IdGenerator, clock: Clock) = StartWorkoutUseCase(repository, ids, clock)
+
+    @Provides
+    fun addExercises(repository: WorkoutRepository, ids: IdGenerator, clock: Clock) = AddExercisesUseCase(repository, ids, clock)
+
+    @Provides
+    fun replaceExercise(repository: WorkoutRepository, ids: IdGenerator, clock: Clock) = ReplaceExerciseUseCase(repository, ids, clock)
+
+    @Provides
+    fun removeExercise(repository: WorkoutRepository, clock: Clock) = RemoveExerciseUseCase(repository, clock)
+
+    @Provides
+    fun reorderExercise(repository: WorkoutRepository, clock: Clock) = ReorderExerciseUseCase(repository, clock)
+
+    @Provides
+    fun addSet(repository: WorkoutRepository, ids: IdGenerator, clock: Clock) = AddSetUseCase(repository, ids, clock)
+
+    @Provides
+    fun deleteSet(repository: WorkoutRepository, clock: Clock) = DeleteSetUseCase(repository, clock)
+
+    @Provides
+    fun changeSetType(repository: WorkoutRepository, clock: Clock) = ChangeSetTypeUseCase(repository, clock)
+
+    @Provides
+    fun editSetValues(repository: WorkoutRepository, clock: Clock) = EditSetValuesUseCase(repository, clock)
+
+    @Provides
+    fun completeSet(repository: WorkoutRepository, clock: Clock) = CompleteSetUseCase(repository, clock)
+
+    @Provides
+    fun uncompleteSet(repository: WorkoutRepository, clock: Clock) = UncompleteSetUseCase(repository, clock)
 }

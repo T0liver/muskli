@@ -24,25 +24,28 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import hu.toliver.muskli.R
 import hu.toliver.muskli.domain.model.SetType
+import hu.toliver.muskli.domain.settings.WeightUnit
 import hu.toliver.muskli.ui.components.AddExerciseButton
 import hu.toliver.muskli.ui.components.ExerciseCard
 import hu.toliver.muskli.ui.components.RestTimerBar
 import hu.toliver.muskli.ui.components.RestTimerUi
+import hu.toliver.muskli.ui.components.SetColumn
 import hu.toliver.muskli.ui.components.WorkoutExerciseUi
 import hu.toliver.muskli.ui.components.WorkoutHeader
 import hu.toliver.muskli.ui.components.WorkoutSetUi
 import hu.toliver.muskli.ui.theme.MuskliTheme
 import hu.toliver.muskli.ui.theme.Spacing
 
-/** Static layout of the live-workout screen; state and events are wired in T-013. */
+/** Layout of the live-workout screen; [LiveWorkoutScreen] wires it to the ViewModel state. */
 @Composable
 fun LiveWorkoutContent(
     duration: String,
     volume: String,
     completedSets: Int,
     exercises: List<WorkoutExerciseUi>,
-    weightColumnLabel: String,
+    weightUnit: WeightUnit,
     menuExpandedForExerciseId: String?,
+    setTypeMenuForSetId: String?,
     restTimer: RestTimerUi?,
     onDurationClick: () -> Unit,
     onFinish: () -> Unit,
@@ -52,9 +55,11 @@ fun LiveWorkoutContent(
     onReplace: (exerciseId: String) -> Unit,
     onRemove: (exerciseId: String) -> Unit,
     onSetTypeClick: (setId: String) -> Unit,
-    onWeightChange: (setId: String, value: String) -> Unit,
-    onRepsChange: (setId: String, value: String) -> Unit,
+    onSetTypeChosen: (setId: String, type: SetType) -> Unit,
+    onSetTypeMenuDismiss: () -> Unit,
+    onValueChange: (setId: String, column: SetColumn, value: String) -> Unit,
     onCompletedChange: (setId: String, completed: Boolean) -> Unit,
+    onDeleteSet: (setId: String) -> Unit,
     onAddSet: (exerciseId: String) -> Unit,
     onAddExercise: () -> Unit,
     onRestMinus15: () -> Unit,
@@ -95,17 +100,20 @@ fun LiveWorkoutContent(
                 items(exercises, key = { it.id }) { exercise ->
                     ExerciseCard(
                         exercise = exercise,
-                        weightColumnLabel = weightColumnLabel,
+                        weightUnit = weightUnit,
                         menuExpanded = exercise.id == menuExpandedForExerciseId,
+                        setTypeMenuForSetId = setTypeMenuForSetId,
                         onMenuClick = { onMenuClick(exercise.id) },
                         onMenuDismiss = onMenuDismiss,
                         onReorder = { onReorder(exercise.id) },
                         onReplace = { onReplace(exercise.id) },
                         onRemove = { onRemove(exercise.id) },
                         onSetTypeClick = onSetTypeClick,
-                        onWeightChange = onWeightChange,
-                        onRepsChange = onRepsChange,
+                        onSetTypeChosen = onSetTypeChosen,
+                        onSetTypeMenuDismiss = onSetTypeMenuDismiss,
+                        onValueChange = onValueChange,
                         onCompletedChange = onCompletedChange,
+                        onDeleteSet = onDeleteSet,
                         onAddSet = { onAddSet(exercise.id) },
                     )
                 }
@@ -141,32 +149,37 @@ private fun EmptyWorkout(onAddExercise: () -> Unit, modifier: Modifier = Modifie
     }
 }
 
+private val weightReps = listOf(SetColumn.WEIGHT, SetColumn.REPS)
+
 private fun previewExercises(completed: Boolean): List<WorkoutExerciseUi> = listOf(
     WorkoutExerciseUi(
         id = "bench",
         name = "Bench Press (Barbell)",
+        columns = weightReps,
         sets = listOf(
-            WorkoutSetUi("b1", 1, SetType.WARMUP, "40", "10", "40", "10", completed = completed),
-            WorkoutSetUi("b2", 1, SetType.NORMAL, "80", "8", "82.5", "8", completed = completed),
-            WorkoutSetUi("b3", 2, SetType.NORMAL, "80", "8", "82.5", "8", completed = false),
-            WorkoutSetUi("b4", 3, SetType.FAILURE, "80", "6", "82.5", "6", completed = false),
+            WorkoutSetUi("b1", 1, SetType.WARMUP, listOf("40", "10"), listOf("40", "10"), completed = completed),
+            WorkoutSetUi("b2", 1, SetType.NORMAL, listOf("80", "8"), listOf("82.5", "8"), completed = completed),
+            WorkoutSetUi("b3", 2, SetType.NORMAL, listOf("80", "8"), listOf("82.5", "8"), completed = false),
+            WorkoutSetUi("b4", 3, SetType.FAILURE, listOf("80", "6"), listOf("82.5", "6"), completed = false),
         ),
     ),
     WorkoutExerciseUi(
         id = "raise",
         name = "Lateral Raise (Dumbbell)",
+        columns = weightReps,
         sets = listOf(
-            WorkoutSetUi("l1", 1, SetType.NORMAL, "12", "12", "12", "12", completed = false),
-            WorkoutSetUi("l2", 2, SetType.DROPSET, "8", "10", "8", "10", completed = false),
-            WorkoutSetUi("l3", 3, SetType.DROPSET, null, null, "", "", completed = false),
+            WorkoutSetUi("l1", 1, SetType.NORMAL, listOf("12", "12"), listOf("12", "12"), completed = false),
+            WorkoutSetUi("l2", 2, SetType.DROPSET, listOf("8", "10"), listOf("8", "10"), completed = false),
+            WorkoutSetUi("l3", 3, SetType.DROPSET, null, listOf("", ""), completed = false),
         ),
     ),
     WorkoutExerciseUi(
         id = "row",
         name = "Bent-Over Row (Barbell)",
+        columns = weightReps,
         sets = listOf(
-            WorkoutSetUi("r1", 1, SetType.NORMAL, "70", "10", "70", "10", completed = completed),
-            WorkoutSetUi("r2", 2, SetType.NORMAL, "70", "10", "70", "10", completed = false),
+            WorkoutSetUi("r1", 1, SetType.NORMAL, listOf("70", "10"), listOf("70", "10"), completed = completed),
+            WorkoutSetUi("r2", 2, SetType.NORMAL, listOf("70", "10"), listOf("70", "10"), completed = false),
         ),
     ),
 )
@@ -184,8 +197,9 @@ private fun LiveWorkoutPreview(
             volume = stringResource(R.string.volume_kg, volume),
             completedSets = completedSets,
             exercises = exercises,
-            weightColumnLabel = stringResource(R.string.column_kg),
+            weightUnit = WeightUnit.KG,
             menuExpandedForExerciseId = null,
+            setTypeMenuForSetId = null,
             restTimer = restTimer,
             onDurationClick = {},
             onFinish = {},
@@ -195,9 +209,11 @@ private fun LiveWorkoutPreview(
             onReplace = {},
             onRemove = {},
             onSetTypeClick = {},
-            onWeightChange = { _, _ -> },
-            onRepsChange = { _, _ -> },
+            onSetTypeChosen = { _, _ -> },
+            onSetTypeMenuDismiss = {},
+            onValueChange = { _, _, _ -> },
             onCompletedChange = { _, _ -> },
+            onDeleteSet = {},
             onAddSet = {},
             onAddExercise = {},
             onRestMinus15 = {},

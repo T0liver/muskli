@@ -130,4 +130,14 @@ class VolumeTest {
             ),
         )
     }
+
+    @Test
+    fun `set count takes completed sets only and leaves warm-ups out by default`() {
+        val sets = listOf(
+            warmUpAndTwoWorkSets,
+            exercise(ExerciseType.DURATION, SetData(durationS = 60, completed = true), SetData(durationS = 60)),
+        )
+        assertEquals(3, completedSetCount(sets))
+        assertEquals(4, completedSetCount(sets, includeWarmUps = true))
+    }
 }

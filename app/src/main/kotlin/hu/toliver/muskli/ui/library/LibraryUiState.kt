@@ -45,6 +45,7 @@ sealed interface LibraryEvent {
     data class ShowArchivedChanged(val show: Boolean) : LibraryEvent
     data class RestoreClicked(val id: String) : LibraryEvent
     data class SelectionToggled(val id: String) : LibraryEvent
+    data object SelectionCleared : LibraryEvent
     data object CreateClicked : LibraryEvent
     data class EditClicked(val id: String) : LibraryEvent
     data class EditorTitleChanged(val title: String) : LibraryEvent
