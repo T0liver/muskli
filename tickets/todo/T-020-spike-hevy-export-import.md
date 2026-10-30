@@ -20,3 +20,4 @@ Understand the real export format and plan the importer.
 - [ ] Mapping table + risks + follow-up tickets in `todo/`.
 
 ## Handoff log
+- 2026-10-30 SPIKE: blocked: no export file. `docs/fixtures/` holds only `.gitkeep`. Ticket stays in `todo/`; no format was inferred. Owner: put a Hevy export in `docs/fixtures/` (git-ignored), then rerun this spike.
