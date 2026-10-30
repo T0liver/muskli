@@ -19,6 +19,7 @@ One-file JSON export and safe, all-or-nothing import, via the system file picker
 - [x] TC-DATA-05 and 06 pass; AC-06 steps work on the device (emulator; the owner's phone is the VERIFY ticket's job).
 
 ## Handoff log
+- 2026-10-30: Owner approved. Moved to `done/`. The phone run of AC-06 stays with T-019.
 - 2026-10-29 DOCS: D-024 is OS Auto Backup, already on via `allowBackup`. This ticket stays the manual JSON file. "Cloud backup" above means do not build a sync or upload feature.
 - **2026-10-30 (BUILD):** Done. Owner choices recorded as **D-034** (kotlinx.serialization, Replace import, settings included).
   - **Dependency:** `org.jetbrains.kotlin.plugin.serialization` at `kotlin` (2.4.21) and `kotlinx-serialization-json` **1.12.0** (latest stable on Maven Central, checked 2026-10-30), `:data` only.

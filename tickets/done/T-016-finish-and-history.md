@@ -22,6 +22,7 @@ Finish a workout (name, duration, start date/time, note), then browse, open, edi
 - [x] Logging a past date works.
 
 ## Handoff log
+- 2026-10-30: Owner approved. Moved to `done/`.
 - **2026-10-30 (BUILD):** Done. Owner rules recorded as **D-033**.
   - **Domain:** `FinishAndHistoryUseCases.kt` (`FinishWorkoutUseCase`, `DeleteWorkoutUseCase`, `RestoreWorkoutUseCase`, `StartPastWorkoutUseCase`, `PreviousSetsBeforeUseCase`, `MarkSetCompletedUseCase`, `WorkoutDetails`, `FinishWorkoutResult`) and `history/ExerciseSessions.kt`. These are new public `:domain` APIs, nothing existing changed. No schema change (still v3).
   - **App:** Finish screen (`ui/finish`), History list, workout detail, and exercise history (`ui/history`), date/time picker dialogs. The live-workout screen gets an edit mode (assisted `WorkoutSessionViewModel(editWorkoutId)`), header says "Edit workout"/"Save". Exercise menu gains **History**; Home gains **History**. A small hand-rolled, saveable back stack (`AppRoutes.kt`) replaces the old screen switch in `MainActivity`; still no navigation library.
