@@ -45,3 +45,16 @@ Needs owner approval for any schema or catalogue format change. Owner, 2026-10-3
   - **Nit:** `CatalogueParser` could use `optBoolean("unilateral", false)`, but `optBoolean` would also accept the string `"true"`, so the explicit `has`/`getBoolean` is stricter and fine as is. In `WorkoutSessionViewModel.toActive` the template is looked up twice per exercise (once for `types`, once for `unilateral`); this is harmless. Nothing to change.
   - **Checks:** `.\gradlew.bat :domain:test testDebugUnitTest assembleDebug lintDebug` BUILD SUCCESSFUL. The test tasks were re-run with `--rerun` and also passed. Lint: 0 errors, 1 warning (the existing junit-bom `NewerVersionAvailable`). `python -m unittest discover -s catalogue/tools -p "test_*.py"`: 41 tests OK.
   - **Result:** moved to `verify/`.
+- 2026-10-30 VERIFY:
+  - **Build:** debug APK from `3d5c23c` (the same code as `68b65f1`, plus the ticket file only). For the migration step, the `main` debug APK at `0398e4b` (schema v3) was built and saved as `build/verify/main-v3.apk`.
+  - **Device:** emulator `medium_phone` (`emulator-5554`), `sdk_gphone64_x86_64`, Android 16 (API 36).
+  - **Steps:**
+    1. Ticket verification `.\gradlew.bat :domain:test testDebugUnitTest`: **pass** (see REVIEW, re-run with `--rerun`).
+    2. Real 3→4 migration: uninstalled, installed the `main` v3 build, and created the custom "Old Lunge" (Quadriceps, Dumbbell) in its editor, which has no Unilateral row (`v1-main-editor.png`). Then installed this build over it with `adb install -r`. The app launched, "Old Lunge" is still in the library, and its editor shows Unilateral **off** (`v2-migrated-off.png`). **Pass.**
+    3. Editor toggle: tapping the row label turns the switch on (`v3-toggled-on.png`). After Save and reopen it is still on (`v4-reopened-on.png`). The row is 126 px tall, which is 48 dp at this density, and the whole row is the toggle target. **Pass.**
+    4. Live volume (TC-VOL-09 plus a bilateral control): Barbell Back Squat 100 kg × 5 completed showed a header of **500 kg**, so bilateral is not doubled. Adding Old Lunge 20 kg × 10 completed showed **900 kg**, 2 sets (`v5-live-900.png`). **Pass.** (In one attempt my scripted tap hit the squat's "Complete set 1" button twice, because both rows have that label. This was a tap-targeting error in the harness, not an app issue.)
+    5. History: finished and saved the workout. The History row reads "2 min · 900 kg · 2 sets" (`v6-history-900.png`). **Pass.**
+    6. Dark mode: with `cmd uimode night yes`, the editor's Unilateral row and switch are legible with correct contrast (`v7-editor-dark.png`). **Pass.**
+  - **Crashes:** `logcat -b crash` was empty throughout.
+  - **Evidence:** screenshots are in `build/verify/` (git-ignored).
+  - **Result:** all steps pass, so moved to `done/`. No new tickets.
