@@ -42,3 +42,12 @@ Found during T-013: F-02 AC1 asks for it, but no ticket covered the live edit.
   - **Nit:** none worth a change.
   - **Commands:** `.\gradlew.bat :domain:test testDebugUnitTest assembleDebug lintDebug` BUILD SUCCESSFUL, 292 tests, 0 failures; lint 0 errors, 1 warning (the existing junit-bom `NewerVersionAvailable`).
   - **Result:** to `verify/`.
+- 2026-10-31 VERIFY (debug build of `bb83894`, code unchanged at `7af8814`; emulator `emulator-5554`, medium_phone, Android 16 / API 36; screenshots in `build/verify/T-026/`):
+  - Discarded the leftover BUILD draft, started a fresh workout at 00:15:42.
+  - **Tap stopwatch opens the picker** at the stored start (date Oct 31, then 12:15 AM): pass (`02-date-picker`, `03-time-picker`).
+  - **Confirm unchanged keeps the seconds:** at 00:16:35 the stopwatch read 0:53 (start still 00:15:42; it would read 1:35 if the seconds were dropped): pass (`04-unchanged-confirm`).
+  - **Earlier start persists and the stopwatch follows:** picked Oct 30, 11:15 PM at 00:18:06; stopwatch 1:03:08 and still running 5 s later: pass (`06-earlier-start`). After `am force-stop` and relaunch: 1:03:36 at 00:18:33, same start: pass (`07-after-relaunch`).
+  - **Future start rejected:** picked today (Oct 31) 11:15 PM; "Start time is in the future" dialog shown, OK closes it, stopwatch 1:04:56 at 00:19:54 (start unchanged): pass (`08-future-rejected`).
+  - **Cancel and dark mode:** in dark mode the date picker reopens at Oct 30 and the time at 11:15 PM, both readable; Cancel leaves the start unchanged (1:05:27 at 00:20:26): pass (`09-dark-date-picker`, `10-dark-time-picker`).
+  - Cleanup: light mode restored, test draft discarded.
+  - **Result:** all steps pass, to `done/`.
