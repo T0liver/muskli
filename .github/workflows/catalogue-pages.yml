@@ -1,0 +1,92 @@
+# docs/CATALOGUE.md section 6 step 3: a push to main that touches catalogue/** publishes
+# catalogue/v1/ to GitHub Pages (source "GitHub Actions"). Each deploy replaces the whole site.
+name: Publish catalogue
+
+on:
+  push:
+    branches: [main]
+    paths: ["catalogue/**"]
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  LIVE_URL: https://t0liver.github.io/muskli/catalogue/v1/catalogue.json
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The previous main commit must be present for `git show <before>:catalogue/catalogue.json`.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install check-jsonschema (CI only, D-025)
+        run: python -m pip install check-jsonschema==0.39.0
+
+      - name: Checker unit tests
+        run: python -m unittest discover -s catalogue/tools -p "test_*.py" -v
+
+      - name: Rule 2, JSON Schema
+        run: check-jsonschema --schemafile catalogue/catalogue.schema.json catalogue/catalogue.json
+
+      - name: Rules 1 and 3-7 against the previous main
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            python catalogue/tools/check_catalogue.py --base-ref "$BEFORE"
+          else
+            echo "No previous commit '$BEFORE' in the clone; checking without a base."
+            python catalogue/tools/check_catalogue.py
+          fi
+
+      - name: Rules 6 and 7 against the live file
+        # The query string skips the Pages CDN cache (max-age=600), so the comparison sees the latest deploy.
+        run: |
+          status=$(curl --silent --show-error --location --retry 3 \
+            --header "Cache-Control: no-cache" \
+            --output live.json --write-out "%{http_code}" \
+            "${LIVE_URL}?ci=${GITHUB_SHA}")
+          case "$status" in
+            200)
+              python catalogue/tools/check_catalogue.py --base-file live.json
+              ;;
+            404)
+              echo "Nothing live at $LIVE_URL yet (HTTP 404): first deploy, no live version to beat."
+              ;;
+            *)
+              echo "::error title=Live catalogue::GET $LIVE_URL returned HTTP $status; refusing to deploy without the version check."
+              exit 1
+              ;;
+          esac
+
+      - name: Build site
+        run: |
+          mkdir -p _site/catalogue/v1
+          cp catalogue/catalogue.json catalogue/catalogue.schema.json _site/catalogue/v1/
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}catalogue/v1/catalogue.json
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
