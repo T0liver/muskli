@@ -17,9 +17,10 @@ Completing a set starts the rest timer per the rule; the alert fires with the sc
 
 ## Acceptance criteria
 - [x] No timer after completing the set before a drop set (AC-05).
-- [ ] Alert fires with the screen off on the owner's phone (AC-02) and after force-stop/reopen the remaining time is correct (AC-03). *Emulator passes; owner phone run pending (steps in the Handoff log).*
+- [x] Alert fires with the screen off on the owner's phone (AC-02) and after force-stop/reopen the remaining time is correct (AC-03).
 
 ## Handoff log
+- 2026-10-30: Owner ran the AC-02 and AC-03 phone steps and confirmed everything works as intended. Phone model and Android version were not reported. Moved to `done/`.
 - 2026-10-30 BUILD: Implemented. AC-05 is covered by tests. AC-02 and AC-03 pass on the API 36 emulator; the owner's phone run is still to do. Moved to `review/`.
   - Taken while T-009 is in `verify/`: its precondition, D-015 decided, holds, and the owner asked for T-015.
   - **Owner decisions (D-032):** schema v3 with nullable `workout.rest_ends_at` and `workout.rest_duration_s`. A None from completing a set cancels a running rest. −15 s with 15 s or less left ends the rest silently. Un-ticking keeps the rest.
