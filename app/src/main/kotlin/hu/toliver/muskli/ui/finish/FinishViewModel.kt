@@ -12,6 +12,7 @@ import hu.toliver.muskli.domain.usecase.workout.DeleteWorkoutUseCase
 import hu.toliver.muskli.domain.usecase.workout.FinishWorkoutResult
 import hu.toliver.muskli.domain.usecase.workout.FinishWorkoutUseCase
 import hu.toliver.muskli.domain.usecase.workout.WorkoutDetails
+import hu.toliver.muskli.domain.usecase.workout.finishDurationS
 import hu.toliver.muskli.domain.usecase.workout.hasCompletedSet
 import hu.toliver.muskli.domain.usecase.workout.uncompletedSetCount
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,10 +43,14 @@ class FinishViewModel @AssistedInject constructor(
     private val state = MutableStateFlow<FinishUiState>(FinishUiState.Loading)
     val uiState: StateFlow<FinishUiState> = state.asStateFlow()
 
+    /** Measured when the screen opens, so a workout under a minute is not saved as 0 (D-051). */
+    private var elapsedMs = 0L
+
     init {
         viewModelScope.launch {
             val workout = workouts.observe(workoutId).first() ?: return@launch
-            val durationS = ((workout.finishedAtEpochMs ?: clock.nowEpochMs()) - workout.startedAtEpochMs).coerceAtLeast(0) / 1000
+            elapsedMs = ((workout.finishedAtEpochMs ?: clock.nowEpochMs()) - workout.startedAtEpochMs).coerceAtLeast(0)
+            val durationS = elapsedMs / 1000
             state.value = FinishUiState.Ready(
                 title = workout.title,
                 notes = workout.notes.orEmpty(),
@@ -94,7 +99,7 @@ class FinishViewModel @AssistedInject constructor(
 
     private fun finish() {
         val ready = state.value as? FinishUiState.Ready ?: return
-        val durationS = ready.durationS() ?: return
+        val durationS = finishDurationS(elapsedMs, ready.durationS() ?: return)
         viewModelScope.launch {
             val details = WorkoutDetails(ready.title, ready.notes, ready.startedAtEpochMs, durationS)
             when (finishWorkout(workoutId, details)) {

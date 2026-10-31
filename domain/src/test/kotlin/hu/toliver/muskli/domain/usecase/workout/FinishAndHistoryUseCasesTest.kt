@@ -197,4 +197,35 @@ class FinishAndHistoryUseCasesTest {
         assertEquals(5_000_000L, set.completedAtEpochMs)
         assertNull(stored().restTimer)
     }
+
+    @Test
+    fun `a workout shorter than a minute finished without editing the duration keeps its seconds (D-051)`() = runTest {
+        repo.save(draft(exercise("a", set("a1", true))))
+        clock.now = 1_000_000L + 30_400L
+        val durationS = finishDurationS(elapsedMs = clock.now - 1_000_000L, typedS = 0)
+
+        val finished = (finish("w", details.copy(startedAtEpochMs = 1_000_000L, durationS = durationS)) as FinishWorkoutResult.Finished).workout
+
+        assertEquals(30L, durationS)
+        assertEquals(1_000_000L + 30_000L, finished.finishedAtEpochMs)
+    }
+
+    @Test
+    fun `under a second still counts as one second, so end is never the start (D-051)`() {
+        assertEquals(1L, finishDurationS(elapsedMs = 400, typedS = 0))
+        assertEquals(59L, finishDurationS(elapsedMs = 59_999, typedS = 0))
+    }
+
+    @Test
+    fun `a workout of a minute or more saves the minutes shown on the finish screen (D-051)`() {
+        assertEquals(300L, finishDurationS(elapsedMs = 340_000, typedS = 300))
+        assertEquals(60L, finishDurationS(elapsedMs = 60_000, typedS = 60))
+    }
+
+    @Test
+    fun `a duration the user typed is saved as typed (D-051)`() {
+        assertEquals(120L, finishDurationS(elapsedMs = 30_000, typedS = 120))
+        assertEquals(0L, finishDurationS(elapsedMs = 340_000, typedS = 0))
+        assertEquals(0L, finishDurationS(elapsedMs = 0, typedS = 0))
+    }
 }

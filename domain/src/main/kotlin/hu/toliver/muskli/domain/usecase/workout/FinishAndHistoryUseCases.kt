@@ -30,6 +30,14 @@ fun Workout.uncompletedSetCount(): Int = exercises.sumOf { exercise -> exercise.
 fun Workout.hasCompletedSet(): Boolean = exercises.any { exercise -> exercise.sets.any { it.data.completed } }
 
 /**
+ * The duration Finish saves (D-051): [typedS] from the whole-minute editors, except that a workout
+ * under a minute whose editors still show 0 keeps its [elapsedMs] in whole seconds, at least 1, so
+ * it is never stored with end == start.
+ */
+fun finishDurationS(elapsedMs: Long, typedS: Long): Long =
+    if (typedS == 0L && elapsedMs in 1 until 60_000) (elapsedMs / 1_000).coerceAtLeast(1) else typedS
+
+/**
  * Finishes the live draft, or saves an edited past workout, with [details]. Uncompleted sets are
  * discarded (D-011, the screen confirms first) and exercises left without sets are removed. The
  * offset is taken at the new start, since a back-dated start may fall in another DST period.
