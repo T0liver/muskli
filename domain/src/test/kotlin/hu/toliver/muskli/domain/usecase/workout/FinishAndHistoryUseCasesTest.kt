@@ -1,6 +1,7 @@
 package hu.toliver.muskli.domain.usecase.workout
 
 import hu.toliver.muskli.domain.TestClock
+import hu.toliver.muskli.domain.calc.PreviousMode
 import hu.toliver.muskli.domain.calc.WorkoutExerciseRecord
 import hu.toliver.muskli.domain.model.RestTimer
 import hu.toliver.muskli.domain.model.SetData
@@ -182,6 +183,27 @@ class FinishAndHistoryUseCasesTest {
         val edited = draft(exercise("a", set("a1", true)), finishedAt = 4_000_000L)
 
         val previous = PreviousSetsBeforeUseCase(repo)("t-a", edited)
+
+        assertEquals(listOf(SetData(weightKg = 80.0, reps = 5, completed = true)), previous)
+    }
+
+    @Test
+    fun `previous values while editing in routine mode use the edited workout's routine`() = runTest {
+        fun record(workoutId: String, startedAt: Long, weightKg: Double, routineId: String?) = WorkoutExerciseRecord(
+            workoutId = workoutId,
+            workoutStartedAtEpochMs = startedAt,
+            workoutFinishedAtEpochMs = startedAt + 1,
+            workoutDeletedAtEpochMs = null,
+            positionInWorkout = 0,
+            sets = listOf(SetData(weightKg = weightKg, reps = 5, completed = true)),
+            routineId = routineId,
+        )
+        repo.history = mapOf(
+            "t-a" to listOf(record("a", 400_000L, 80.0, "routine-a"), record("b", 500_000L, 85.0, "routine-b")),
+        )
+        val edited = draft(exercise("a", set("a1", true)), finishedAt = 4_000_000L).copy(routineId = "routine-a")
+
+        val previous = PreviousSetsBeforeUseCase(repo)("t-a", edited, PreviousMode.ROUTINE_SCOPED)
 
         assertEquals(listOf(SetData(weightKg = 80.0, reps = 5, completed = true)), previous)
     }

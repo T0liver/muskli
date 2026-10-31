@@ -130,7 +130,7 @@ fun SettingsScreen(
             RadioRow(R.string.settings_previous_anywhere, selected = state.previousMode == PreviousMode.ANYWHERE) {
                 onEvent(SettingsEvent.PreviousModeChanged(PreviousMode.ANYWHERE))
             }
-            // Routine-scoped mode is stored by the repository but only becomes selectable with routines (T-024).
+            // Routine-scoped mode works (D-053) but only becomes selectable once routines can be started (T-041).
             RadioRow(
                 R.string.settings_previous_routine,
                 selected = state.previousMode == PreviousMode.ROUTINE_SCOPED,

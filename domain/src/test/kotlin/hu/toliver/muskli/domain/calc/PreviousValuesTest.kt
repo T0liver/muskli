@@ -17,6 +17,7 @@ class PreviousValuesTest {
         position: Int = 0,
         finished: Boolean = true,
         deleted: Boolean = false,
+        routineId: String? = null,
     ) = WorkoutExerciseRecord(
         workoutId = workoutId,
         workoutStartedAtEpochMs = startedAt,
@@ -24,6 +25,7 @@ class PreviousValuesTest {
         workoutDeletedAtEpochMs = if (deleted) startedAt + 7_200_000 else null,
         positionInWorkout = position,
         sets = sets.toList(),
+        routineId = routineId,
     )
 
     private fun anywhere(history: List<WorkoutExerciseRecord>, setIndex: Int) =
@@ -45,6 +47,50 @@ class PreviousValuesTest {
             record("last", 2_000, set(60.0, 10), set(80.0, 8)),
         )
         assertNull(anywhere(history, 2))
+    }
+
+    private fun inRoutine(history: List<WorkoutExerciseRecord>, setIndex: Int, routineId: String?) =
+        previousFor(history, setIndex, PreviousMode.ROUTINE_SCOPED, routineId)
+
+    private val routinesAThenB = listOf(
+        record("a", 1_000, set(80.0, 8), routineId = "routine-a"),
+        record("b", 2_000, set(85.0, 6), routineId = "routine-b"),
+    )
+
+    @Test
+    fun `TC-PREV-03 routine mode returns the last workout of the same routine`() {
+        assertEquals(set(80.0, 8), inRoutine(routinesAThenB, 0, "routine-a"))
+        assertEquals(set(85.0, 6), inRoutine(routinesAThenB, 0, "routine-b"))
+    }
+
+    @Test
+    fun `TC-PREV-03 anywhere mode returns the last workout whatever the routine`() {
+        assertEquals(set(85.0, 6), previousFor(routinesAThenB, 0, PreviousMode.ANYWHERE, "routine-a"))
+        assertEquals(set(85.0, 6), previousFor(routinesAThenB, 0, PreviousMode.ANYWHERE, "routine-b"))
+    }
+
+    @Test
+    fun `routine mode without a routine falls back to last time anywhere (D-038)`() {
+        val history = routinesAThenB + record("free", 3_000, set(90.0, 5))
+        assertEquals(set(90.0, 5), inRoutine(history, 0, routineId = null))
+    }
+
+    @Test
+    fun `routine mode is null when the exercise was never done in that routine (D-053)`() {
+        assertNull(inRoutine(routinesAThenB, 0, "routine-c"))
+        assertEquals(emptyList(), previousSets(routinesAThenB, PreviousMode.ROUTINE_SCOPED, "routine-c"))
+    }
+
+    @Test
+    fun `routine mode applies the same draft, delete, and first-occurrence rules`() {
+        val history = listOf(
+            record("a1", 1_000, set(70.0, 8), routineId = "routine-a"),
+            record("a2", 2_000, set(60.0, 12), position = 3, routineId = "routine-a"),
+            record("a2", 2_000, set(80.0, 8), position = 0, routineId = "routine-a"),
+            record("a3", 3_000, set(90.0, 8), finished = false, routineId = "routine-a"),
+            record("a4", 4_000, set(95.0, 8), deleted = true, routineId = "routine-a"),
+        )
+        assertEquals(set(80.0, 8), inRoutine(history, 0, "routine-a"))
     }
 
     @Test
