@@ -26,8 +26,24 @@ sealed interface HevyPreview {
         val matches: Map<String, HevyMatch>,
         val defaultResolutions: Map<String, HevyResolution>,
         val plan: HevyImportPlan,
-    ) : HevyPreview
+    ) : HevyPreview {
+        /**
+         * New custom exercises [resolutions] would create for the workouts [plan] imports, so the
+         * preview can recount after a mapping change without re-reading the device (D-059). A missing
+         * resolution counts as its default, as in apply.
+         */
+        fun newCustomCount(resolutions: Map<String, HevyResolution>): Int {
+            // Duplicate status depends only on the start minute (D-044), so the plan's minutes pick the imported workouts.
+            val importedMinutes = plan.newWorkouts.mapTo(HashSet()) { Math.floorDiv(it.startedAtEpochMs, MINUTE_MS) }
+            return workouts
+                .filter { Math.floorDiv(it.startedAtEpochMs, MINUTE_MS) in importedMinutes }
+                .flatMapTo(LinkedHashSet()) { w -> w.exercises.map { it.title } }
+                .count { (resolutions[it] ?: defaultResolutions[it]) == HevyResolution.CreateCustom }
+        }
+    }
 }
+
+private const val MINUTE_MS = 60_000L
 
 /** Parses, matches, and plans with the default resolutions; writes nothing. */
 class PreviewHevyImportUseCase(

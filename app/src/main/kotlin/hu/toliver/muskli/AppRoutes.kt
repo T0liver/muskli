@@ -28,6 +28,9 @@ sealed interface Route {
 
     /** The library picker adding to the editor opened as [entry]. */
     data class RoutineAddExercises(val routineId: String?, val entry: Int) : Route
+
+    /** [entry] is unique per opening, so each import starts at the file picker. */
+    data class HevyImport(val entry: Int) : Route
 }
 
 // Ids are UUIDs or catalogue slugs, so the unit separator never occurs in them.
@@ -48,6 +51,7 @@ private fun Route.encode(): String = when (this) {
     Route.Routines -> "routines"
     is Route.RoutineEditor -> listOf("routine", routineId.orEmpty(), entry.toString()).joinToString(SEP)
     is Route.RoutineAddExercises -> listOf("routine-add", routineId.orEmpty(), entry.toString()).joinToString(SEP)
+    is Route.HevyImport -> listOf("hevy", entry.toString()).joinToString(SEP)
 }
 
 private fun decodeRoute(encoded: String): Route {
@@ -66,6 +70,7 @@ private fun decodeRoute(encoded: String): Route {
         "routines" -> Route.Routines
         "routine" -> Route.RoutineEditor(parts[1].ifEmpty { null }, parts[2].toInt())
         "routine-add" -> Route.RoutineAddExercises(parts[1].ifEmpty { null }, parts[2].toInt())
+        "hevy" -> Route.HevyImport(parts[1].toInt())
         else -> Route.Home
     }
 }

@@ -168,6 +168,84 @@
         <item quantity="other">…and %d more</item>
     </plurals>
     <string name="action_ok">OK</string>
+    <string name="hevy_open">Import from Hevy</string>
+    <string name="hevy_title">Import from Hevy</string>
+    <string name="hevy_pick_hint">Pick the workout CSV file exported from Hevy. Workouts are added to what is on this phone; nothing here is changed or deleted.</string>
+    <string name="hevy_choose_file">Choose workout file</string>
+    <string name="hevy_choose_another">Choose another file</string>
+    <string name="hevy_rejected_title">Nothing was changed</string>
+    <string name="hevy_rejected_errors">Problems found in the file:</string>
+    <string name="hevy_measurements_file">This is a measurements file; choose the workout file first.</string>
+    <string name="hevy_read_failed">Could not read the file.</string>
+    <string name="hevy_error_at_column">Record %1$d, %2$s: %3$s</string>
+    <string name="hevy_error_at_record">Record %1$d: %2$s</string>
+    <string name="hevy_problem_not_hevy">not a Hevy export</string>
+    <string name="hevy_problem_missing_column">required column is missing</string>
+    <string name="hevy_problem_field_count">wrong number of fields</string>
+    <string name="hevy_problem_invalid_date">invalid date</string>
+    <string name="hevy_problem_invalid_number">invalid number</string>
+    <string name="hevy_problem_negative_number">negative number</string>
+    <string name="hevy_problem_unknown_set_type">unknown set type</string>
+    <string name="hevy_problem_end_before_start">ends before it starts</string>
+    <plurals name="hevy_more_errors">
+        <item quantity="one">…and %d more</item>
+        <item quantity="other">…and %d more</item>
+    </plurals>
+    <plurals name="hevy_summary_in_file">
+        <item quantity="one">%d workout in the file</item>
+        <item quantity="other">%d workouts in the file</item>
+    </plurals>
+    <plurals name="hevy_summary_new">
+        <item quantity="one">%d new workout to add</item>
+        <item quantity="other">%d new workouts to add</item>
+    </plurals>
+    <plurals name="hevy_summary_duplicates">
+        <item quantity="one">%d duplicate skipped</item>
+        <item quantity="other">%d duplicates skipped</item>
+    </plurals>
+    <plurals name="hevy_summary_sets">
+        <item quantity="one">%d set</item>
+        <item quantity="other">%d sets</item>
+    </plurals>
+    <plurals name="hevy_summary_new_customs">
+        <item quantity="one">%d new custom exercise</item>
+        <item quantity="other">%d new custom exercises</item>
+    </plurals>
+    <string name="hevy_summary_dates">From %1$s to %2$s</string>
+    <plurals name="hevy_summary_rpe">
+        <item quantity="one">%d RPE value is not stored</item>
+        <item quantity="other">%d RPE values are not stored</item>
+    </plurals>
+    <string name="hevy_exercises">Exercises</string>
+    <string name="hevy_exercises_hint">Tap an exercise to change how it is imported.</string>
+    <string name="hevy_unmatched">Not found in the library</string>
+    <string name="hevy_resolution_library">Library: %1$s</string>
+    <string name="hevy_resolution_library_check">Library: %1$s (check)</string>
+    <string name="hevy_resolution_custom">New custom exercise (%1$s)</string>
+    <plurals name="hevy_import_action">
+        <item quantity="one">Import %d workout</item>
+        <item quantity="other">Import %d workouts</item>
+    </plurals>
+    <string name="hevy_map_create_custom">Create as custom exercise</string>
+    <string name="hevy_map_search">Search library</string>
+    <string name="hevy_map_candidates">Possible matches</string>
+    <string name="hevy_map_library">Library</string>
+    <string name="hevy_map_no_results">No exercises found</string>
+    <string name="hevy_done">%1$s, %2$s, %3$s.</string>
+    <plurals name="hevy_done_workouts">
+        <item quantity="one">Imported %d workout</item>
+        <item quantity="other">Imported %d workouts</item>
+    </plurals>
+    <plurals name="hevy_done_customs">
+        <item quantity="one">%d new custom exercise</item>
+        <item quantity="other">%d new custom exercises</item>
+    </plurals>
+    <plurals name="hevy_done_duplicates">
+        <item quantity="one">%d duplicate skipped</item>
+        <item quantity="other">%d duplicates skipped</item>
+    </plurals>
+    <string name="hevy_back_to_settings">Back to Settings</string>
+    <string name="hevy_failed">The import failed. Nothing was changed.</string>
     <string name="day_monday">Monday</string>
     <string name="day_tuesday">Tuesday</string>
     <string name="day_wednesday">Wednesday</string>

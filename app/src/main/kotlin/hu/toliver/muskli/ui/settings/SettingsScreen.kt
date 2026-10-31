@@ -21,6 +21,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -61,6 +62,7 @@ import java.util.Locale
 @Composable
 fun SettingsRoute(
     onBack: () -> Unit,
+    onImportHevy: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
     backupViewModel: BackupViewModel = hiltViewModel(),
 ) {
@@ -82,6 +84,7 @@ fun SettingsRoute(
         // Some file managers label .json files as plain text or as unknown bytes.
         onImport = { importLauncher.launch(arrayOf(JSON_MIME, "text/*", "application/octet-stream")) },
         onBackupEvent = backupViewModel::onEvent,
+        onImportHevy = onImportHevy,
     )
 }
 
@@ -97,6 +100,7 @@ fun SettingsScreen(
     onExport: () -> Unit = {},
     onImport: () -> Unit = {},
     onBackupEvent: (BackupEvent) -> Unit = {},
+    onImportHevy: () -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier,
@@ -156,6 +160,11 @@ fun SettingsScreen(
             HorizontalDivider()
             SectionTitle(R.string.settings_backup)
             BackupSection(state = backup, onExport = onExport, onImport = onImport, onEvent = onBackupEvent)
+            OutlinedButton(
+                onClick = onImportHevy,
+                enabled = !backup.busy,
+                modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget),
+            ) { Text(stringResource(R.string.hevy_open)) }
         }
     }
 }

@@ -137,6 +137,25 @@ class HevyImportUseCasesTest {
     }
 
     @Test
+    fun `new custom count follows the resolutions and equals the default plan`() = runTest {
+        val ready = ready()
+
+        assertEquals(ready.plan.newTemplates.size, ready.newCustomCount(ready.defaultResolutions))
+        assertEquals(2, ready.newCustomCount(ready.defaultResolutions + ("Assisted Pull Up" to HevyResolution.UseTemplate("pull-up"))))
+        assertEquals(4, ready.newCustomCount(ready.defaultResolutions + ("Plank" to HevyResolution.CreateCustom)))
+    }
+
+    @Test
+    fun `new custom count leaves out titles used only by duplicates and treats a missing resolution as its default`() = runTest {
+        repository.starts = listOf(legsStart)
+        val ready = ready()
+
+        assertEquals(1, ready.newCustomCount(ready.defaultResolutions))
+        assertEquals(1, ready.newCustomCount(ready.defaultResolutions - "Lateral Raise (Dumbbell)"))
+        assertEquals(1, ready.newCustomCount(ready.defaultResolutions + ("Rowing Machine" to HevyResolution.CreateCustom)))
+    }
+
+    @Test
     fun `TC-HEVY-21 applying the same file again adds nothing`() = runTest {
         val ready = ready()
         apply(ready.workouts, ready.defaultResolutions, bodyWeightKg = null)
