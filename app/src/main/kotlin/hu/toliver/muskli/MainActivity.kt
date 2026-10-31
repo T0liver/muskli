@@ -34,6 +34,10 @@ import hu.toliver.muskli.ui.history.WorkoutDetailViewModel
 import hu.toliver.muskli.ui.home.HomeScreen
 import hu.toliver.muskli.ui.library.LibraryMode
 import hu.toliver.muskli.ui.library.LibraryRoute
+import hu.toliver.muskli.ui.routine.RoutineEditorEvent
+import hu.toliver.muskli.ui.routine.RoutineEditorRoute
+import hu.toliver.muskli.ui.routine.RoutineEditorViewModel
+import hu.toliver.muskli.ui.routine.RoutinesRoute
 import hu.toliver.muskli.ui.settings.SettingsRoute
 import hu.toliver.muskli.ui.theme.MuskliTheme
 import hu.toliver.muskli.ui.workout.LiveWorkoutEvent
@@ -57,6 +61,7 @@ class MainActivity : ComponentActivity() {
                 var stack by rememberSaveable(stateSaver = RouteStackSaver) { mutableStateOf(listOf<Route>(Route.Home)) }
                 var startChecked by rememberSaveable { mutableStateOf(false) }
                 var finishEntries by rememberSaveable { mutableIntStateOf(0) }
+                var routineEntries by rememberSaveable { mutableIntStateOf(0) }
                 // If denied, the in-app bar still counts down, but the screen-off alert cannot be shown.
                 val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
 
@@ -69,6 +74,13 @@ class MainActivity : ComponentActivity() {
                 }
 
                 fun openFinish(workoutId: String) = push(Route.Finish(workoutId, finishEntries++))
+
+                fun openRoutineEditor(routineId: String?) = push(Route.RoutineEditor(routineId, routineEntries++))
+
+                // At workout start, before any set is logged (D-015).
+                fun requestRestAlertPermission() {
+                    if (needsNotificationPermission()) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
 
                 // Edits are already stored, so leaving edit mode goes through the save step, which
                 // applies D-011; a new past workout left with nothing completed is dropped instead.
@@ -110,12 +122,12 @@ class MainActivity : ComponentActivity() {
                     Route.Home -> HomeScreen(
                         workoutInProgress = workoutState is LiveWorkoutUiState.Active,
                         onStartWorkout = {
-                            // At workout start, before any set is logged (D-015).
-                            if (needsNotificationPermission()) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            requestRestAlertPermission()
                             workout.onEvent(LiveWorkoutEvent.StartClicked)
                             push(Route.Workout)
                         },
                         onResumeWorkout = { push(Route.Workout) },
+                        onOpenRoutines = { push(Route.Routines) },
                         onOpenHistory = { push(Route.History) },
                         onOpenLibrary = { push(Route.Library) },
                         onOpenSettings = { push(Route.Settings) },
@@ -182,6 +194,30 @@ class MainActivity : ComponentActivity() {
                         onBack = ::pop,
                         onOpenWorkout = { push(Route.WorkoutDetail(it)) },
                     )
+                    Route.Routines -> RoutinesRoute(
+                        viewModel = hiltViewModel(),
+                        onBack = ::pop,
+                        onCreate = { openRoutineEditor(null) },
+                        onEdit = ::openRoutineEditor,
+                        onStarted = {
+                            requestRestAlertPermission()
+                            push(Route.Workout)
+                        },
+                        onResumeWorkout = { push(Route.Workout) },
+                    )
+                    is Route.RoutineEditor -> RoutineEditorRoute(
+                        viewModel = routineEditorViewModel(top.routineId, top.entry),
+                        onBack = ::pop,
+                        onAddExercise = { push(Route.RoutineAddExercises(top.routineId, top.entry)) },
+                        onDone = ::pop,
+                    )
+                    is Route.RoutineAddExercises -> {
+                        val target = routineEditorViewModel(top.routineId, top.entry)
+                        LibraryRoute(mode = LibraryMode.PICK, onBack = ::pop, onPicked = { ids ->
+                            target.onEvent(RoutineEditorEvent.ExercisesPicked(ids))
+                            pop()
+                        })
+                    }
                     Route.Library -> LibraryRoute(mode = LibraryMode.BROWSE, onBack = ::pop, onPicked = {})
                     Route.Settings -> SettingsRoute(onBack = ::pop)
                 }
@@ -198,3 +234,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun workoutViewModel(editId: String?): WorkoutSessionViewModel =
     hiltViewModel<WorkoutSessionViewModel, WorkoutSessionViewModel.Factory>(key = "workout-${editId ?: "live"}") { it.create(editId) }
+
+/** The editor opened as [entry]; its picker gets the same instance through the same key. */
+@Composable
+private fun routineEditorViewModel(routineId: String?, entry: Int): RoutineEditorViewModel =
+    hiltViewModel<RoutineEditorViewModel, RoutineEditorViewModel.Factory>(key = "routine-editor-$entry") { it.create(routineId) }

@@ -131,6 +131,60 @@ fun SetRow(
     }
 }
 
+/** Header for a routine's planned sets: no PREVIOUS and no check column. */
+@Composable
+fun PlannedSetTableHeader(columns: List<SetColumn>, weightUnit: WeightUnit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = Spacing.l),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.s),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        HeaderText(stringResource(R.string.column_set), Modifier.size(width = Spacing.minTouchTarget, height = Spacing.xl))
+        columns.forEach { HeaderText(stringResource(it.labelRes(weightUnit)), Modifier.weight(VALUE_WEIGHT)) }
+    }
+}
+
+/** One planned set of a routine: SET | value columns. Same cells as [SetRow], nothing to complete. */
+@Composable
+fun PlannedSetRow(
+    number: Int,
+    type: SetType,
+    values: List<String>,
+    columns: List<SetColumn>,
+    typeMenuExpanded: Boolean,
+    onSetTypeClick: () -> Unit,
+    onSetTypeChosen: (SetType) -> Unit,
+    onSetTypeMenuDismiss: () -> Unit,
+    onValueChange: (column: SetColumn, value: String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = Spacing.l, vertical = Spacing.xs),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.s),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box {
+            SetTypeCell(number = number, type = type, onClick = onSetTypeClick)
+            SetTypeMenu(expanded = typeMenuExpanded, onChosen = onSetTypeChosen, onDismiss = onSetTypeMenuDismiss)
+        }
+        columns.forEachIndexed { index, column ->
+            SetValueField(
+                value = values.getOrElse(index) { "" },
+                onValueChange = { onValueChange(column, it) },
+                keyboardType = if (column == SetColumn.REPS || column == SetColumn.DURATION) KeyboardType.Number else KeyboardType.Decimal,
+                completed = false,
+                contentDescription = stringResource(column.descriptionRes(), number),
+                modifier = Modifier.weight(VALUE_WEIGHT),
+            )
+        }
+    }
+}
+
 @StringRes
 private fun SetColumn.labelRes(unit: WeightUnit): Int {
     val lb = unit == WeightUnit.LB

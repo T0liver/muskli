@@ -109,7 +109,7 @@ fun ExerciseCard(
 
 /** Swipe from the end deletes (F-03 AC1); the same action is offered to accessibility services. */
 @Composable
-private fun SwipeToDeleteSet(onDelete: () -> Unit, content: @Composable () -> Unit) {
+fun SwipeToDeleteSet(onDelete: () -> Unit, content: @Composable () -> Unit) {
     val state = rememberSwipeToDismissBoxState()
     val deleteLabel = stringResource(R.string.action_delete_set)
     SwipeToDismissBox(
