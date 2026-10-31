@@ -118,12 +118,14 @@ fun SetRow(
         }
         PreviousText(set.previous)
         columns.forEachIndexed { index, column ->
+            val value = set.values.getOrElse(index) { "" }
+            val label = stringResource(column.descriptionRes(), set.number)
             SetValueField(
-                value = set.values.getOrElse(index) { "" },
+                value = value,
                 onValueChange = { onValueChange(column, it) },
                 keyboardType = if (column == SetColumn.REPS || column == SetColumn.DURATION) KeyboardType.Number else KeyboardType.Decimal,
                 completed = set.completed,
-                contentDescription = stringResource(column.descriptionRes(), set.number),
+                contentDescription = if (value.isEmpty()) label else stringResource(R.string.cd_set_field_value, label, value),
                 modifier = Modifier.weight(VALUE_WEIGHT),
             )
         }

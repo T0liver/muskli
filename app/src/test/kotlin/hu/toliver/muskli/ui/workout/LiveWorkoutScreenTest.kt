@@ -4,9 +4,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -96,6 +98,27 @@ class LiveWorkoutScreenTest {
 
         compose.onNodeWithContentDescription("Complete set 2").assertIsOn()
         compose.onNodeWithText("640 kg").assertExists()
+    }
+
+    @Test
+    fun setFieldsAnnounceTheirValueAndEmptyFieldsOnlyTheirName() {
+        workouts.history.value = mapOf("squat-barbell" to listOf(lastTime(done(80.0, 8))))
+        val workout = workoutSessionViewModel(workouts, templates, FakeSettingsRepository())
+        workout.onEvent(LiveWorkoutEvent.StartClicked)
+        workout.onEvent(LiveWorkoutEvent.ExercisesPicked(listOf("squat-barbell", "bench-press-barbell")))
+        compose.setContent {
+            MuskliTheme {
+                LiveWorkoutRoute(viewModel = workout, onAddExercise = {}, onReplaceExercise = {}, onFinish = {}, onExerciseHistory = {})
+            }
+        }
+
+        compose.onNodeWithContentDescription("Weight, set 1, 80").assertExists()
+        compose.onNodeWithContentDescription("Reps, set 1, 8").assertExists()
+
+        compose.onNodeWithContentDescription("Weight, set 1").performTextInput("100")
+        compose.onNodeWithContentDescription("Weight, set 1, 100").assertExists()
+        compose.onNodeWithContentDescription("Reps, set 1").assertExists()
+        compose.onAllNodesWithContentDescription("Complete set 1").assertCountEquals(2)
     }
 
     @Test
