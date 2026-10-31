@@ -35,6 +35,26 @@ None open: D-045.
 ## Handoff log
 <!-- Newest first. Each entry: date, role, what was done, what's left, gotchas, commands run + results. -->
 
+### 2026-10-31 · VERIFY · all acceptance criteria pass, move to done
+Debug build of a577f8f (includes the review fix) on emulator `medium_phone`, Android 16 (API 36), en-US. Anonymised fixtures `domain/src/test/resources/hevy/{workout,measurement}_data.csv` pushed to `/sdcard/Download/`; `pm clear` before each scenario; stored value read from `files/datastore/settings.preferences_pb` with `run-as`. Evidence and screenshots: `build/verify/T-039/` (`EVIDENCE.md`, 01–11 PNG).
+- **AC1 (unset, kg):** offer "Set body weight to 80.4 kg (from Mar 1, 2026)" **checked**; Done "Imported 2 workouts, 3 new custom exercises, 0 duplicates skipped. Body weight set to 80.4 kg."; Settings 80.4; DataStore double = 80.4. **Pass.**
+- **AC2 (75 kg set):** offer **unchecked**; Done has no body weight line; Settings and DataStore still 75. **Pass.**
+- **AC3 (lb):** offer "177.3 lb" checked; Done "Body weight set to 177.3 lb."; Settings "Body weight (lb)" 177.3; DataStore **80.4 kg**. **Pass.**
+- **AC4:** checks green in the review session (before and after the fix).
+- The date reads "Mar 1, 2026" (en-US medium format) where the AC text says "1 Mar 2026"; accepted per D-060.
+
+### 2026-10-31 · REVIEW · one should-fix fixed, move to verify
+Diff `main...t-039-hevy-body-weight` checked against the ticket and WORKFLOW §5.
+- **Scope:** matches the ticket. ViewModel + screen + strings + previews + tests; the `formatWeight`/`labelRes` visibility change is reuse, not a refactor. No domain API, dependency, or schema change.
+- **D-058 vs D-060:** no conflict. The ticket's goal is to set body weight "when the workouts are imported" and its Out of scope lists "Importing a measurements file without a workout file", so D-060 keeping Import disabled without a new workout is correct for this ticket. D-058's "can set only the body weight" describes what the use case allows, not a UI requirement.
+- **Tests:** the TC-HEVY-22 and ticket cases (checked when unset, unchecked when set, lb shown / kg stored, weight only when checked) are asserted; no existing expectation changed (only the new constructor argument was added).
+- **Layers / threading:** parsing runs on `@WorkDispatcher`; the tick default reads Settings once; composables are stateless; 48dp row with `toggleable` + `Role.Checkbox`; strings in `strings.xml`; light/dark previews.
+- **Should-fix (fixed, c985083):** the parser accepts `weight_kg = 0`, so a file whose latest weight is 0 was offered (ticked when unset) and `ApplyHevyImportUseCase` then threw `IllegalArgumentException` (D-058), which the ViewModel does not catch, crashing the app on Import. The ViewModel now treats a non-positive latest weight as "No body weight in this file". New test `a zero latest weight is not offered and the import still succeeds` failed before the fix and passes after.
+- **Nit:** `SettingsRepository` import in `HevyImportViewModel` is out of alphabetical order.
+- **Nit:** in the "nothing new" preview the checkbox is still shown though Import is disabled, so it cannot take effect; acceptable under D-060.
+- **Nit:** the Done text joins two strings with a space instead of one formatted string; fine for the single English locale.
+- **Commands:** `.\gradlew.bat :domain:test testDebugUnitTest assembleDebug lintDebug` → BUILD SUCCESSFUL before and after the fix; lint 0 errors, 1 warning (pre-existing `NewerVersionAvailable`).
+
 ### 2026-10-31 · UI · done, ready for review
 **Done.** No domain change: the parser (T-035) already returns the latest body weight and `ApplyHevyImportUseCase(bodyWeightKg)` (T-037) already writes it after the commit (TC-HEVY-09/22 domain tests exist). This ticket is ViewModel + screen only.
 - `HevyImportViewModel` injects `SettingsRepository`. New events `MeasurementsFilePicked(uri)` and `BodyWeightToggled(checked)`. The file goes through `PreviewHevyImportUseCase`; `Measurements` with a weight becomes `HevyMeasurements.BodyWeight(weight, measuredAt, checked = Settings body weight == null)`; without a weight `NoBodyWeight`; a workout or rejected file `NotMeasurementsFile`; an `IOException` `ReadFailed`. The workout preview is kept in every case. Import passes the **unrounded kg from the file** only when checked; `Done.bodyWeight` carries the displayed weight when written.
