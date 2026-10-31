@@ -1,6 +1,7 @@
 package hu.toliver.muskli.domain.usecase.workout
 
 import hu.toliver.muskli.domain.TestClock
+import hu.toliver.muskli.domain.calc.PreviousMode
 import hu.toliver.muskli.domain.calc.RestEffect
 import hu.toliver.muskli.domain.calc.WorkoutExerciseRecord
 import hu.toliver.muskli.domain.model.SetData
@@ -388,6 +389,33 @@ class LiveWorkoutUseCasesTest {
 
         assertEquals(listOf(done(SetType.WARMUP, 40.0, 10), done(SetType.NORMAL, 100.0, 5)), previousSets("bench"))
         assertEquals(emptyList(), previousSets("row"))
+    }
+
+    private val benchInRoutinesAThenB = mapOf(
+        "bench" to listOf(
+            lastTime("a", 1_000, done(SetType.NORMAL, 80.0, 8)).copy(routineId = "routine-a"),
+            lastTime("b", 2_000, done(SetType.NORMAL, 85.0, 6)).copy(routineId = "routine-b"),
+        ),
+    )
+
+    @Test
+    fun `previous sets in routine mode come from the last workout of that routine`() = runTest {
+        repo.history = benchInRoutinesAThenB
+        val previousSets = PreviousSetsUseCase(repo)
+
+        assertEquals(listOf(done(SetType.NORMAL, 80.0, 8)), previousSets("bench", PreviousMode.ROUTINE_SCOPED, "routine-a"))
+        assertEquals(listOf(done(SetType.NORMAL, 85.0, 6)), previousSets("bench", PreviousMode.ROUTINE_SCOPED, null))
+        assertEquals(listOf(done(SetType.NORMAL, 85.0, 6)), previousSets("bench", PreviousMode.ANYWHERE, "routine-a"))
+    }
+
+    @Test
+    fun `prefill in routine mode follows the same routine as the previous column`() = runTest {
+        repo.history = benchInRoutinesAThenB
+        val draft = (start() as StartWorkoutResult.Started).workout
+
+        val workout = addExercises(draft.id, listOf("bench"), PreviousMode.ROUTINE_SCOPED, "routine-a")!!
+
+        assertEquals(listOf(SetData(weightKg = 80.0, reps = 8)), workout.exercises[0].sets.map { it.data })
     }
 
     @Test

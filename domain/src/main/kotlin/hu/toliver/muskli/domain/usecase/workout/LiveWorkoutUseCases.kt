@@ -66,29 +66,41 @@ class StartWorkoutUseCase(
  * Appends the templates in the given order. An exercise done before starts with last time's sets
  * (count, types, values), uncompleted and aligned like the PREVIOUS column (D-019); a slot
  * without a previous value becomes an empty normal set. Otherwise one empty normal set (D-029).
+ * "Last time" follows [mode] and the workout's [routineId], like the PREVIOUS column (D-053).
  */
 class AddExercisesUseCase(
     private val repository: WorkoutRepository,
     private val ids: IdGenerator,
     private val clock: Clock,
 ) {
-    suspend operator fun invoke(workoutId: String, templateIds: List<String>): Workout? {
+    suspend operator fun invoke(
+        workoutId: String,
+        templateIds: List<String>,
+        mode: PreviousMode = PreviousMode.ANYWHERE,
+        routineId: String? = null,
+    ): Workout? {
         val added = templateIds.map { templateId ->
-            val prefill = repository.lastTime(templateId).map { it?.copy(completed = false) ?: SetData() }
+            val prefill = repository.lastTime(templateId, mode, routineId).map { it?.copy(completed = false) ?: SetData() }
             newExercise(templateId, ids, prefill)
         }
         return repository.edit(workoutId, clock) { it.copy(exercises = it.exercises + added) }
     }
 }
 
-/** The PREVIOUS column of one exercise: last time's sets by raw index, null where there is none (D-019). */
+/**
+ * The PREVIOUS column of one exercise: last time's sets by raw index, null where there is none (D-019).
+ * [routineId] is the live workout's routine; it only matters in routine mode (D-038, D-053).
+ */
 class PreviousSetsUseCase(private val repository: WorkoutRepository) {
-    suspend operator fun invoke(exerciseTemplateId: String): List<SetData?> = repository.lastTime(exerciseTemplateId)
+    suspend operator fun invoke(
+        exerciseTemplateId: String,
+        mode: PreviousMode = PreviousMode.ANYWHERE,
+        routineId: String? = null,
+    ): List<SetData?> = repository.lastTime(exerciseTemplateId, mode, routineId)
 }
 
-// "Anywhere" only: routine-scoped previous values need routines (T-024).
-private suspend fun WorkoutRepository.lastTime(templateId: String): List<SetData?> =
-    previousSets(exerciseHistory(templateId), PreviousMode.ANYWHERE, routineId = null)
+private suspend fun WorkoutRepository.lastTime(templateId: String, mode: PreviousMode, routineId: String?): List<SetData?> =
+    previousSets(exerciseHistory(templateId), mode, routineId)
 
 /**
  * Swaps the template at the same position. Old sets are dropped (their values may not fit the new

@@ -21,6 +21,10 @@ data class WorkoutExerciseRecord(
  * value and does not shift the sets after it (D-019). A repeated exercise uses its first
  * occurrence in the workout. Workouts are ordered by start time so a back-dated workout does
  * not become "last time".
+ *
+ * [PreviousMode.ROUTINE_SCOPED] only looks at workouts of [routineId], so an exercise never done
+ * in that routine has no previous value (D-053). Without a routine it is the same as
+ * [PreviousMode.ANYWHERE] (D-038).
  */
 fun previousFor(
     history: List<WorkoutExerciseRecord>,
@@ -38,8 +42,8 @@ fun previousSets(
     mode: PreviousMode,
     routineId: String?,
 ): List<SetData?> {
-    if (mode == PreviousMode.ROUTINE_SCOPED) TODO("T-024: routine-scoped previous values (TC-PREV-03)")
-    val finished = history.filter { it.workoutFinishedAtEpochMs != null && it.workoutDeletedAtEpochMs == null }
+    val scoped = if (mode == PreviousMode.ROUTINE_SCOPED && routineId != null) history.filter { it.routineId == routineId } else history
+    val finished = scoped.filter { it.workoutFinishedAtEpochMs != null && it.workoutDeletedAtEpochMs == null }
     val lastWorkoutId = finished.maxByOrNull { it.workoutStartedAtEpochMs }?.workoutId ?: return emptyList()
     val occurrence = finished
         .filter { it.workoutId == lastWorkoutId }

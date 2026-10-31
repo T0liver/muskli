@@ -12,7 +12,7 @@ data class Settings(
     val weightUnit: WeightUnit = WeightUnit.KG,
     /** Null means the default rest timer is off. */
     val defaultRestSeconds: Int? = 90,
-    /** Stored now; only [PreviousMode.ANYWHERE] is active until routines exist (T-024). */
+    /** Routine mode only differs for a workout started from a routine (D-038). */
     val previousMode: PreviousMode = PreviousMode.ANYWHERE,
     val keepScreenAwake: Boolean = true,
     val soundEnabled: Boolean = true,

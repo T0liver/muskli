@@ -7,6 +7,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import hu.toliver.muskli.domain.calc.ExerciseSets
+import hu.toliver.muskli.domain.calc.PreviousMode
 import hu.toliver.muskli.domain.calc.completedSetCount
 import hu.toliver.muskli.domain.calc.fractionLeft
 import hu.toliver.muskli.domain.calc.kgToLb
@@ -53,6 +54,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -76,7 +78,7 @@ class WorkoutSessionViewModel @AssistedInject constructor(
     @Assisted private val editWorkoutId: String?,
     workouts: WorkoutRepository,
     templates: ExerciseTemplateRepository,
-    settingsRepository: SettingsRepository,
+    private val settingsRepository: SettingsRepository,
     private val clock: Clock,
     private val startWorkout: StartWorkoutUseCase,
     private val addExercises: AddExercisesUseCase,
@@ -145,6 +147,11 @@ class WorkoutSessionViewModel @AssistedInject constructor(
                 local.update { it.copy(textEdits = emptyMap()) }
             }
         }
+        viewModelScope.launch {
+            settingsRepository.settings.map { it.previousMode }.distinctUntilChanged().drop(1).collect {
+                (draft.value as? Draft.Loaded)?.workout?.let { reloadPrevious(it) }
+            }
+        }
     }
 
     private suspend fun loadMissingPrevious(workout: Workout) {
@@ -165,8 +172,13 @@ class WorkoutSessionViewModel @AssistedInject constructor(
         previous.update { if (it.workoutId == workout.id) it.copy(byTemplate = it.byTemplate + byTemplate) else it }
     }
 
-    private suspend fun previousOf(templateId: String, workout: Workout): List<SetData?> =
-        if (editing) previousSetsBefore(templateId, workout) else previousSets(templateId)
+    private suspend fun previousOf(templateId: String, workout: Workout): List<SetData?> {
+        val mode = previousMode()
+        return if (editing) previousSetsBefore(templateId, workout, mode) else previousSets(templateId, mode, workout.routineId)
+    }
+
+    // The stored value, not [settings]: that one starts at the defaults before the store is read.
+    private suspend fun previousMode(): PreviousMode = settingsRepository.settings.first().previousMode
 
     fun onEvent(event: LiveWorkoutEvent) {
         when (event) {
@@ -174,7 +186,10 @@ class WorkoutSessionViewModel @AssistedInject constructor(
                 (draft.value as? Draft.Loaded)?.workout?.let { reloadPrevious(it) }
             }
             LiveWorkoutEvent.StartClicked -> write { startWorkout() }
-            is LiveWorkoutEvent.ExercisesPicked -> edit { addExercises(it, event.templateIds) }
+            is LiveWorkoutEvent.ExercisesPicked -> edit { workoutId ->
+                val routineId = (draft.value as? Draft.Loaded)?.workout?.routineId
+                addExercises(workoutId, event.templateIds, previousMode(), routineId)
+            }
             is LiveWorkoutEvent.ReplacementPicked -> edit { replaceExercise(it, event.workoutExerciseId, event.templateId) }
             is LiveWorkoutEvent.ExerciseMenuClicked -> local.update { it.copy(exerciseMenuFor = event.workoutExerciseId) }
             LiveWorkoutEvent.ExerciseMenuDismissed -> local.update { it.copy(exerciseMenuFor = null) }

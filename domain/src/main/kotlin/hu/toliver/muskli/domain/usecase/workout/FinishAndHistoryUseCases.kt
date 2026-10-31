@@ -116,13 +116,18 @@ class StartPastWorkoutUseCase(
 
 /**
  * The PREVIOUS column while editing [workout]: the last session started before it, so the
- * workout never shows itself or a later session as "last time".
+ * workout never shows itself or a later session as "last time". In routine mode the edited
+ * workout's own routine scopes the lookup (D-053).
  */
 class PreviousSetsBeforeUseCase(private val repository: WorkoutRepository) {
-    suspend operator fun invoke(exerciseTemplateId: String, workout: Workout): List<SetData?> {
+    suspend operator fun invoke(
+        exerciseTemplateId: String,
+        workout: Workout,
+        mode: PreviousMode = PreviousMode.ANYWHERE,
+    ): List<SetData?> {
         val earlier = repository.exerciseHistory(exerciseTemplateId)
             .filter { it.workoutId != workout.id && it.workoutStartedAtEpochMs < workout.startedAtEpochMs }
-        return previousSets(earlier, PreviousMode.ANYWHERE, routineId = null)
+        return previousSets(earlier, mode, workout.routineId)
     }
 }
 

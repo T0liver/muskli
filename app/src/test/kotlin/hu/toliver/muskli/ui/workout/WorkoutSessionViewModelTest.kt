@@ -1,5 +1,6 @@
 package hu.toliver.muskli.ui.workout
 
+import hu.toliver.muskli.domain.calc.PreviousMode
 import hu.toliver.muskli.domain.model.ExerciseType
 import hu.toliver.muskli.domain.model.RestTimer
 import hu.toliver.muskli.domain.model.SetData
@@ -288,6 +289,50 @@ class WorkoutSessionViewModelTest {
         assertEquals(sets.map { it.values }, vm.previousColumn)
         assertEquals(listOf(false, false), sets.map { it.completed })
         assertEquals(0, vm.active.completedSets)
+    }
+
+    private val squatInRoutinesAThenB = mapOf(
+        "squat-barbell" to listOf(
+            lastTime(done(80.0, 8), workoutId = "a", startedAt = 500L).copy(routineId = "routine-a"),
+            lastTime(done(85.0, 6), workoutId = "b", startedAt = 600L).copy(routineId = "routine-b"),
+        ),
+    )
+
+    @Test
+    fun tcPrev03RoutineModeShowsAndPrefillsLastTimeInTheDraftsRoutine() = runTest(dispatcher) {
+        settings.settings.value = Settings(previousMode = PreviousMode.ROUTINE_SCOPED)
+        val workouts = FakeWorkoutRepository(listOf(draft().copy(routineId = "routine-a")))
+        workouts.history.value = squatInRoutinesAThenB
+        val vm = subscribed(workouts)
+
+        vm.onEvent(LiveWorkoutEvent.ExercisesPicked(listOf("squat-barbell")))
+
+        assertEquals(listOf(listOf("80", "8")), vm.previousColumn)
+        assertEquals(listOf(listOf("80", "8")), vm.active.exercises[0].sets.map { it.values })
+    }
+
+    @Test
+    fun routineModeWithoutARoutineShowsLastTimeAnywhere() = runTest(dispatcher) {
+        settings.settings.value = Settings(previousMode = PreviousMode.ROUTINE_SCOPED)
+        val workouts = FakeWorkoutRepository(listOf(draft()))
+        workouts.history.value = squatInRoutinesAThenB
+        val vm = subscribed(workouts)
+
+        vm.onEvent(LiveWorkoutEvent.ExercisesPicked(listOf("squat-barbell")))
+
+        assertEquals(listOf(listOf("85", "6")), vm.previousColumn)
+    }
+
+    @Test
+    fun anywhereModeIgnoresTheDraftsRoutineAndAModeChangeReloadsThePreviousColumn() = runTest(dispatcher) {
+        val workouts = FakeWorkoutRepository(listOf(draft(exercise("e1", "squat-barbell", set("s1"))).copy(routineId = "routine-a")))
+        workouts.history.value = squatInRoutinesAThenB
+        val vm = subscribed(workouts)
+        assertEquals(listOf(listOf("85", "6")), vm.previousColumn)
+
+        settings.setPreviousMode(PreviousMode.ROUTINE_SCOPED)
+
+        assertEquals(listOf(listOf("80", "8")), vm.previousColumn)
     }
 
     @Test

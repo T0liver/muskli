@@ -36,5 +36,6 @@ Rules and prompts: `docs/WORKFLOW.md`. Use `TEMPLATE.md` for new tickets. WIP li
 | T-038 | UI | Hevy import screen: pick file, preview, map exercises, confirm |
 | T-039 | UI | Hevy import: body weight from the measurements file |
 | T-040 | VERIFY | Hevy import with the owner's real export (AC-07) |
+| T-041 | UI | Enable the "Last time in this routine" setting |
 
 REVIEW sessions pick up BUILD/UI tickets sitting in `review/` (findings go into that ticket's Handoff log; blockers become new tickets in `todo/`). VERIFY sessions pick up tickets in `verify/`.
