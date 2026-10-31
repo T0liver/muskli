@@ -11,6 +11,7 @@ import hu.toliver.muskli.domain.importer.hevy.inferCustomExercise
 import hu.toliver.muskli.domain.library.ExerciseFilter
 import hu.toliver.muskli.domain.library.searchExercises
 import hu.toliver.muskli.domain.model.ExerciseTemplate
+import hu.toliver.muskli.domain.model.ExerciseType
 import hu.toliver.muskli.domain.usecase.importer.ApplyHevyImportUseCase
 import hu.toliver.muskli.domain.usecase.importer.HevyPreview
 import hu.toliver.muskli.domain.usecase.importer.PreviewHevyImportUseCase
@@ -40,6 +41,7 @@ class HevyImportViewModel @Inject constructor(
     private var ready: HevyPreview.Ready? = null
     private var resolutions: Map<String, HevyResolution> = emptyMap()
     private var templates: Map<String, ExerciseTemplate> = emptyMap()
+    private var customTypes: Map<String, ExerciseType> = emptyMap()
 
     /** Title and query of the open mapping dialog. */
     private var mapping: Pair<String, String>? = null
@@ -81,6 +83,12 @@ class HevyImportViewModel @Inject constructor(
                 is HevyPreview.Measurements -> state.value = HevyImportUiState.Rejected(HevyRejection.MeasurementsFile)
                 is HevyPreview.Ready -> {
                     templates = search(ExerciseFilter(includeArchived = true)).first().associateBy { it.id }
+                    // Inferred once: rendering runs on every keystroke in the mapping search.
+                    customTypes = withContext(work) {
+                        result.workouts.flatMap { it.exercises }
+                            .groupBy({ it.title }) { e -> e.sets.map { it.data } }
+                            .mapValues { (title, sets) -> inferCustomExercise(title, sets.flatten()).first }
+                    }
                     ready = result
                     resolutions = result.defaultResolutions
                     mapping = null
@@ -140,10 +148,7 @@ class HevyImportViewModel @Inject constructor(
                 title = templates[resolution.templateId]?.title.orEmpty(),
                 check = match == HevyMatch.Normalised(resolution.templateId),
             )
-            HevyResolution.CreateCustom -> {
-                val sets = current.workouts.flatMap { w -> w.exercises.filter { it.title == title }.flatMap { e -> e.sets.map { it.data } } }
-                HevyRowResolution.NewCustom(inferCustomExercise(title, sets).first)
-            }
+            HevyResolution.CreateCustom -> HevyRowResolution.NewCustom(customTypes.getValue(title))
         }
 
     private fun mappingDialog(current: HevyPreview.Ready, title: String, query: String): HevyMappingDialog {
