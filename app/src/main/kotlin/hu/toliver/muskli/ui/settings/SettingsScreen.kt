@@ -130,13 +130,9 @@ fun SettingsScreen(
             RadioRow(R.string.settings_previous_anywhere, selected = state.previousMode == PreviousMode.ANYWHERE) {
                 onEvent(SettingsEvent.PreviousModeChanged(PreviousMode.ANYWHERE))
             }
-            // Routine-scoped mode works (D-053) but only becomes selectable once routines can be started (T-041).
-            RadioRow(
-                R.string.settings_previous_routine,
-                selected = state.previousMode == PreviousMode.ROUTINE_SCOPED,
-                enabled = false,
-                supporting = stringResource(R.string.settings_previous_routine_unavailable),
-            ) {}
+            RadioRow(R.string.settings_previous_routine, selected = state.previousMode == PreviousMode.ROUTINE_SCOPED) {
+                onEvent(SettingsEvent.PreviousModeChanged(PreviousMode.ROUTINE_SCOPED))
+            }
 
             HorizontalDivider()
             SwitchRow(R.string.settings_keep_awake, state.keepScreenAwake) { onEvent(SettingsEvent.KeepScreenAwakeChanged(it)) }
@@ -203,29 +199,17 @@ private fun SwitchRow(@StringRes label: Int, checked: Boolean, onChange: (Boolea
 }
 
 @Composable
-private fun RadioRow(
-    @StringRes label: Int,
-    selected: Boolean,
-    enabled: Boolean = true,
-    supporting: String? = null,
-    onClick: () -> Unit,
-) {
+private fun RadioRow(@StringRes label: Int, selected: Boolean, onClick: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.m),
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = Spacing.minTouchTarget)
-            .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = onClick),
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
     ) {
-        RadioButton(selected = selected, onClick = null, enabled = enabled)
-        Column {
-            val color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
-            Text(stringResource(label), style = MaterialTheme.typography.bodyLarge, color = color)
-            if (supporting != null) {
-                Text(supporting, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
+        RadioButton(selected = selected, onClick = null)
+        Text(stringResource(label), style = MaterialTheme.typography.bodyLarge)
     }
 }
 
@@ -306,7 +290,7 @@ private fun SettingsScreenPreview() {
     }
 }
 
-@Preview(name = "Settings: lb, rest off, invalid body weight", showBackground = true)
+@Preview(name = "Settings: lb, rest off, routine previous, invalid body weight", showBackground = true)
 @Composable
 private fun SettingsScreenEditedPreview() {
     MuskliTheme {
@@ -315,6 +299,7 @@ private fun SettingsScreenEditedPreview() {
                 weightUnit = WeightUnit.LB,
                 restEnabled = false,
                 restSecondsText = "",
+                previousMode = PreviousMode.ROUTINE_SCOPED,
                 weekStart = WeekStartDay.SUNDAY,
                 bodyWeightText = "abc",
                 bodyWeightInvalid = true,

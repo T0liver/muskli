@@ -66,6 +66,18 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun routinePreviousModeIsSavedAndShown() = runTest(dispatcher) {
+        val repo = FakeSettingsRepository()
+        val vm = SettingsViewModel(repo)
+        backgroundScope.launch { vm.uiState.collect {} }
+
+        vm.onEvent(SettingsEvent.PreviousModeChanged(PreviousMode.ROUTINE_SCOPED))
+
+        assertEquals(PreviousMode.ROUTINE_SCOPED, repo.settings.value.previousMode)
+        assertEquals(PreviousMode.ROUTINE_SCOPED, vm.uiState.value.previousMode)
+    }
+
+    @Test
     fun restOffAndOnAgainRestoresDefault() = runTest(dispatcher) {
         val repo = FakeSettingsRepository(Settings(defaultRestSeconds = 120))
         val vm = SettingsViewModel(repo)

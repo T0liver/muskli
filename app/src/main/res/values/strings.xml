@@ -132,7 +132,6 @@
     <string name="settings_previous">Previous values</string>
     <string name="settings_previous_anywhere">Last time anywhere</string>
     <string name="settings_previous_routine">Last time in this routine</string>
-    <string name="settings_previous_routine_unavailable">Available once routines exist</string>
     <string name="settings_keep_awake">Keep screen awake during a workout</string>
     <string name="settings_sound">Rest timer sound</string>
     <string name="settings_vibration">Rest timer vibration</string>
