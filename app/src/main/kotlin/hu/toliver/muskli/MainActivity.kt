@@ -24,6 +24,7 @@ import hu.toliver.muskli.domain.repo.Clock
 import hu.toliver.muskli.ui.finish.FinishOutcome
 import hu.toliver.muskli.ui.finish.FinishRoute
 import hu.toliver.muskli.ui.finish.FinishViewModel
+import hu.toliver.muskli.ui.hevy.HevyImportRoute
 import hu.toliver.muskli.ui.history.ExerciseHistoryRoute
 import hu.toliver.muskli.ui.history.ExerciseHistoryViewModel
 import hu.toliver.muskli.ui.history.HistoryEvent
@@ -62,6 +63,7 @@ class MainActivity : ComponentActivity() {
                 var startChecked by rememberSaveable { mutableStateOf(false) }
                 var finishEntries by rememberSaveable { mutableIntStateOf(0) }
                 var routineEntries by rememberSaveable { mutableIntStateOf(0) }
+                var hevyEntries by rememberSaveable { mutableIntStateOf(0) }
                 // If denied, the in-app bar still counts down, but the screen-off alert cannot be shown.
                 val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
 
@@ -219,7 +221,11 @@ class MainActivity : ComponentActivity() {
                         })
                     }
                     Route.Library -> LibraryRoute(mode = LibraryMode.BROWSE, onBack = ::pop, onPicked = {})
-                    Route.Settings -> SettingsRoute(onBack = ::pop)
+                    Route.Settings -> SettingsRoute(onBack = ::pop, onImportHevy = { push(Route.HevyImport(hevyEntries++)) })
+                    is Route.HevyImport -> HevyImportRoute(
+                        viewModel = hiltViewModel(key = "hevy-import-${top.entry}"),
+                        onBack = ::pop,
+                    )
                 }
             }
         }
