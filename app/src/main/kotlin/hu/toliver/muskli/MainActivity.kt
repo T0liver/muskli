@@ -141,10 +141,12 @@ class MainActivity : ComponentActivity() {
                             pop()
                         })
                     }
-                    // TODO(T-027): single-select picker; until then the first selected exercise is used.
                     is Route.ReplaceExercise -> {
                         val target = workoutViewModel(top.editId)
-                        LibraryRoute(mode = LibraryMode.PICK, onBack = ::pop, onPicked = { ids ->
+                        val targetState by target.uiState.collectAsStateWithLifecycle()
+                        val currentId = (targetState as? LiveWorkoutUiState.Active)
+                            ?.exercises?.firstOrNull { it.id == top.workoutExerciseId }?.templateId
+                        LibraryRoute(mode = LibraryMode.REPLACE, onBack = ::pop, currentId = currentId, onPicked = { ids ->
                             ids.firstOrNull()?.let { target.onEvent(LiveWorkoutEvent.ReplacementPicked(top.workoutExerciseId, it)) }
                             pop()
                         })

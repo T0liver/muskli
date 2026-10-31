@@ -33,6 +33,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -58,14 +59,16 @@ fun LibraryRoute(
     mode: LibraryMode,
     onBack: () -> Unit,
     onPicked: (ids: List<String>) -> Unit,
+    currentId: String? = null,
     viewModel: LibraryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     // The ViewModel outlives one pick (activity scope), so the next "Add exercise" starts empty.
     DisposableEffect(viewModel) { onDispose { viewModel.onEvent(LibraryEvent.SelectionCleared) } }
-    LibraryScreen(state = state, mode = mode, onEvent = viewModel::onEvent, onBack = onBack, onPicked = onPicked)
+    LibraryScreen(state = state, mode = mode, onEvent = viewModel::onEvent, onBack = onBack, onPicked = onPicked, currentId = currentId)
 }
 
+/** [currentId] is the exercise being replaced in [LibraryMode.REPLACE]; it is listed but can't be picked. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun LibraryScreen(
@@ -75,7 +78,13 @@ fun LibraryScreen(
     onBack: () -> Unit,
     onPicked: (ids: List<String>) -> Unit,
     modifier: Modifier = Modifier,
+    currentId: String? = null,
 ) {
+    // Taps in REPLACE never select, so a selection there is an exercise just created in the form.
+    if (mode == LibraryMode.REPLACE) {
+        val created = state.selectedIds.lastOrNull()
+        LaunchedEffect(created) { if (created != null) onPicked(listOf(created)) }
+    }
     val editor = state.editor
     if (editor != null) {
         BackHandler { onEvent(LibraryEvent.EditorDismiss) }
@@ -86,14 +95,20 @@ fun LibraryScreen(
         when {
             state.showArchived -> onEvent(LibraryEvent.RestoreClicked(exercise.id))
             mode == LibraryMode.PICK -> onEvent(LibraryEvent.SelectionToggled(exercise.id))
+            mode == LibraryMode.REPLACE -> onPicked(listOf(exercise.id))
             exercise.isCustom -> onEvent(LibraryEvent.EditClicked(exercise.id))
         }
+    }
+    val title = when (mode) {
+        LibraryMode.BROWSE -> R.string.library_title
+        LibraryMode.PICK -> R.string.library_pick_title
+        LibraryMode.REPLACE -> R.string.library_replace_title
     }
     Scaffold(
         modifier = modifier,
         topBar = {
             BackTopBar(
-                title = stringResource(if (mode == LibraryMode.PICK) R.string.library_pick_title else R.string.library_title),
+                title = stringResource(title),
                 onBack = onBack,
                 actions = {
                     IconButton(onClick = { onEvent(LibraryEvent.CreateClicked) }) {
@@ -162,6 +177,7 @@ fun LibraryScreen(
                         keyPrefix = "recent",
                         mode = mode,
                         selectedIds = state.selectedIds,
+                        currentId = currentId,
                         restoring = false,
                         onClick = onItemClick,
                     )
@@ -172,6 +188,7 @@ fun LibraryScreen(
                     keyPrefix = "all",
                     mode = mode,
                     selectedIds = state.selectedIds,
+                    currentId = currentId,
                     restoring = state.showArchived,
                     onClick = onItemClick,
                 )
@@ -198,6 +215,7 @@ private fun LazyListScope.section(
     keyPrefix: String,
     mode: LibraryMode,
     selectedIds: List<String>,
+    currentId: String?,
     restoring: Boolean,
     onClick: (ExerciseTemplate) -> Unit,
 ) {
@@ -211,7 +229,14 @@ private fun LazyListScope.section(
     }
     // The same exercise may be in Recent and All, so keys carry the section.
     items(exercises, key = { "$keyPrefix-${it.id}" }) { exercise ->
-        ExerciseRow(exercise, mode, selected = exercise.id in selectedIds, restoring = restoring, onClick = { onClick(exercise) })
+        ExerciseRow(
+            exercise,
+            mode,
+            selected = exercise.id in selectedIds,
+            current = mode == LibraryMode.REPLACE && exercise.id == currentId,
+            restoring = restoring,
+            onClick = { onClick(exercise) },
+        )
     }
 }
 
@@ -220,6 +245,7 @@ private fun ExerciseRow(
     exercise: ExerciseTemplate,
     mode: LibraryMode,
     selected: Boolean,
+    current: Boolean,
     restoring: Boolean,
     onClick: () -> Unit,
 ) {
@@ -240,6 +266,9 @@ private fun ExerciseRow(
             mode == LibraryMode.PICK -> {
                 { Checkbox(checked = selected, onCheckedChange = null) }
             }
+            current -> {
+                { Text(stringResource(R.string.library_current), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            }
             else -> null
         },
         colors = if (selected && mode == LibraryMode.PICK && !restoring) {
@@ -247,9 +276,17 @@ private fun ExerciseRow(
         } else {
             ListItemDefaults.colors()
         },
+        // Replacing an exercise with itself would drop its logged sets, so the current one can't be picked.
         modifier = Modifier
             .heightIn(min = Spacing.minTouchTarget)
-            .clickable(enabled = restoring || mode == LibraryMode.PICK || exercise.isCustom, onClick = onClick),
+            .clickable(
+                enabled = restoring || when (mode) {
+                    LibraryMode.BROWSE -> exercise.isCustom
+                    LibraryMode.PICK -> true
+                    LibraryMode.REPLACE -> !current
+                },
+                onClick = onClick,
+            ),
     )
 }
 
@@ -333,6 +370,22 @@ private fun LibraryPickPreview() {
             onEvent = {},
             onBack = {},
             onPicked = {},
+        )
+    }
+}
+
+@Preview(name = "Library: replace", showBackground = true)
+@Preview(name = "Library: replace dark", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun LibraryReplacePreview() {
+    MuskliTheme {
+        LibraryScreen(
+            state = previewState,
+            mode = LibraryMode.REPLACE,
+            onEvent = {},
+            onBack = {},
+            onPicked = {},
+            currentId = "squat-barbell",
         )
     }
 }
