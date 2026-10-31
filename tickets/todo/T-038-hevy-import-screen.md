@@ -26,7 +26,7 @@ From Settings, the owner picks a Hevy workout CSV, sees what will be imported, r
 - Any change to the live-workout screen or the existing backup import.
 
 ## Acceptance criteria
-- [ ] Picking the T-035 fixture (pushed to the emulator) shows 2 new workouts, 14 sets, 2 RPE values not stored, and 3 unmatched exercises listed first.
+- [ ] Picking the T-035 fixture (pushed to the emulator) shows 2 new workouts, 13 sets, 2 RPE values not stored, and 3 unmatched exercises listed first.
 - [ ] Mapping one unmatched exercise to a library exercise lowers the new custom count to 2 and the import uses that exercise.
 - [ ] Confirming imports; History shows both workouts with their sets; the Library shows the new custom exercises.
 - [ ] Picking the same file again shows 0 new and 2 duplicates, and the import button is disabled.

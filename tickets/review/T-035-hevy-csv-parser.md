@@ -27,10 +27,10 @@ A pure `:domain` function turns the text of a Hevy export file into parsed worko
 - Adding any dependency (no CSV library).
 
 ## Acceptance criteria
-- [ ] Fixture files exist under `domain/src/test/resources/hevy/` and match HEVY-IMPORT §8 byte for byte apart from line ends.
-- [ ] TC-HEVY-01..10 are implemented as tests, were seen failing first, and pass.
-- [ ] No `java.time`, no Android import, no new dependency in `:domain`.
-- [ ] `./gradlew :domain:test assembleDebug` pass.
+- [x] Fixture files exist under `domain/src/test/resources/hevy/` and match HEVY-IMPORT §8 byte for byte apart from line ends.
+- [x] TC-HEVY-01..10 are implemented as tests, were seen failing first, and pass.
+- [x] No `java.time`, no Android import, no new dependency in `:domain`.
+- [x] `./gradlew :domain:test assembleDebug` pass.
 
 ## Verification
 `.\gradlew.bat :domain:test assembleDebug`
@@ -40,3 +40,11 @@ None open: D-040, D-041, D-042, D-045. The parser reads the whole text (the owne
 
 ## Handoff log
 <!-- Newest first. Each entry: date, role, what was done, what's left, gotchas, commands run + results. -->
+- **2026-10-31 · BUILD.** Done, branch `t-035-hevy-csv-parser`.
+  - **Code** (`:domain` `importer/hevy/`): `HevyExport.kt` holds the public types exactly as in this ticket. `CsvReader.kt` is the internal RFC 4180 `readCsv` and `CsvRecord(number, fields)`. `HevyLocalTime.kt` has `parseHevyLocalTime` (strict `d MMM yyyy, HH:mm`, calendar-checked, days-from-civil, no `java.time`) and `localToEpochMs` (HEVY-IMPORT §5 probe algorithm). `HevyParser.kt` has `parseHevyExport`: kind from header, columns by name, all-or-nothing errors, and the §2 mapping (grouping by first appearance, occurrence split, superset renumbering, km to m in `BigDecimal`, completed true, side BOTH, RPE on `HevySet`).
+  - **Tests** (written first; all 23 seen failing on `TODO()` stubs, then passing): `CsvReaderTest` covers TC-HEVY-02 syntax. `HevyParserTest` covers TC-HEVY-01, file-level TC-HEVY-02, and TC-HEVY-03..10, with a `SwitchingClock` fake for the DST cases.
+  - **Fixtures**: `domain/src/test/resources/hevy/{workout,measurement}_data.csv` were copied from §8 and compared programmatically with the doc blocks (identical after line-end normalisation). Nothing from `docs/fixtures/` is used or committed.
+  - **Decisions:** D-055 covers parser details (kind detection so a missing `exercise_title` gives MISSING_COLUMN, required columns, number and date syntax, error granularity, lenient quoting). D-056 fixes the fixture set count: §8 said 9 / 14 sets, but its own breakdown and the verbatim fixture give **8 / 13**. The TC-HEVY-01 count assertion therefore expects 13; HEVY-IMPORT §8, TC-HEVY-01, TC-HEVY-18, and T-038's AC were corrected to match. Reviewer: please confirm this is the intended reading.
+  - **Gotchas:** TC-HEVY-01's "`completedAtEpochMs` null" has no field at this level (`HevySet` wraps `SetData` only); it applies when T-036 builds `WorkoutSet`. Workout-level `createdAt`/`updatedAt` and ids are also T-036's job, so `parseHevyExport` uses `Clock` only for offsets.
+  - **Commands:** `.\gradlew.bat :domain:test --tests "...importer.hevy.*"` failed first (23/23), then passed. `.\gradlew.bat :domain:test testDebugUnitTest assembleDebug lintDebug` gave BUILD SUCCESSFUL: 205 domain tests, 0 failures; lint 0 errors, 1 warning (the existing JUnit BOM `NewerVersionAvailable`, not new). `rg "java\.time|android\." domain/.../importer` found no matches. No Gradle file changed.
+  - **Left:** nothing for this ticket; matching and the plan are T-036.

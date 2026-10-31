@@ -152,8 +152,8 @@ line two",0,"normal",,,,60,
 ```
 
 Expected with a fixed offset of **+3600 s**:
-- 2 workouts, in file order. "Push, heavy": start `1773507900000`, end `1773511920000`, notes `Felt "strong"`, 5 exercise occurrences (Bench 3 sets, Lateral Raise 2 sets with `supersetGroup` 0, Pull Up 1 set with `supersetGroup` 0, Plank 1 set with notes `line one\nline two` and `durationS` 60, Bench again 1 set), 9 sets. "Legs": start `1773295200000`, end `1773297900000`, notes null, 4 occurrences, 5 sets; Farmers Walk `distanceM` 40.0, Rowing `distanceM` 5020.0, `durationS` 1260.
-- 14 sets total, all completed; 2 sets with RPE.
+- 2 workouts, in file order. "Push, heavy": start `1773507900000`, end `1773511920000`, notes `Felt "strong"`, 5 exercise occurrences (Bench 3 sets, Lateral Raise 2 sets with `supersetGroup` 0, Pull Up 1 set with `supersetGroup` 0, Plank 1 set with notes `line one\nline two` and `durationS` 60, Bench again 1 set), 8 sets. "Legs": start `1773295200000`, end `1773297900000`, notes null, 4 occurrences, 5 sets; Farmers Walk `distanceM` 40.0, Rowing `distanceM` 5020.0, `durationS` 1260.
+- 13 sets total (13 data records; the Plank note spans two lines), all completed; 2 sets with RPE (D-056).
 - Against the 10 exercises of catalogue version 1 (copied into test code, not read from `catalogue/`): Plank and Rowing Machine **exact**; Bench Press (Barbell) → `barbell-bench-press`, Pull Up → `pull-up`, Farmers Walk (Dumbbell) → `dumbbell-farmers-walk` **normalised**; Lateral Raise (Dumbbell) (WEIGHT_REPS, DUMBBELL), Goblet Squat (Kettlebell) (WEIGHT_REPS, KETTLEBELL), Assisted Pull Up (BODYWEIGHT_ASSISTED_REPS, OTHER) **unmatched**.
 
 `domain/src/test/resources/hevy/measurement_data.csv`:

@@ -152,7 +152,7 @@ Fixtures: `domain/src/test/resources/hevy/` (HEVY-IMPORT §8). Unless stated, th
 
 | ID | Case | Expected |
 |---|---|---|
-| TC-HEVY-01 | Parse the workout fixture | Exactly the values in HEVY-IMPORT §8: 2 workouts in file order, 5 + 4 exercise occurrences, 14 sets, all completed, `completedAtEpochMs` null, side BOTH, 2 sets with RPE |
+| TC-HEVY-01 | Parse the workout fixture | Exactly the values in HEVY-IMPORT §8: 2 workouts in file order, 5 + 4 exercise occurrences, 8 + 5 = 13 sets (D-056), all completed, `completedAtEpochMs` null, side BOTH, 2 sets with RPE |
 | TC-HEVY-02 | CSV syntax: `""` inside quotes, comma inside quotes, line break inside quotes (CRLF and LF), CRLF and LF record ends, UTF-8 BOM, no final newline | Fields read correctly; line breaks inside a field become `\n`; BOM ignored |
 | TC-HEVY-03 | Header handling: columns reordered; an extra unknown column; `exercise_title` column missing | Same result as the fixture; extra column ignored; missing column rejects the file (MISSING_COLUMN, record 1) |
 | TC-HEVY-04 | Same exercise twice in one workout (`set_index` back to 0) | Two separate occurrences in file order |
@@ -169,7 +169,7 @@ Fixtures: `domain/src/test/resources/hevy/` (HEVY-IMPORT §8). Unless stated, th
 | TC-HEVY-15 | Plan with every unmatched title as "create custom" | 3 new custom templates (title = Hevy title, primary OTHER, no secondary, inferred type and equipment, ids from IdGenerator); every set references an existing or new template |
 | TC-HEVY-16 | Plan with Lateral Raise (Dumbbell) mapped to an existing template and Pull Up re-mapped | No custom for it; sets use the chosen templates |
 | TC-HEVY-17 | Existing workouts started at `1773507900000 + 37000` (same minute), and a soft-deleted one at `1773295200000` | Both fixture workouts skipped as duplicates; with the existing start one minute later, "Push, heavy" is imported |
-| TC-HEVY-18 | Plan summary for the fixture on an empty phone | 2 in file, 2 new, 0 duplicates, 14 sets, 2 RPE values dropped, 3 new custom exercises, first and last start |
+| TC-HEVY-18 | Plan summary for the fixture on an empty phone | 2 in file, 2 new, 0 duplicates, 13 sets, 2 RPE values dropped, 3 new custom exercises, first and last start |
 | TC-HEVY-19 | An unmatched title used only by duplicate workouts | No custom exercise created for it |
 | TC-HEVY-20 | Apply the plan into a database with an existing finished workout and a draft | Existing rows unchanged; new workouts read back equal to the plan; new customs present; a failure injected after the first insert writes nothing |
 | TC-HEVY-21 | Apply the fixture twice | Second time: 0 new, 2 duplicates, 0 new custom exercises |
