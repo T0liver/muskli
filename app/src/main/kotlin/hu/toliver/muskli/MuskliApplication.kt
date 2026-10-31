@@ -2,6 +2,7 @@ package hu.toliver.muskli
 
 import android.app.Application
 import android.util.Log
+import dagger.Lazy
 import dagger.hilt.android.HiltAndroidApp
 import hu.toliver.muskli.data.seed.BundledCatalogueLoader
 import hu.toliver.muskli.data.seed.CatalogueSync
@@ -15,11 +16,12 @@ import javax.inject.Inject
 
 @HiltAndroidApp
 class MuskliApplication : Application() {
-    @Inject lateinit var bundledCatalogue: BundledCatalogueLoader
+    // Lazy, so the database and the HTTP source are built on a worker thread instead of before the first frame (AC-08).
+    @Inject lateinit var bundledCatalogue: Lazy<BundledCatalogueLoader>
 
-    @Inject lateinit var catalogueSync: CatalogueSync
+    @Inject lateinit var catalogueSync: Lazy<CatalogueSync>
 
-    @Inject lateinit var restTimerSync: RestTimerSync
+    @Inject lateinit var restTimerSync: Lazy<RestTimerSync>
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -29,15 +31,15 @@ class MuskliApplication : Application() {
         // either failure keeps the current library and never blocks startup (D-021, D-035).
         appScope.launch {
             try {
-                bundledCatalogue.load()
+                bundledCatalogue.get().load()
             } catch (e: Exception) {
                 Log.w(TAG, "Bundled catalogue not applied", e)
             }
-            catalogueSync.sync()
+            catalogueSync.get().sync()
         }
         RestNotifications.createChannels(this)
         // From process start, so a rest still running after the process died is re-armed (AC-03).
-        appScope.launch { restTimerSync.run() }
+        appScope.launch { restTimerSync.get().run() }
     }
 
     private companion object {

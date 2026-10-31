@@ -26,6 +26,14 @@ android {
         compose = true
     }
 
+    // Stored, page-aligned dex is mapped in place; compressed dex (the default below minSdk 28) is
+    // extracted again on every cold start whenever no dexopt output exists (AC-08, D-061).
+    packaging {
+        dex {
+            useLegacyPackaging = false
+        }
+    }
+
     testOptions {
         unitTests.isIncludeAndroidResources = true
         // Robolectric's SDK 36 sandbox reflects into JDK internals that JDK 17+ does not export by default.
