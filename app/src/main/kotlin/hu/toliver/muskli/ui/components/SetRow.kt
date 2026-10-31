@@ -118,14 +118,12 @@ fun SetRow(
         }
         PreviousText(set.previous)
         columns.forEachIndexed { index, column ->
-            val value = set.values.getOrElse(index) { "" }
-            val label = stringResource(column.descriptionRes(), set.number)
             SetValueField(
-                value = value,
+                value = set.values.getOrElse(index) { "" },
                 onValueChange = { onValueChange(column, it) },
                 keyboardType = if (column == SetColumn.REPS || column == SetColumn.DURATION) KeyboardType.Number else KeyboardType.Decimal,
                 completed = set.completed,
-                contentDescription = if (value.isEmpty()) label else stringResource(R.string.cd_set_field_value, label, value),
+                contentDescription = stringResource(column.descriptionRes(), set.number),
                 modifier = Modifier.weight(VALUE_WEIGHT),
             )
         }
@@ -243,6 +241,7 @@ private fun SetValueField(
         textStyle = SetValueTextStyle.copy(color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Next),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        // The field already exposes its value as text; putting it in the description too makes TalkBack read it twice.
         modifier = modifier.semantics { this.contentDescription = contentDescription },
         decorationBox = { innerTextField ->
             Box(

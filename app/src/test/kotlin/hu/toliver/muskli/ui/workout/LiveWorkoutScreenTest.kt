@@ -7,6 +7,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -101,7 +103,7 @@ class LiveWorkoutScreenTest {
     }
 
     @Test
-    fun setFieldsAnnounceTheirValueAndEmptyFieldsOnlyTheirName() {
+    fun setFieldsExposeTheirValueOnceAsTextUnderTheFieldName() {
         workouts.history.value = mapOf("squat-barbell" to listOf(lastTime(done(80.0, 8))))
         val workout = workoutSessionViewModel(workouts, templates, FakeSettingsRepository())
         workout.onEvent(LiveWorkoutEvent.StartClicked)
@@ -112,12 +114,15 @@ class LiveWorkoutScreenTest {
             }
         }
 
-        compose.onNodeWithContentDescription("Weight, set 1, 80").assertExists()
-        compose.onNodeWithContentDescription("Reps, set 1, 8").assertExists()
+        val weights = compose.onAllNodesWithContentDescription("Weight, set 1")
+        weights[0].assertTextEquals("80")
+        compose.onAllNodesWithContentDescription("Reps, set 1")[0].assertTextEquals("8")
 
-        compose.onNodeWithContentDescription("Weight, set 1").performTextInput("100")
-        compose.onNodeWithContentDescription("Weight, set 1, 100").assertExists()
-        compose.onNodeWithContentDescription("Reps, set 1").assertExists()
+        weights[1].performTextInput("100")
+        weights[1].assertTextEquals("100")
+        compose.onAllNodesWithContentDescription("Reps, set 1")[1].assertTextEquals("")
+        compose.onAllNodes(hasContentDescription("80", substring = true)).assertCountEquals(0)
+        compose.onAllNodes(hasContentDescription("100", substring = true)).assertCountEquals(0)
         compose.onAllNodesWithContentDescription("Complete set 1").assertCountEquals(2)
     }
 

@@ -209,7 +209,6 @@
     <string name="cd_reps">Reps, set %1$d</string>
     <string name="cd_duration">Time, set %1$d</string>
     <string name="cd_distance">Distance, set %1$d</string>
-    <string name="cd_set_field_value">%1$s, %2$s</string>
     <string name="cd_complete_set">Complete set %1$d</string>
     <string name="action_delete_set">Delete set</string>
 
