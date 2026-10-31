@@ -5,8 +5,11 @@ import hu.toliver.muskli.domain.model.ExerciseTemplate
 import hu.toliver.muskli.domain.model.ExerciseType
 import hu.toliver.muskli.domain.model.MuscleGroup
 
-/** [BROWSE] edits custom exercises on tap; [PICK] toggles a multi-selection for "Add exercise". */
-enum class LibraryMode { BROWSE, PICK }
+/**
+ * [BROWSE] edits custom exercises on tap; [PICK] toggles a multi-selection for "Add exercise";
+ * [REPLACE] returns the one exercise tapped (or just created) for "Replace exercise".
+ */
+enum class LibraryMode { BROWSE, PICK, REPLACE }
 
 data class LibraryUiState(
     val query: String = "",

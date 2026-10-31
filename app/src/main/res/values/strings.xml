@@ -25,6 +25,8 @@
     <string name="library_custom">Custom</string>
     <string name="library_item_details">%1$s · %2$s</string>
     <string name="library_add_selected">Add %1$d</string>
+    <string name="library_replace_title">Replace exercise</string>
+    <string name="library_current">Current</string>
     <string name="cd_create_exercise">Create exercise</string>
 
     <!-- Exercise form -->
