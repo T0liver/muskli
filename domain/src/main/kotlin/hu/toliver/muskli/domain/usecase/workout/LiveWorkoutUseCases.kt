@@ -137,16 +137,23 @@ class ReorderExerciseUseCase(
         }
 }
 
-/** Appends one empty normal set to the exercise. */
+/**
+ * Appends one normal, uncompleted set that copies the values and side of the exercise's last set,
+ * whatever that set's type; an exercise with no sets gets an empty one (D-050).
+ */
 class AddSetUseCase(
     private val repository: WorkoutRepository,
     private val ids: IdGenerator,
     private val clock: Clock,
 ) {
     suspend operator fun invoke(workoutId: String, workoutExerciseId: String): Workout? {
-        val set = emptySet(ids)
+        val id = ids.newId()
         return repository.edit(workoutId, clock) { workout ->
-            workout.mapExercise(workoutExerciseId) { it.copy(sets = it.sets + set) }
+            workout.mapExercise(workoutExerciseId) { exercise ->
+                val above = exercise.sets.lastOrNull()?.data ?: SetData()
+                val set = WorkoutSet(id, above.copy(type = SetType.NORMAL, completed = false), completedAtEpochMs = null)
+                exercise.copy(sets = exercise.sets + set)
+            }
         }
     }
 }
@@ -337,8 +344,6 @@ private fun newExercise(templateId: String, ids: IdGenerator, prefill: List<SetD
         sets = prefill.ifEmpty { listOf(SetData(type = SetType.NORMAL)) }.map { newSet(ids, it) },
     )
 }
-
-private fun emptySet(ids: IdGenerator) = newSet(ids, SetData(type = SetType.NORMAL))
 
 private fun newSet(ids: IdGenerator, data: SetData) = WorkoutSet(id = ids.newId(), data = data, completedAtEpochMs = null)
 
