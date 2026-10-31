@@ -59,6 +59,7 @@ Follow `research/04-data-model.md` section 4 (SQLite proposal), translated to Ro
 - Schema v2 adds `catalogue_meta`, one row holding the applied catalogue version (D-028).
 - Schema v3 adds `workout.rest_ends_at` and `workout.rest_duration_s`, the live workout's running rest (D-032).
 - Schema v4 adds `exercise_template.unilateral`, non-null, default `0` (D-037). Volume passes it to `setVolumeKg` (D-026).
+- Schema v5 adds `routine`, `routine_exercise`, `routine_set` (children keyed by position) and `workout.routine_id`, indexed, without a foreign key; deleting a routine clears it (D-052).
 
 ### Enums
 - SetType: `normal | warmup | dropset | failure`
@@ -99,7 +100,7 @@ fun lbToKg(lb: Double): Double
 ```
 
 ## 8. Export format
-Single JSON document with `schemaVersion`; mirrors Hevy's public API shapes where reasonable (research/06) so Hevy data maps cleanly. Import validates before applying (all-or-nothing transaction). An exercise's `unilateral` is optional and written only when true; a file without it imports as false, so `schemaVersion` stays 1 (D-047).
+Single JSON document with `schemaVersion`; mirrors Hevy's public API shapes where reasonable (research/06) so Hevy data maps cleanly. Import validates before applying (all-or-nothing transaction). An exercise's `unilateral` is optional and written only when true; a file without it imports as false, so `schemaVersion` stays 1 (D-047). Routines and `workouts[].routineId` are optional the same way; a file without them imports no routines (D-052).
 
 ## 9. Testing strategy
 | Layer | Tests |

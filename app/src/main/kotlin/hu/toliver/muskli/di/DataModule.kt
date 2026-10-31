@@ -15,6 +15,7 @@ import hu.toliver.muskli.data.UuidIdGenerator
 import hu.toliver.muskli.data.backup.JsonBackupRepository
 import hu.toliver.muskli.data.db.MuskliDatabase
 import hu.toliver.muskli.data.repo.RoomExerciseTemplateRepository
+import hu.toliver.muskli.data.repo.RoomRoutineRepository
 import hu.toliver.muskli.data.repo.RoomWorkoutRepository
 import hu.toliver.muskli.data.seed.BundledCatalogueLoader
 import hu.toliver.muskli.data.seed.CatalogueApplier
@@ -26,6 +27,7 @@ import hu.toliver.muskli.domain.repo.BackupRepository
 import hu.toliver.muskli.domain.repo.Clock
 import hu.toliver.muskli.domain.repo.ExerciseTemplateRepository
 import hu.toliver.muskli.domain.repo.IdGenerator
+import hu.toliver.muskli.domain.repo.RoutineRepository
 import hu.toliver.muskli.domain.repo.SettingsRepository
 import hu.toliver.muskli.domain.repo.WorkoutRepository
 import hu.toliver.muskli.ui.backup.BackupDocuments
@@ -51,6 +53,9 @@ object DataModule {
 
     @Provides
     fun workoutRepository(db: MuskliDatabase): WorkoutRepository = RoomWorkoutRepository(db)
+
+    @Provides
+    fun routineRepository(db: MuskliDatabase): RoutineRepository = RoomRoutineRepository(db.routineDao())
 
     // Singleton: DataStore allows only one instance per file in a process.
     @Provides

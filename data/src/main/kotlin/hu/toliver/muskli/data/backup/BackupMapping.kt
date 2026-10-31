@@ -3,6 +3,10 @@ package hu.toliver.muskli.data.backup
 import hu.toliver.muskli.data.db.entity.ExerciseTemplateEntity
 import hu.toliver.muskli.data.db.entity.ExerciseTemplateSecondaryMuscleEntity
 import hu.toliver.muskli.data.db.entity.ExerciseTemplateWithMuscles
+import hu.toliver.muskli.data.db.entity.RoutineEntity
+import hu.toliver.muskli.data.db.entity.RoutineExerciseEntity
+import hu.toliver.muskli.data.db.entity.RoutineSetEntity
+import hu.toliver.muskli.data.db.entity.RoutineWithChildren
 import hu.toliver.muskli.data.db.entity.WorkoutEntity
 import hu.toliver.muskli.data.db.entity.WorkoutExerciseEntity
 import hu.toliver.muskli.data.db.entity.WorkoutSetEntity
@@ -46,6 +50,7 @@ internal fun WorkoutWithExercises.toJson() = WorkoutJson(
     deletedAtMs = workout.deletedAt,
     restEndsAtMs = workout.restEndsAt,
     restDurationS = workout.restDurationS,
+    routineId = workout.routineId,
     exercises = exercises.sortedBy { it.exercise.position }.map { (exercise, sets) ->
         WorkoutExerciseJson(
             index = exercise.position,
@@ -72,6 +77,35 @@ internal fun WorkoutWithExercises.toJson() = WorkoutJson(
     },
 )
 
+internal fun RoutineWithChildren.toJson(): RoutineJson {
+    val setsByExercise = sets.groupBy { it.exercisePosition }
+    return RoutineJson(
+        id = routine.id,
+        title = routine.title,
+        createdAtMs = routine.createdAt,
+        updatedAtMs = routine.updatedAt,
+        exercises = exercises.sortedBy { it.position }.map { exercise ->
+            RoutineExerciseJson(
+                index = exercise.position,
+                exerciseTemplateId = exercise.exerciseTemplateId,
+                supersetId = exercise.supersetGroup,
+                notes = exercise.notes,
+                restSeconds = exercise.restSeconds,
+                sets = setsByExercise[exercise.position].orEmpty().sortedBy { it.position }.map { set ->
+                    RoutineSetJson(
+                        index = set.position,
+                        type = set.setType.lower(),
+                        weightKg = set.weightKg,
+                        reps = set.reps,
+                        distanceMeters = set.distanceM,
+                        durationSeconds = set.durationS,
+                    )
+                },
+            )
+        },
+    )
+}
+
 internal fun Settings.toJson() = SettingsJson(
     weightUnit = weightUnit.lower(),
     defaultRestSeconds = defaultRestSeconds,
@@ -91,6 +125,9 @@ internal data class ValidBackup(
     val exercises: List<WorkoutExerciseEntity>,
     val sets: List<WorkoutSetEntity>,
     val settings: Settings?,
+    val routines: List<RoutineEntity>,
+    val routineExercises: List<RoutineExerciseEntity>,
+    val routineSets: List<RoutineSetEntity>,
 )
 
 /** Collects every problem rather than stopping at the first, so one report lists all bad records. */
@@ -142,6 +179,56 @@ internal fun BackupFile.validate(): Pair<ValidBackup?, List<ImportError>> {
         }
     }
 
+    fun indicesInvalid(indices: List<Int>) = indices.toSet().size != indices.size || indices.any { it < 0 }
+
+    val routineIds = mutableSetOf<String>()
+    val routineRows = mutableListOf<RoutineEntity>()
+    val routineExerciseRows = mutableListOf<RoutineExerciseEntity>()
+    val routineSetRows = mutableListOf<RoutineSetEntity>()
+    routines.forEachIndexed { r, json ->
+        val path = "routines[$r]"
+        if (json.id.isBlank()) invalid("$path.id")
+        if (!routineIds.add(json.id)) errors += ImportError(ImportProblem.DUPLICATE_ID, "$path.id")
+        if (json.title.isBlank()) invalid("$path.title")
+        if (indicesInvalid(json.exercises.map { it.index })) invalid("$path.exercises.index")
+        routineRows += RoutineEntity(id = json.id, title = json.title, createdAt = json.createdAtMs, updatedAt = json.updatedAtMs)
+        json.exercises.forEachIndexed { e, exercise ->
+            val exercisePath = "$path.exercises[$e]"
+            if (exercise.exerciseTemplateId !in templateIds) {
+                errors += ImportError(ImportProblem.UNKNOWN_EXERCISE, "$exercisePath.exerciseTemplateId")
+            }
+            nonNegative("$exercisePath.restSeconds", exercise.restSeconds)
+            if (indicesInvalid(exercise.sets.map { it.index })) invalid("$exercisePath.sets.index")
+            routineExerciseRows += RoutineExerciseEntity(
+                routineId = json.id,
+                position = exercise.index,
+                exerciseTemplateId = exercise.exerciseTemplateId,
+                supersetGroup = exercise.supersetId,
+                notes = exercise.notes,
+                restSeconds = exercise.restSeconds,
+            )
+            exercise.sets.forEachIndexed { s, set ->
+                val setPath = "$exercisePath.sets[$s]"
+                nonNegative("$setPath.weightKg", set.weightKg)
+                nonNegative("$setPath.reps", set.reps)
+                nonNegative("$setPath.distanceMeters", set.distanceMeters)
+                nonNegative("$setPath.durationSeconds", set.durationSeconds)
+                parse("$setPath.type") { set.type.toEnum<SetType>() }?.let { type ->
+                    routineSetRows += RoutineSetEntity(
+                        routineId = json.id,
+                        exercisePosition = exercise.index,
+                        position = set.index,
+                        setType = type,
+                        weightKg = set.weightKg,
+                        reps = set.reps,
+                        distanceM = set.distanceMeters,
+                        durationS = set.durationSeconds,
+                    )
+                }
+            }
+        }
+    }
+
     val workoutIds = mutableSetOf<String>()
     val exerciseIds = mutableSetOf<String>()
     val setIds = mutableSetOf<String>()
@@ -154,6 +241,7 @@ internal fun BackupFile.validate(): Pair<ValidBackup?, List<ImportError>> {
         if (!workoutIds.add(json.id)) errors += ImportError(ImportProblem.DUPLICATE_ID, "$path.id")
         if (json.endTimeMs != null && json.endTimeMs < json.startTimeMs) invalid("$path.endTimeMs")
         nonNegative("$path.restDurationS", json.restDurationS)
+        if (json.routineId != null && json.routineId !in routineIds) invalid("$path.routineId")
         if (json.exercises.map { it.index }.let { it.toSet().size != it.size || it.any { i -> i < 0 } }) {
             invalid("$path.exercises.index")
         }
@@ -169,6 +257,7 @@ internal fun BackupFile.validate(): Pair<ValidBackup?, List<ImportError>> {
             deletedAt = json.deletedAtMs,
             restEndsAt = json.restEndsAtMs,
             restDurationS = json.restDurationS,
+            routineId = json.routineId,
         )
         json.exercises.forEachIndexed { e, exercise ->
             val exercisePath = "$path.exercises[$e]"
@@ -247,7 +336,17 @@ internal fun BackupFile.validate(): Pair<ValidBackup?, List<ImportError>> {
     }
 
     if (errors.isNotEmpty()) return null to errors
-    return ValidBackup(templates, muscles, workoutRows, exerciseRows, setRows, settings) to emptyList()
+    return ValidBackup(
+        templates = templates,
+        secondaryMuscles = muscles,
+        workouts = workoutRows,
+        exercises = exerciseRows,
+        sets = setRows,
+        settings = settings,
+        routines = routineRows,
+        routineExercises = routineExerciseRows,
+        routineSets = routineSetRows,
+    ) to emptyList()
 }
 
 private fun Enum<*>.lower() = name.lowercase()

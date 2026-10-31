@@ -146,4 +146,37 @@ class MigrationTest {
             room.close()
         }
     }
+
+    @Test
+    fun `TC-DATA-04 migration 4 to 5 keeps workouts without a routine and starts with no routines`() = runTest {
+        helper.createDatabase(4).apply {
+            execSQL(
+                "INSERT INTO exercise_template (id, title, exercise_type, primary_muscle, equipment, is_custom, archived, created_at, updated_at, unilateral) " +
+                    "VALUES ('bench-press', 'Bench press', 'weight_reps', 'chest', 'barbell', 0, 0, 1, 1, 0)",
+            )
+            execSQL(
+                "INSERT INTO workout (id, title, notes, start_time, utc_offset_s, end_time, created_at, updated_at, deleted_at, rest_ends_at, rest_duration_s) " +
+                    "VALUES ('draft', '', NULL, 10, 0, NULL, 10, 10, NULL, NULL, NULL)",
+            )
+            execSQL(
+                "INSERT INTO workout_exercise (id, workout_id, position, exercise_template_id, superset_group, notes, rest_seconds) " +
+                    "VALUES ('e1', 'draft', 0, 'bench-press', NULL, NULL, NULL)",
+            )
+            close()
+        }
+
+        helper.runMigrationsAndValidate(5, listOf(MuskliDatabase.MIGRATION_4_5)).close()
+
+        val room = Room.databaseBuilder(context, MuskliDatabase::class.java, dbName)
+            .addMigrations(*MuskliDatabase.MIGRATIONS)
+            .build()
+        try {
+            val draft = room.workoutDao().observeActiveDraft().first()!!.toDomain()
+            assertEquals("bench-press", draft.exercises.single().exerciseTemplateId)
+            assertNull(draft.routineId)
+            assertEquals(emptyList<Any>(), room.routineDao().observeAll().first())
+        } finally {
+            room.close()
+        }
+    }
 }

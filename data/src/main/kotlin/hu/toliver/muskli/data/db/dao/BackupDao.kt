@@ -8,6 +8,10 @@ import androidx.room.Transaction
 import hu.toliver.muskli.data.db.entity.ExerciseTemplateEntity
 import hu.toliver.muskli.data.db.entity.ExerciseTemplateSecondaryMuscleEntity
 import hu.toliver.muskli.data.db.entity.ExerciseTemplateWithMuscles
+import hu.toliver.muskli.data.db.entity.RoutineEntity
+import hu.toliver.muskli.data.db.entity.RoutineExerciseEntity
+import hu.toliver.muskli.data.db.entity.RoutineSetEntity
+import hu.toliver.muskli.data.db.entity.RoutineWithChildren
 import hu.toliver.muskli.data.db.entity.WorkoutEntity
 import hu.toliver.muskli.data.db.entity.WorkoutExerciseEntity
 import hu.toliver.muskli.data.db.entity.WorkoutSetEntity
@@ -20,12 +24,18 @@ abstract class BackupDao {
     @Query("SELECT * FROM workout ORDER BY start_time, id")
     abstract suspend fun allWorkouts(): List<WorkoutWithExercises>
 
-    /** Custom exercises plus the catalogue exercises any workout uses. */
+    @Transaction
+    @Query("SELECT * FROM routine ORDER BY id")
+    abstract suspend fun allRoutines(): List<RoutineWithChildren>
+
+    /** Custom exercises plus the catalogue exercises any workout or routine uses. */
     @Transaction
     @Query(
         """
         SELECT * FROM exercise_template
-        WHERE is_custom = 1 OR id IN (SELECT exercise_template_id FROM workout_exercise)
+        WHERE is_custom = 1
+           OR id IN (SELECT exercise_template_id FROM workout_exercise)
+           OR id IN (SELECT exercise_template_id FROM routine_exercise)
         ORDER BY id
         """,
     )
@@ -37,6 +47,10 @@ abstract class BackupDao {
     /** Exercises and sets go with them through the foreign-key cascades. */
     @Query("DELETE FROM workout")
     abstract suspend fun deleteAllWorkouts()
+
+    /** Exercises and sets go with them through the foreign-key cascades. */
+    @Query("DELETE FROM routine")
+    abstract suspend fun deleteAllRoutines()
 
     @Query("DELETE FROM exercise_template WHERE is_custom = 1")
     abstract suspend fun deleteCustomTemplates()
@@ -55,4 +69,13 @@ abstract class BackupDao {
 
     @Insert
     abstract suspend fun insertSets(sets: List<WorkoutSetEntity>)
+
+    @Insert
+    abstract suspend fun insertRoutines(routines: List<RoutineEntity>)
+
+    @Insert
+    abstract suspend fun insertRoutineExercises(exercises: List<RoutineExerciseEntity>)
+
+    @Insert
+    abstract suspend fun insertRoutineSets(sets: List<RoutineSetEntity>)
 }

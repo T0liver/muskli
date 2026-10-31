@@ -137,6 +137,16 @@ Streak = consecutive calendar weeks with at least one workout, week start config
 | TC-DATA-06 | Import file with a bad record | Nothing applied, error report |
 | TC-DATA-07 | Foreign keys: removing a workout removes its exercises and sets | true |
 
+## TC-ROUTINE: routines (D-052)
+| ID | Case | Expected |
+|---|---|---|
+| TC-ROUTINE-01 | Create " Push A " with exercises | Title "Push A", new id, created = updated = now; blank title rejected, nothing written |
+| TC-ROUTINE-02 | Update title and exercises of a routine | Replaced; created kept, updated = now; unknown id gives null; blank title rejected |
+| TC-ROUTINE-03 | List routines "pull", "Legs", "Push"; delete "pull" | Legs, pull, Push (title ignoring case, then id); then Legs, Push |
+| TC-ROUTINE-04 | Start from a routine with no draft | Draft with the routine's exercises in order, notes/rest/superset, planned sets uncompleted with type and values, title = routine title, `routineId` set; an exercise without sets gets one empty normal set |
+| TC-ROUTINE-05 | Start from a routine while a draft exists; start from an unknown routine | Existing draft returned as Resumed, nothing written; unknown gives null |
+| TC-ROUTINE-06 | Save a finished workout as a routine | Exercises, notes, rest, superset, set types and values copied; side and completion dropped; draft, deleted, or unknown workout gives null |
+
 ## TC-HEVY: Hevy CSV import (docs/HEVY-IMPORT.md, D-040..D-045)
 Fixtures: `domain/src/test/resources/hevy/` (HEVY-IMPORT §8). Unless stated, the fake clock has a fixed offset of +3600 s.
 

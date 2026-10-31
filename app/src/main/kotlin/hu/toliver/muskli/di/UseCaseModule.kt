@@ -7,12 +7,19 @@ import dagger.hilt.components.SingletonComponent
 import hu.toliver.muskli.domain.repo.Clock
 import hu.toliver.muskli.domain.repo.ExerciseTemplateRepository
 import hu.toliver.muskli.domain.repo.IdGenerator
+import hu.toliver.muskli.domain.repo.RoutineRepository
 import hu.toliver.muskli.domain.repo.WorkoutRepository
 import hu.toliver.muskli.domain.usecase.library.ArchiveCustomExerciseUseCase
 import hu.toliver.muskli.domain.usecase.library.CreateCustomExerciseUseCase
 import hu.toliver.muskli.domain.usecase.library.EditCustomExerciseUseCase
 import hu.toliver.muskli.domain.usecase.library.SearchExercisesUseCase
 import hu.toliver.muskli.domain.usecase.library.UnarchiveCustomExerciseUseCase
+import hu.toliver.muskli.domain.usecase.routine.CreateRoutineUseCase
+import hu.toliver.muskli.domain.usecase.routine.DeleteRoutineUseCase
+import hu.toliver.muskli.domain.usecase.routine.ObserveRoutinesUseCase
+import hu.toliver.muskli.domain.usecase.routine.SaveWorkoutAsRoutineUseCase
+import hu.toliver.muskli.domain.usecase.routine.StartWorkoutFromRoutineUseCase
+import hu.toliver.muskli.domain.usecase.routine.UpdateRoutineUseCase
 import hu.toliver.muskli.domain.usecase.workout.AddExercisesUseCase
 import hu.toliver.muskli.domain.usecase.workout.AddSetUseCase
 import hu.toliver.muskli.domain.usecase.workout.AdjustRestTimerUseCase
@@ -123,4 +130,24 @@ object UseCaseModule {
 
     @Provides
     fun changeStartTime(repository: WorkoutRepository, clock: Clock) = ChangeStartTimeUseCase(repository, clock)
+
+    @Provides
+    fun observeRoutines(repository: RoutineRepository) = ObserveRoutinesUseCase(repository)
+
+    @Provides
+    fun createRoutine(repository: RoutineRepository, ids: IdGenerator, clock: Clock) = CreateRoutineUseCase(repository, ids, clock)
+
+    @Provides
+    fun updateRoutine(repository: RoutineRepository, clock: Clock) = UpdateRoutineUseCase(repository, clock)
+
+    @Provides
+    fun deleteRoutine(repository: RoutineRepository) = DeleteRoutineUseCase(repository)
+
+    @Provides
+    fun startWorkoutFromRoutine(routines: RoutineRepository, workouts: WorkoutRepository, ids: IdGenerator, clock: Clock) =
+        StartWorkoutFromRoutineUseCase(routines, workouts, ids, clock)
+
+    @Provides
+    fun saveWorkoutAsRoutine(workouts: WorkoutRepository, routines: RoutineRepository, ids: IdGenerator, clock: Clock) =
+        SaveWorkoutAsRoutineUseCase(workouts, routines, ids, clock)
 }
