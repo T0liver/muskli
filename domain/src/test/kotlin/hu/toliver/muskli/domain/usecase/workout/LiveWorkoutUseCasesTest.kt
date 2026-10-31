@@ -5,6 +5,7 @@ import hu.toliver.muskli.domain.calc.RestEffect
 import hu.toliver.muskli.domain.calc.WorkoutExerciseRecord
 import hu.toliver.muskli.domain.model.SetData
 import hu.toliver.muskli.domain.model.SetType
+import hu.toliver.muskli.domain.model.Side
 import hu.toliver.muskli.domain.model.Workout
 import hu.toliver.muskli.domain.model.WorkoutExercise
 import hu.toliver.muskli.domain.model.WorkoutSet
@@ -98,6 +99,61 @@ class LiveWorkoutUseCasesTest {
 
         assertEquals(11_000L, edited.updatedAtEpochMs)
         assertEquals(10_000L, edited.createdAtEpochMs)
+    }
+
+    @Test
+    fun `add set copies the values of the latest set, uncompleted`() = runTest {
+        val workout = startWith("bench")
+        val exerciseId = workout.exercises[0].id
+        val firstId = workout.exercises[0].sets[0].id
+        editSetValues(workout.id, firstId, SetValues(weightKg = 100.0, reps = 5))
+        completeSet(workout.id, firstId, defaultRestS = 90)
+
+        val added = addSet(workout.id, exerciseId)!!.exercises[0].sets.last()
+
+        assertEquals(SetData(SetType.NORMAL, weightKg = 100.0, reps = 5), added.data)
+        assertNull(added.completedAtEpochMs)
+    }
+
+    @Test
+    fun `add set copies every value field and the side of the set directly above`() = runTest {
+        val workout = startWith("bench")
+        val exerciseId = workout.exercises[0].id
+        val above = SetData(weightKg = 20.0, reps = 8, durationS = 45, distanceM = 300.0, side = Side.LEFT)
+        repo.update(workout.id) { w ->
+            w.copy(exercises = w.exercises.map { e -> e.copy(sets = e.sets.map { it.copy(data = above) }) })
+        }
+
+        val added = addSet(workout.id, exerciseId)!!.exercises[0].sets.last()
+
+        assertEquals(SetData(weightKg = 20.0, reps = 8, durationS = 45, distanceM = 300.0, side = Side.LEFT), added.data)
+    }
+
+    @Test
+    fun `add set after a warm-up or drop set adds a normal set with its values`() = runTest {
+        val workout = startWith("bench")
+        val setId = workout.exercises[0].sets[0].id
+        editSetValues(workout.id, setId, SetValues(weightKg = 40.0, reps = 12))
+
+        listOf(SetType.WARMUP, SetType.DROPSET, SetType.FAILURE).forEach { type ->
+            val aboveId = stored(workout.id).setIds(0).last()
+            changeSetType(workout.id, aboveId, type)
+
+            val added = addSet(workout.id, workout.exercises[0].id)!!.exercises[0].sets.last()
+
+            assertEquals(SetData(SetType.NORMAL, weightKg = 40.0, reps = 12), added.data)
+        }
+    }
+
+    @Test
+    fun `add set on an exercise with no sets adds one empty normal set`() = runTest {
+        val workout = startWith("bench")
+        val exerciseId = workout.exercises[0].id
+        deleteSet(workout.id, workout.exercises[0].sets[0].id)
+
+        val sets = addSet(workout.id, exerciseId)!!.exercises[0].sets
+
+        assertEquals(listOf(SetData(SetType.NORMAL)), sets.map { it.data })
     }
 
     @Test
