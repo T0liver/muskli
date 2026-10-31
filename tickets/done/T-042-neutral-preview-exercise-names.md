@@ -28,6 +28,13 @@ None. Found during T-036; the AC "no Hevy exercise names in `src/main`" was met 
 ## Handoff log
 <!-- Newest first. Each entry: date, role, what was done, what's left, gotchas, commands run + results. -->
 
+### 2026-10-31 · VERIFY
+**Pass. Move to `done/`.** No emulator. The diff only changes `@Preview` sample titles, plus the library preview's template ids so the replace preview still marks the current exercise. A running app shows none of that, so WORKFLOW §6's device install does not apply.
+- Build: preview change `c3a794a`, review `004044c`, branch `t-042-neutral-preview-exercise-names`, Windows. `$env:JAVA_TOOL_OPTIONS='-Djavax.net.ssl.trustStoreType=Windows-ROOT'; .\gradlew.bat :domain:test testDebugUnitTest assembleDebug lintDebug` → BUILD SUCCESSFUL. `:domain:test`, `testDebugUnitTest` and `assembleDebug` were UP-TO-DATE for this tree (results from 14:03 on `c3a794a`): domain 239, app 125, data 67, 431 tests, 0 failures, 0 errors, 0 skipped. Lint: 0 errors, 1 warning, the pre-existing `NewerVersionAvailable` on `junit5 = "5.14.4"` in `gradle/libs.versions.toml`. No new warnings.
+- `rg -n "\((Barbell|Dumbbell|Kettlebell|Cable|Machine|Band)\)" app/src/main data/src/main domain/src/main` exits 1.
+- No production strings, catalogue, or test expected values in the diff. No new dependency.
+- Every acceptance criterion holds. No new tickets.
+
 ### 2026-10-31 · REVIEW
 **Verdict: no Blockers, no Should-fix, no Nits. Move to `verify/`.** Reviewed `git diff main...t-042-neutral-preview-exercise-names` (commit `c3a794a`) against the ticket, D-025, D-043 and WORKFLOW §5.
 - **Scope.** Eleven paths: the nine listed preview files, plus this ticket moving `todo/` → `review/`. Every Kotlin hunk is a title (and, in `LibraryScreen`, the matching preview template id) inside a `@Preview` function or a `preview*` helper used only by previews. `currentId` in the replace preview is `barbell-back-squat`, the same id as that row, so the current exercise stays marked.
