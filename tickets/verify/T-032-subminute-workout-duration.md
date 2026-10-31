@@ -29,6 +29,16 @@ T-019 backup `muskli-backup-2026-10-30.json`, workout "Air": `startTimeMs == end
 
 ## Handoff log
 <!-- Newest first. Each entry: date, role, what was done, what's left, gotchas, commands run + results. -->
+- 2026-10-31: REVIEW of `5e08a7b` (`git diff main...t-032-subminute-workout-duration`).
+  - **Scope:** matches the ticket and D-051. A workout under a minute with the editors at 0 saves `elapsedMs / 1000` (at least 1 s); otherwise `finishDurationS` returns the typed seconds unchanged, so a multi-minute workout keeps the shown minutes. The hour/minute editors, their validation (`durationS()`), `WorkoutDetails`, and `FinishWorkoutUseCase` are untouched. Log past creates a 1 h workout (D-033), so its elapsed time is ≥ 1 min and the typed duration is saved as before. No schema change, no dependency, no change to the logging screen.
+  - **Tests:** only additions (4 in `FinishAndHistoryUseCasesTest`, 1 in `FinishViewModelTest`); no existing expected value edited. Logic is a pure `:domain` function; the ViewModel only measures elapsed time with the injected `Clock`. New string in `strings.xml`.
+  - **Blocker:** none.
+  - **Should-fix:** none.
+  - **Nit:** `durationText`'s new "N s" branch has no unit test (it is a `@Composable`; checked on the emulator instead).
+  - **Nit:** the first domain test sets `clock.now` only to compute `elapsedMs`; passing the literal 30 400 would read the same. Left as is.
+  - **Nit:** changing the start in the finish form of a sub-minute workout does not change the saved seconds (they come from the opening time). That matches D-051 ("measures the elapsed time when it opens"), and the duration was already independent of the start.
+  - **Commands:** `.\gradlew.bat :domain:test testDebugUnitTest assembleDebug lintDebug`: BUILD SUCCESSFUL; reran tests with `--rerun`: 305 tests, 0 failures across `:domain`, `:data`, `:app`. Lint: 0 errors, 1 warning (existing `NewerVersionAvailable`).
+  - **Result:** no fixes needed; moved to `verify/`.
 - 2026-10-31: BUILD.
   - **Decision:** D-051 (auto-accepted recommendation, owner-delegated 2026-10-30). Under a minute with the editors still at 0: save the exact elapsed whole seconds, at least 1 s (not rounded up to 1 min). Otherwise the typed minutes are saved, as before. History shows "N s" for 1–59 s; 0 s stays "0 min". No schema change, no new dependency.
   - **`:domain`:** new pure `finishDurationS(elapsedMs, typedS)` in `FinishAndHistoryUseCases.kt`. `WorkoutDetails` and `FinishWorkoutUseCase` are unchanged. Four tests in `FinishAndHistoryUseCasesTest` were written first; with a stub returning `typedS`, 2 failed (the 30 s and 400 ms cases), then all passed after the implementation. One of them finishes a 30.4 s draft through `FinishWorkoutUseCase` with a `TestClock` and checks end = start + 30 s.
