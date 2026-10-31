@@ -26,6 +26,42 @@ android {
         compose = true
     }
 
+    // The release workflow signs with ANDROID_KEYSTORE_* when those secrets are set.
+    // Until a keystore is provided, release still builds, signed with the debug key.
+    val releaseKeystore = System.getenv("ANDROID_KEYSTORE_FILE").orEmpty()
+    signingConfigs {
+        if (releaseKeystore.isNotEmpty()) {
+            val storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+            val keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+            val keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+            require(!storePassword.isNullOrEmpty()) {
+                "ANDROID_KEYSTORE_FILE is set but ANDROID_KEYSTORE_PASSWORD is empty."
+            }
+            require(!keyAlias.isNullOrEmpty()) {
+                "ANDROID_KEYSTORE_FILE is set but ANDROID_KEY_ALIAS is empty."
+            }
+            require(!keyPassword.isNullOrEmpty()) {
+                "ANDROID_KEYSTORE_FILE is set but ANDROID_KEY_PASSWORD is empty."
+            }
+            create("release") {
+                storeFile = file(releaseKeystore)
+                this.storePassword = storePassword
+                this.keyAlias = keyAlias
+                this.keyPassword = keyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig = if (releaseKeystore.isNotEmpty()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
+        }
+    }
+
     testOptions {
         unitTests.isIncludeAndroidResources = true
         // Robolectric's SDK 36 sandbox reflects into JDK internals that JDK 17+ does not export by default.
