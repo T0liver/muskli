@@ -29,6 +29,17 @@ Found in T-019 (2026-10-30), commit `893cbd94`, emulator-5554. Official trio aft
 ## Handoff log
 <!-- Newest first. Each entry: date, role, what was done, what's left, gotchas, commands run + results. -->
 
+### 2026-10-31 · REVIEW · bar NOT met, back to todo; only the lazy init is merged
+**Result:** acceptance criterion 1 is **not met** and stays unticked. Official trio on the branch: 4818, 3040, 2502 ms (median **3040**), against `main` 2655, 3641, 2663 (median 2663) and 5-run medians of 2896 (`main`) vs 2731 (branch). The required median is under 2000 ms. The ±1 s run-to-run noise on this emulator is larger than any gain measured.
+
+**Findings:**
+- **Blocker (reverted):** uncompressed dex (`packaging.dex.useLegacyPackaging = false`) grew the APK from 13.9 to 35.2 MB in every build type, release included, for a gain smaller than the noise, and the official trio was slower than `main`. Reverted; `app/build.gradle.kts` is identical to `main` again. D-061 now records it as tried and rejected (auto-accepted recommendation, owner-delegated 2026-10-30).
+- **Kept:** `MuskliApplication` injects `BundledCatalogueLoader`, `CatalogueSync` and `RestTimerSync` as `dagger.Lazy` and resolves them in the worker coroutines. Correct: the database is `@Singleton` (Hilt's double-check is thread-safe, also against the activity's own injection on the main thread), the constructors only read the Context and `AlarmManager`, and order, try/catch and logging are unchanged. No main-thread I/O, no new tap, no dependency, schema or API change. Merged to `main` with this review.
+
+**Still open (owner decision, not taken):** how AC-08 is measured. Options: (1) measure a release / non-debuggable build or a dexopted install; (2) a stronger emulator (more RAM, host GPU); (3) the owner's phone, which is what SPEC §8 says. Even with verified dex the emulator median was ~2.2 s (see the BUILD entry), so app-side work alone is unlikely to reach 2 s on this emulator.
+
+**Commands:** `$env:JAVA_TOOL_OPTIONS='-Djavax.net.ssl.trustStoreType=Windows-ROOT'; .\gradlew.bat :domain:test testDebugUnitTest assembleDebug lintDebug`: BUILD SUCCESSFUL; lint shows only the existing `NewerVersionAvailable`. `app-debug.apk` after the revert: 14,605,119 bytes (13.9 MiB). No new start-time measurement in this review.
+
 ### 2026-10-31 · BUILD · bar NOT met (median 3040 ms), safe improvement committed
 **Result:** acceptance criterion 1 is **not met** and stays unticked; the number was not changed. Criterion 2 met: after the start returned, a `uiautomator dump` shows Muskli / Start workout / Routines / History / Exercise library / Settings (no draft in the DB).
 
