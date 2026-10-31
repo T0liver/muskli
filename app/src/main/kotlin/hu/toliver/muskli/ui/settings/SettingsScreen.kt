@@ -273,7 +273,7 @@ private fun NumberField(
 }
 
 @StringRes
-private fun WeightUnit.labelRes(): Int = when (this) {
+internal fun WeightUnit.labelRes(): Int = when (this) {
     WeightUnit.KG -> R.string.unit_kg
     WeightUnit.LB -> R.string.unit_lb
 }

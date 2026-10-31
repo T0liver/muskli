@@ -2,6 +2,7 @@ package hu.toliver.muskli.ui.hevy
 
 import hu.toliver.muskli.domain.importer.hevy.HevyParseError
 import hu.toliver.muskli.domain.model.ExerciseType
+import hu.toliver.muskli.domain.settings.WeightUnit
 
 sealed interface HevyImportUiState {
     data object Pick : HevyImportUiState
@@ -17,11 +18,19 @@ sealed interface HevyImportUiState {
         /** One row per distinct Hevy title, unmatched first (F-09 AC2). */
         val exercises: List<HevyExerciseRow>,
         val mapping: HevyMappingDialog? = null,
+        /** Null until a measurements file is added. */
+        val measurements: HevyMeasurements? = null,
     ) : HevyImportUiState {
         val canImport: Boolean get() = summary.newWorkouts > 0
     }
 
-    data class Done(val workouts: Int, val newCustomExercises: Int, val duplicatesSkipped: Int) : HevyImportUiState
+    /** [bodyWeight] is set only when the import wrote it. */
+    data class Done(
+        val workouts: Int,
+        val newCustomExercises: Int,
+        val duplicatesSkipped: Int,
+        val bodyWeight: HevyWeight? = null,
+    ) : HevyImportUiState
 
     /** Writing failed; the transaction rolled back, so nothing was changed. */
     data object Failed : HevyImportUiState
@@ -34,6 +43,20 @@ sealed interface HevyRejection {
 
     data object ReadFailed : HevyRejection
 }
+
+/** What the added measurements file offers (D-045). */
+sealed interface HevyMeasurements {
+    data class BodyWeight(val weight: HevyWeight, val measuredAtEpochMs: Long, val checked: Boolean) : HevyMeasurements
+
+    data object NoBodyWeight : HevyMeasurements
+
+    data object NotMeasurementsFile : HevyMeasurements
+
+    data object ReadFailed : HevyMeasurements
+}
+
+/** A weight already converted to [unit] and formatted for display. */
+data class HevyWeight(val value: String, val unit: WeightUnit)
 
 data class HevyImportSummary(
     val workoutsInFile: Int,
@@ -74,4 +97,6 @@ sealed interface HevyImportEvent {
     data class TemplateChosen(val templateId: String) : HevyImportEvent
     data object MappingDismissed : HevyImportEvent
     data object ImportClicked : HevyImportEvent
+    data class MeasurementsFilePicked(val uri: String) : HevyImportEvent
+    data class BodyWeightToggled(val checked: Boolean) : HevyImportEvent
 }

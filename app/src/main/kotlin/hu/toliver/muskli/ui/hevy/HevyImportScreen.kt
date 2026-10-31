@@ -16,9 +16,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -41,8 +43,10 @@ import hu.toliver.muskli.R
 import hu.toliver.muskli.domain.importer.hevy.HevyParseError
 import hu.toliver.muskli.domain.importer.hevy.HevyProblem
 import hu.toliver.muskli.domain.model.ExerciseType
+import hu.toliver.muskli.domain.settings.WeightUnit
 import hu.toliver.muskli.ui.components.BackTopBar
 import hu.toliver.muskli.ui.library.labelRes
+import hu.toliver.muskli.ui.settings.labelRes
 import hu.toliver.muskli.ui.theme.MuskliTheme
 import hu.toliver.muskli.ui.theme.Spacing
 import java.text.DateFormat
@@ -54,11 +58,15 @@ fun HevyImportRoute(viewModel: HevyImportViewModel, onBack: () -> Unit) {
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { viewModel.onEvent(HevyImportEvent.FilePicked(it.toString())) }
     }
+    val measurementsPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let { viewModel.onEvent(HevyImportEvent.MeasurementsFilePicked(it.toString())) }
+    }
     HevyImportScreen(
         state = state,
         onEvent = viewModel::onEvent,
         // Any type: file managers label CSV inconsistently, and the parser decides (D-040).
         onChooseFile = { picker.launch(arrayOf("*/*")) },
+        onAddMeasurements = { measurementsPicker.launch(arrayOf("*/*")) },
         onBack = onBack,
     )
 }
@@ -68,6 +76,7 @@ fun HevyImportScreen(
     state: HevyImportUiState,
     onEvent: (HevyImportEvent) -> Unit,
     onChooseFile: () -> Unit,
+    onAddMeasurements: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -87,7 +96,7 @@ fun HevyImportScreen(
                 CircularProgressIndicator()
             }
             is HevyImportUiState.Rejected -> Rejected(content, state.reason, onChooseFile)
-            is HevyImportUiState.Preview -> PreviewContent(content, state, onEvent)
+            is HevyImportUiState.Preview -> PreviewContent(content, state, onEvent, onAddMeasurements)
             is HevyImportUiState.Done -> Message(content, text = doneText(state)) {
                 PrimaryAction(stringResource(R.string.hevy_back_to_settings), onBack)
             }
@@ -157,9 +166,18 @@ private fun errorText(error: HevyParseError): String {
 }
 
 @Composable
-private fun PreviewContent(modifier: Modifier, state: HevyImportUiState.Preview, onEvent: (HevyImportEvent) -> Unit) {
+private fun PreviewContent(
+    modifier: Modifier,
+    state: HevyImportUiState.Preview,
+    onEvent: (HevyImportEvent) -> Unit,
+    onAddMeasurements: () -> Unit,
+) {
     LazyColumn(modifier = modifier) {
         item { Summary(state.summary) }
+        item {
+            MeasurementsSection(state.measurements, onAddMeasurements, onToggle = { onEvent(HevyImportEvent.BodyWeightToggled(it)) })
+            HorizontalDivider()
+        }
         item {
             Column(Modifier.padding(horizontal = Spacing.l, vertical = Spacing.s)) {
                 Text(stringResource(R.string.hevy_exercises), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
@@ -198,6 +216,41 @@ private fun Summary(summary: HevyImportSummary) {
 }
 
 private fun formatDate(epochMs: Long): String = DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(epochMs))
+
+@Composable
+private fun MeasurementsSection(measurements: HevyMeasurements?, onAdd: () -> Unit, onToggle: (Boolean) -> Unit) {
+    Column(Modifier.padding(horizontal = Spacing.l, vertical = Spacing.s), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+        Text(stringResource(R.string.hevy_measurements), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+        when (measurements) {
+            null -> Unit
+            is HevyMeasurements.BodyWeight -> Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.m),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = Spacing.minTouchTarget)
+                    .toggleable(value = measurements.checked, role = Role.Checkbox, onValueChange = onToggle),
+            ) {
+                Checkbox(checked = measurements.checked, onCheckedChange = null)
+                Text(
+                    stringResource(
+                        R.string.hevy_set_body_weight,
+                        measurements.weight.value,
+                        stringResource(measurements.weight.unit.labelRes()),
+                        formatDate(measurements.measuredAtEpochMs),
+                    ),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+            }
+            HevyMeasurements.NoBodyWeight -> Text(stringResource(R.string.hevy_no_body_weight))
+            HevyMeasurements.NotMeasurementsFile -> Text(stringResource(R.string.hevy_not_measurements_file), color = MaterialTheme.colorScheme.error)
+            HevyMeasurements.ReadFailed -> Text(stringResource(R.string.hevy_read_failed), color = MaterialTheme.colorScheme.error)
+        }
+        OutlinedButton(onClick = onAdd, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget)) {
+            Text(stringResource(R.string.hevy_add_measurements))
+        }
+    }
+}
 
 @Composable
 private fun ExerciseRow(row: HevyExerciseRow, onClick: () -> Unit) {
@@ -297,12 +350,16 @@ private fun OptionRow(label: String, selected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun doneText(state: HevyImportUiState.Done): String = stringResource(
-    R.string.hevy_done,
-    pluralStringResource(R.plurals.hevy_done_workouts, state.workouts, state.workouts),
-    pluralStringResource(R.plurals.hevy_done_customs, state.newCustomExercises, state.newCustomExercises),
-    pluralStringResource(R.plurals.hevy_done_duplicates, state.duplicatesSkipped, state.duplicatesSkipped),
-)
+private fun doneText(state: HevyImportUiState.Done): String {
+    val imported = stringResource(
+        R.string.hevy_done,
+        pluralStringResource(R.plurals.hevy_done_workouts, state.workouts, state.workouts),
+        pluralStringResource(R.plurals.hevy_done_customs, state.newCustomExercises, state.newCustomExercises),
+        pluralStringResource(R.plurals.hevy_done_duplicates, state.duplicatesSkipped, state.duplicatesSkipped),
+    )
+    val weight = state.bodyWeight ?: return imported
+    return imported + " " + stringResource(R.string.hevy_done_body_weight, weight.value, stringResource(weight.unit.labelRes()))
+}
 
 private const val MAX_ERRORS_SHOWN = 20
 
@@ -329,7 +386,7 @@ private val samplePreview = HevyImportUiState.Preview(
 
 @Composable
 private fun ScreenPreview(state: HevyImportUiState) {
-    MuskliTheme { HevyImportScreen(state = state, onEvent = {}, onChooseFile = {}, onBack = {}) }
+    MuskliTheme { HevyImportScreen(state = state, onEvent = {}, onChooseFile = {}, onAddMeasurements = {}, onBack = {}) }
 }
 
 @Preview(name = "Hevy import: pick", showBackground = true)
@@ -366,6 +423,20 @@ private fun MeasurementsPreview() = ScreenPreview(HevyImportUiState.Rejected(Hev
 @Composable
 private fun PreviewPreview() = ScreenPreview(samplePreview)
 
+@Preview(name = "Hevy import: body weight offered", showBackground = true)
+@Preview(name = "Hevy import: body weight offered, dark", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun BodyWeightPreview() = ScreenPreview(
+    samplePreview.copy(
+        measurements = HevyMeasurements.BodyWeight(HevyWeight("80.4", WeightUnit.KG), measuredAtEpochMs = 1_772_353_800_000L, checked = true),
+    ),
+)
+
+@Preview(name = "Hevy import: no body weight in file", showBackground = true)
+@Preview(name = "Hevy import: no body weight in file, dark", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun NoBodyWeightPreview() = ScreenPreview(samplePreview.copy(measurements = HevyMeasurements.NoBodyWeight))
+
 @Preview(name = "Hevy import: nothing new", showBackground = true)
 @Preview(name = "Hevy import: nothing new, dark", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
@@ -397,6 +468,13 @@ private fun MappingPreview() = ScreenPreview(
 @Preview(name = "Hevy import: done, dark", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun DonePreview() = ScreenPreview(HevyImportUiState.Done(workouts = 2, newCustomExercises = 3, duplicatesSkipped = 0))
+
+@Preview(name = "Hevy import: done with body weight", showBackground = true)
+@Preview(name = "Hevy import: done with body weight, dark", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun DoneBodyWeightPreview() = ScreenPreview(
+    HevyImportUiState.Done(workouts = 2, newCustomExercises = 3, duplicatesSkipped = 0, bodyWeight = HevyWeight("177.3", WeightUnit.LB)),
+)
 
 @Preview(name = "Hevy import: failed", showBackground = true)
 @Preview(name = "Hevy import: failed, dark", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
