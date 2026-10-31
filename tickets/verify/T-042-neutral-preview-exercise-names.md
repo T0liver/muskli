@@ -28,6 +28,15 @@ None. Found during T-036; the AC "no Hevy exercise names in `src/main`" was met 
 ## Handoff log
 <!-- Newest first. Each entry: date, role, what was done, what's left, gotchas, commands run + results. -->
 
+### 2026-10-31 · REVIEW
+**Verdict: no Blockers, no Should-fix, no Nits. Move to `verify/`.** Reviewed `git diff main...t-042-neutral-preview-exercise-names` (commit `c3a794a`) against the ticket, D-025, D-043 and WORKFLOW §5.
+- **Scope.** Eleven paths: the nine listed preview files, plus this ticket moving `todo/` → `review/`. Every Kotlin hunk is a title (and, in `LibraryScreen`, the matching preview template id) inside a `@Preview` function or a `preview*` helper used only by previews. `currentId` in the replace preview is `barbell-back-squat`, the same id as that row, so the current exercise stays marked.
+- **Catalogue vs neutral.** `Barbell Bench Press`, `Barbell Back Squat` and `Pull-Up` are titles in `catalogue/catalogue.json`, and the library preview ids `barbell-bench-press` / `barbell-back-squat` match that file. `Dumbbell Lateral Raise` and `Barbell Row` are not in the catalogue (it has no row or lateral-raise exercise); the neutral equipment-first names match the ticket. `Cable Fly (Low)` is unchanged: it is the custom-exercise sample and does not match the acceptance pattern.
+- **Left untouched.** No `strings.xml`, no `catalogue/`, no test file, no `libs.versions.toml` or Gradle build file. `app/src/test` still uses Hevy CSV titles, which this ticket puts out of scope. No new dependency, schema change, or `:domain` API change. No logging-screen control.
+- **Pattern.** `rg -n "\((Barbell|Dumbbell|Kettlebell|Cable|Machine|Band)\)" app/src/main data/src/main domain/src/main` exits 1 (no matches).
+
+**Blocker:** none. **Should-fix:** none. **Nit:** none.
+
 ### 2026-10-31 · UI
 - **Done:** replaced the Hevy-style preview titles in all 9 listed files. Catalogue titles where one exists (`Barbell Bench Press`, `Barbell Back Squat`, `Pull-Up`), neutral equipment-first names otherwise (`Dumbbell Lateral Raise`, `Barbell Row`). In `LibraryScreen.kt` the preview template ids (`bench-press-barbell`, `squat-barbell`, and the replace preview's `currentId`) now use the catalogue ids `barbell-bench-press` / `barbell-back-squat`, so the replace preview still marks the current exercise. Every edited line sits inside `@Preview` functions or `preview*` sample values; no production string, layout or logic changed.
 - **Left alone (out of scope):** `app/src/test` fakes/tests still use `Bench Press (Barbell)` / `squat-barbell` (test fixture data, and the Hevy import tests need Hevy's CSV names); `Cable Fly (Low)` in the Library preview is a custom-exercise sample and does not match the AC pattern.
