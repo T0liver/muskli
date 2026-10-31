@@ -41,6 +41,10 @@ abstract class BackupDao {
     )
     abstract suspend fun exportedTemplates(): List<ExerciseTemplateWithMuscles>
 
+    /** Every workout row, drafts and soft-deleted included (Hevy duplicate check, D-044). */
+    @Query("SELECT start_time FROM workout")
+    abstract suspend fun allWorkoutStartTimes(): List<Long>
+
     @Query("SELECT id FROM exercise_template WHERE is_custom = 0")
     abstract suspend fun catalogueTemplateIds(): List<String>
 

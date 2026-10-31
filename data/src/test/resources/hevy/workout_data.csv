@@ -1,0 +1,15 @@
+"title","start_time","end_time","description","exercise_title","superset_id","exercise_notes","set_index","set_type","weight_kg","reps","distance_km","duration_seconds","rpe"
+"Push, heavy","14 Mar 2026, 18:05","14 Mar 2026, 19:12","Felt ""strong""","Bench Press (Barbell)",,"Pause reps",0,"warmup",40,10,,,
+"Push, heavy","14 Mar 2026, 18:05","14 Mar 2026, 19:12","Felt ""strong""","Bench Press (Barbell)",,"Pause reps",1,"normal",82.5,5,,,8.5
+"Push, heavy","14 Mar 2026, 18:05","14 Mar 2026, 19:12","Felt ""strong""","Bench Press (Barbell)",,"Pause reps",2,"failure",82.5,4,,,10
+"Push, heavy","14 Mar 2026, 18:05","14 Mar 2026, 19:12","Felt ""strong""","Lateral Raise (Dumbbell)",3,"",0,"normal",10,12,,,
+"Push, heavy","14 Mar 2026, 18:05","14 Mar 2026, 19:12","Felt ""strong""","Lateral Raise (Dumbbell)",3,"",1,"dropset",6,10,,,
+"Push, heavy","14 Mar 2026, 18:05","14 Mar 2026, 19:12","Felt ""strong""","Pull Up",3,"",0,"normal",,8,,,
+"Push, heavy","14 Mar 2026, 18:05","14 Mar 2026, 19:12","Felt ""strong""","Plank",,"line one
+line two",0,"normal",,,,60,
+"Push, heavy","14 Mar 2026, 18:05","14 Mar 2026, 19:12","Felt ""strong""","Bench Press (Barbell)",,"",0,"normal",60,12,,,
+"Legs","12 Mar 2026, 07:00","12 Mar 2026, 07:45","","Goblet Squat (Kettlebell)",,"",0,"normal",24,10,,,
+"Legs","12 Mar 2026, 07:00","12 Mar 2026, 07:45","","Goblet Squat (Kettlebell)",,"",1,"normal",24,10,,,
+"Legs","12 Mar 2026, 07:00","12 Mar 2026, 07:45","","Assisted Pull Up",,"",0,"normal",20,6,,,
+"Legs","12 Mar 2026, 07:00","12 Mar 2026, 07:45","","Farmers Walk (Dumbbell)",,"",0,"normal",32,,0.04,,
+"Legs","12 Mar 2026, 07:00","12 Mar 2026, 07:45","","Rowing Machine",,"",0,"normal",,,5.02,1260,

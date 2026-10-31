@@ -6,9 +6,13 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import hu.toliver.muskli.domain.repo.Clock
 import hu.toliver.muskli.domain.repo.ExerciseTemplateRepository
+import hu.toliver.muskli.domain.repo.HevyImportRepository
 import hu.toliver.muskli.domain.repo.IdGenerator
 import hu.toliver.muskli.domain.repo.RoutineRepository
+import hu.toliver.muskli.domain.repo.SettingsRepository
 import hu.toliver.muskli.domain.repo.WorkoutRepository
+import hu.toliver.muskli.domain.usecase.importer.ApplyHevyImportUseCase
+import hu.toliver.muskli.domain.usecase.importer.PreviewHevyImportUseCase
 import hu.toliver.muskli.domain.usecase.library.ArchiveCustomExerciseUseCase
 import hu.toliver.muskli.domain.usecase.library.CreateCustomExerciseUseCase
 import hu.toliver.muskli.domain.usecase.library.EditCustomExerciseUseCase
@@ -150,4 +154,12 @@ object UseCaseModule {
     @Provides
     fun saveWorkoutAsRoutine(workouts: WorkoutRepository, routines: RoutineRepository, ids: IdGenerator, clock: Clock) =
         SaveWorkoutAsRoutineUseCase(workouts, routines, ids, clock)
+
+    @Provides
+    fun previewHevyImport(repository: HevyImportRepository, ids: IdGenerator, clock: Clock) =
+        PreviewHevyImportUseCase(repository, ids, clock)
+
+    @Provides
+    fun applyHevyImport(repository: HevyImportRepository, settings: SettingsRepository, ids: IdGenerator, clock: Clock) =
+        ApplyHevyImportUseCase(repository, settings, ids, clock)
 }
