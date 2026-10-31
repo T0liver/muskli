@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -72,18 +73,21 @@ fun LiveWorkoutContent(
     Scaffold(
         modifier = modifier,
         topBar = {
-            WorkoutHeader(
-                duration = duration,
-                volume = volume,
-                completedSets = completedSets,
-                onDurationClick = onDurationClick,
-                onFinish = onFinish,
-                modifier = Modifier
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
-                    .padding(top = Spacing.xs),
-                title = if (editing) R.string.edit_workout_title else R.string.live_workout_title,
-                finishLabel = if (editing) R.string.action_save else R.string.action_finish,
-            )
+            // Opaque because the list is laid out behind the top bar and would otherwise show through.
+            Surface {
+                WorkoutHeader(
+                    duration = duration,
+                    volume = volume,
+                    completedSets = completedSets,
+                    onDurationClick = onDurationClick,
+                    onFinish = onFinish,
+                    modifier = Modifier
+                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
+                        .padding(top = Spacing.xs),
+                    title = if (editing) R.string.edit_workout_title else R.string.live_workout_title,
+                    finishLabel = if (editing) R.string.action_save else R.string.action_finish,
+                )
+            }
         },
         bottomBar = {
             if (restTimer != null) {
