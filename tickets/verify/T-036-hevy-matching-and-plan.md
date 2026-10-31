@@ -37,6 +37,19 @@ None open: D-043, D-044.
 
 ## Handoff log
 <!-- Newest first. Each entry: date, role, what was done, what's left, gotchas, commands run + results. -->
+### 2026-10-31 — REVIEW
+- **Scope:** `git diff main...t-036-hevy-matching-and-plan` touches only `domain/.../importer/hevy` (2 main, 3 test files), D-057, this ticket, and the T-042 follow-up. Signatures match the ticket exactly. No change to `docs/TEST-CASES.md`, the T-035 fixtures, `catalogue/`, `:app`, `:data`, or `gradle/` (no new dependency, no schema change). Logic is pure `:domain`; time and ids come from the injected `Clock` and `IdGenerator`.
+- **Checked against HEVY-IMPORT §3/§4, D-043, D-044, D-057:** exact then token-multiset step, a later step never overriding an earlier tie, non-archived preference, rules 1-8 in order, equipment tokens and fallback, duplicates by `floorDiv(start, 60_000)` against existing starts only (in-file twins both imported), customs only for titles of imported workouts, every `WorkoutSet.completedAtEpochMs` null, `restSeconds`/`deletedAtEpochMs` null, offsets from the clock, summary counts on imported workouts. Tests assert TC-HEVY-11..19 as written in TEST-CASES (13 sets, 2 RPE, 3 customs), plus the `completedAtEpochMs` carry-over from TC-HEVY-01.
+- **Licence boundary:** `rg` for Hevy-style titles (`bench press`, `lateral raise`, `goblet`, `farmers walk`, `pull up`, `(Barbell)` ...) over `domain/src/main`, `data/src/main`, `catalogue/`: only the catalogue's own pre-existing CC0 titles; `rg -i hevy domain/src/main` outside the importer package: none. Hevy titles appear only in test code and the test fixture.
+- **Findings:**
+  - Blocker: none.
+  - Should-fix: none.
+  - Nit 1: two raw titles that differ only in case or surrounding spaces, both left on CreateCustom, give two customs with equal titles, which tie (unmatched) on the next import. Accepted by D-057 (one custom per raw title) and unlikely in a Hevy export; no change.
+  - Nit 2: `UseTemplate` ids are trusted, so "every set references a known template" holds by caller contract (D-057). T-037 must build resolutions only from template ids it read; noted for T-037, no change.
+  - Nit 3: the missing-resolution `IllegalArgumentException` message does not name the title; harmless for a caller bug, no change.
+- **Fixes made:** none needed.
+- **Commands:** `.\gradlew.bat :domain:test testDebugUnitTest assembleDebug lintDebug` BUILD SUCCESSFUL (up to date), then `.\gradlew.bat :domain:test --rerun :data:testDebugUnitTest --rerun :app:testDebugUnitTest --rerun` BUILD SUCCESSFUL: `:domain` 224 tests, `:data` 62, `:app` 108, 0 failed, 0 skipped (`HevyMatchingTest` 10, `HevyImportPlanTest` 9). Lint: `:app` 1 issue, the pre-existing `NewerVersionAvailable`; `:data` 0. No new warnings.
+- **Result:** approved, moved to `verify/`.
 ### 2026-10-31 — BUILD
 - **Done:** `HevyMatching.kt` (`HevyMatch`, `HevyResolution`, `matchHevyExercises`, `inferCustomExercise`, `defaultResolutions`) and `HevyImportPlan.kt` (`HevyImportPlan`, `planHevyImport`) in `domain/.../importer/hevy`, signatures exactly as in scope. Tests: `HevyMatchingTest` (10: TC-HEVY-11..14 plus default resolutions), `HevyImportPlanTest` (9: TC-HEVY-15..19 plus the D-044 "same minute twice in the file" rule), `CatalogueV1.kt` (the 10 catalogue v1 exercises copied into test code). Tests were written against throwing stubs first: 19 failed, the 23 T-035 tests passed; then implemented, all green.
 - **Review scope line honoured:** TC-HEVY-15 asserts every `WorkoutSet.completedAtEpochMs` is null, plus `utcOffsetS` from the clock, created/updated = now, `restSeconds`/`deletedAtEpochMs`/`restTimer`/`routineId` null, set data equal to the parse, and all ids distinct and from `IdGenerator`.
