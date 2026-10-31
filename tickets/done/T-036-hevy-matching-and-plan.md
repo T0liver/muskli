@@ -37,6 +37,13 @@ None open: D-043, D-044.
 
 ## Handoff log
 <!-- Newest first. Each entry: date, role, what was done, what's left, gotchas, commands run + results. -->
+### 2026-10-31 — VERIFY
+- **Build:** branch `t-036-hevy-matching-and-plan` at `7c57339`. No UI in this ticket, so no device run; verification is the ticket's Verification section and the test suites.
+- **Steps and results:**
+  - `.\gradlew.bat :domain:test --rerun assembleDebug`: BUILD SUCCESSFUL; `:domain` 224 tests, 0 failed (TC-HEVY-11..19 in `HevyMatchingTest` 10 and `HevyImportPlanTest` 9); `app-debug.apk` built.
+  - `rg -i hevy domain/src/main`: matches only in `importer/hevy/` (package names, type names, KDoc); none elsewhere. The exercise-title `rg` from REVIEW finds no Hevy titles in any `src/main` of `:domain`/`:data` or in `catalogue/`. Pass.
+  - Full suites from REVIEW (re-executed, not cached): `:data` 62, `:app` 108, 0 failed; lint no new warnings. Pass.
+- **Result:** all pass, moved to `done/`. No bug tickets.
 ### 2026-10-31 — REVIEW
 - **Scope:** `git diff main...t-036-hevy-matching-and-plan` touches only `domain/.../importer/hevy` (2 main, 3 test files), D-057, this ticket, and the T-042 follow-up. Signatures match the ticket exactly. No change to `docs/TEST-CASES.md`, the T-035 fixtures, `catalogue/`, `:app`, `:data`, or `gradle/` (no new dependency, no schema change). Logic is pure `:domain`; time and ids come from the injected `Clock` and `IdGenerator`.
 - **Checked against HEVY-IMPORT §3/§4, D-043, D-044, D-057:** exact then token-multiset step, a later step never overriding an earlier tie, non-archived preference, rules 1-8 in order, equipment tokens and fallback, duplicates by `floorDiv(start, 60_000)` against existing starts only (in-file twins both imported), customs only for titles of imported workouts, every `WorkoutSet.completedAtEpochMs` null, `restSeconds`/`deletedAtEpochMs` null, offsets from the clock, summary counts on imported workouts. Tests assert TC-HEVY-11..19 as written in TEST-CASES (13 sets, 2 RPE, 3 customs), plus the `completedAtEpochMs` carry-over from TC-HEVY-01.
