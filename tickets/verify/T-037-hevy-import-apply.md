@@ -42,6 +42,26 @@ None open: D-044, D-045. Re-planning in Apply avoids stale ids if the user takes
 ## Handoff log
 <!-- Newest first. Each entry: date, role, what was done, what's left, gotchas, commands run + results. -->
 
+### 2026-10-31 · REVIEW
+**Verdict: no Blockers, no Should-fix. Move to `verify/`.** Reviewed `git diff main...t-037-hevy-import-apply` (commit `e9338fc`) against the ticket, D-044, D-058 and WORKFLOW §5.
+- **Scope:** only the interface, the two use cases, `RoomHevyImportRepository`, one read query in `BackupDao`, Hilt bindings, tests, the fixture copy, and one D-058 line. No UI, no strings, no navigation. `BackupRepository` and the backup format are untouched.
+- **Add only (D-044):** `add` uses `insertTemplatesIfMissing` (IGNORE, with `-1` row ids checked so a clash fails instead of being skipped silently) and plain `@Insert` (ABORT) for workouts, exercises and sets. There is no update, replace or delete path. The test `add never replaces an existing template` covers it.
+- **Duplicates:** `SELECT start_time FROM workout` has no filter, so drafts and soft-deleted rows count. The same-minute rule comes from the `planHevyImport` code that T-036 verified. Both the Room test (drafts and soft-deleted) and the domain test (`+59 s`) cover it.
+- **One transaction:** everything runs inside `db.withTransaction`, and `check` throws inside it. The TC-HEVY-20 failure test is a real one: I replaced `withTransaction` with `run` and it fails (`5 tests completed, 1 failed`), then I reverted.
+- **Untrusted template ids (D-058):** `UseTemplate` is kept only when its id is in `allTemplates()` from the same call. Otherwise, or when no resolution is given, it uses the fresh default. `CreateCustom` is kept. Tests cover unknown ids, a missing title, and archived ids that were read.
+- **Body weight:** it is validated before any write and written only after `add` returns. The tests check the order (`add` then `setBodyWeightKg`) and that nothing is written when `add` throws.
+- **No schema change, no new dependencies:** no edits to entities, `MuskliDatabase`, `schemas/`, `MigrationTest`, `libs.versions.toml` or `build.gradle.kts`. No existing test file is modified (`--diff-filter=M` on `*Test*.kt` is empty).
+- **Layers:** the logic is in `:domain` with fakes. `:data` is a thin mapper. Everything is suspend Room, so there is no main-thread I/O. Time and ids are injected.
+
+**Nits (not fixed, no ticket needed):**
+- Apply reads starts and templates outside the write transaction (this is the ticket's interface, and the BUILD log already notes it). A same-minute workout logged in the few milliseconds between them would not be detected. This is acceptable for one user.
+- `data/src/test/resources/hevy/workout_data.csv` must stay byte-identical to the `:domain` fixture. I checked: the SHA-256 hashes match. Nothing enforces it.
+- The Room rollback test calls `repository.add` with a corrupted plan rather than going through Apply. That is fine, because the domain test covers Apply's failure path.
+
+**Commands run.**
+- `.\gradlew.bat :domain:cleanTest :domain:test :data:cleanTestDebugUnitTest :app:cleanTestDebugUnitTest testDebugUnitTest assembleDebug lintDebug --no-build-cache` gave BUILD SUCCESSFUL, 412 tests, 0 failures, 0 errors, 0 skipped. Lint: 0 errors, 1 warning, the pre-existing `NewerVersionAvailable` (junit-bom).
+- Mutation run (`withTransaction` changed to `run`) of `:data:testDebugUnitTest --tests "*RoomHevyImportRepositoryTest*"`: the TC-HEVY-20 failure test FAILED as expected. Reverted, then `:data:testDebugUnitTest assembleDebug` gave BUILD SUCCESSFUL.
+
 ### 2026-10-31 · BUILD
 **Done.**
 - `:domain` `repo/HevyImportRepository` (the three methods as specified) and `usecase/importer/HevyImportUseCases.kt`: `HevyPreview` (`Rejected`, `Measurements`, `Ready`), `PreviewHevyImportUseCase`, `ApplyHevyImportUseCase`. Tests were written first and seen failing (13/13 on `TODO()` stubs): `HevyImportUseCasesTest` with `FakeHevyImportRepository`. They cover preview, fresh ids on apply, a workout logged after the preview, untrusted template ids, an archived mapping, TC-HEVY-21, TC-HEVY-22 (checked, unchecked, failed add), a non-positive body weight, and a measurements-only apply.
