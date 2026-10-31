@@ -4,9 +4,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -96,6 +100,30 @@ class LiveWorkoutScreenTest {
 
         compose.onNodeWithContentDescription("Complete set 2").assertIsOn()
         compose.onNodeWithText("640 kg").assertExists()
+    }
+
+    @Test
+    fun setFieldsExposeTheirValueOnceAsTextUnderTheFieldName() {
+        workouts.history.value = mapOf("squat-barbell" to listOf(lastTime(done(80.0, 8))))
+        val workout = workoutSessionViewModel(workouts, templates, FakeSettingsRepository())
+        workout.onEvent(LiveWorkoutEvent.StartClicked)
+        workout.onEvent(LiveWorkoutEvent.ExercisesPicked(listOf("squat-barbell", "bench-press-barbell")))
+        compose.setContent {
+            MuskliTheme {
+                LiveWorkoutRoute(viewModel = workout, onAddExercise = {}, onReplaceExercise = {}, onFinish = {}, onExerciseHistory = {})
+            }
+        }
+
+        val weights = compose.onAllNodesWithContentDescription("Weight, set 1")
+        weights[0].assertTextEquals("80")
+        compose.onAllNodesWithContentDescription("Reps, set 1")[0].assertTextEquals("8")
+
+        weights[1].performTextInput("100")
+        weights[1].assertTextEquals("100")
+        compose.onAllNodesWithContentDescription("Reps, set 1")[1].assertTextEquals("")
+        compose.onAllNodes(hasContentDescription("80", substring = true)).assertCountEquals(0)
+        compose.onAllNodes(hasContentDescription("100", substring = true)).assertCountEquals(0)
+        compose.onAllNodesWithContentDescription("Complete set 1").assertCountEquals(2)
     }
 
     @Test

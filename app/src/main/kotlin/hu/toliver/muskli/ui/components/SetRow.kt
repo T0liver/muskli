@@ -241,6 +241,7 @@ private fun SetValueField(
         textStyle = SetValueTextStyle.copy(color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Next),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        // The field already exposes its value as text; putting it in the description too makes TalkBack read it twice.
         modifier = modifier.semantics { this.contentDescription = contentDescription },
         decorationBox = { innerTextField ->
             Box(
