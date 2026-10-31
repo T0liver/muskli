@@ -246,6 +246,12 @@
     </plurals>
     <string name="hevy_back_to_settings">Back to Settings</string>
     <string name="hevy_failed">The import failed. Nothing was changed.</string>
+    <string name="hevy_measurements">Body weight</string>
+    <string name="hevy_add_measurements">Add measurements file (optional)</string>
+    <string name="hevy_set_body_weight">Set body weight to %1$s %2$s (from %3$s)</string>
+    <string name="hevy_no_body_weight">No body weight in this file</string>
+    <string name="hevy_not_measurements_file">This is not a Hevy measurements file.</string>
+    <string name="hevy_done_body_weight">Body weight set to %1$s %2$s.</string>
     <string name="day_monday">Monday</string>
     <string name="day_tuesday">Tuesday</string>
     <string name="day_wednesday">Wednesday</string>

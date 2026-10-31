@@ -88,11 +88,12 @@ class SettingsViewModel @Inject constructor(private val repository: SettingsRepo
         // Accepts a decimal comma too, since the phone's keyboard may offer only that.
         fun parsePositive(text: String): Double? =
             text.trim().replace(',', '.').toDoubleOrNull()?.takeIf { it > 0 && it.isFinite() }
-
-        fun formatWeight(kg: Double, unit: WeightUnit): String {
-            val value = if (unit == WeightUnit.LB) kgToLb(kg) else kg
-            val tenths = (value * 10).roundToLong()
-            return if (tenths % 10 == 0L) (tenths / 10).toString() else "${tenths / 10}.${tenths % 10}"
-        }
     }
+}
+
+/** Body weight in [unit], one decimal at most. */
+internal fun formatWeight(kg: Double, unit: WeightUnit): String {
+    val value = if (unit == WeightUnit.LB) kgToLb(kg) else kg
+    val tenths = (value * 10).roundToLong()
+    return if (tenths % 10 == 0L) (tenths / 10).toString() else "${tenths / 10}.${tenths % 10}"
 }

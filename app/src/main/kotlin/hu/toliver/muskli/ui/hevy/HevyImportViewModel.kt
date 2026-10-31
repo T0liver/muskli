@@ -15,8 +15,10 @@ import hu.toliver.muskli.domain.model.ExerciseType
 import hu.toliver.muskli.domain.usecase.importer.ApplyHevyImportUseCase
 import hu.toliver.muskli.domain.usecase.importer.HevyPreview
 import hu.toliver.muskli.domain.usecase.importer.PreviewHevyImportUseCase
+import hu.toliver.muskli.domain.repo.SettingsRepository
 import hu.toliver.muskli.domain.usecase.library.SearchExercisesUseCase
 import hu.toliver.muskli.ui.backup.BackupDocuments
+import hu.toliver.muskli.ui.settings.formatWeight
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +34,7 @@ class HevyImportViewModel @Inject constructor(
     private val preview: PreviewHevyImportUseCase,
     private val apply: ApplyHevyImportUseCase,
     private val search: SearchExercisesUseCase,
+    private val settings: SettingsRepository,
     private val documents: BackupDocuments,
     @WorkDispatcher private val work: CoroutineDispatcher,
 ) : ViewModel() {
@@ -45,6 +48,11 @@ class HevyImportViewModel @Inject constructor(
 
     /** Title and query of the open mapping dialog. */
     private var mapping: Pair<String, String>? = null
+
+    private var measurements: HevyMeasurements? = null
+
+    /** The offered weight in kg, as read from the file, so the display rounding never reaches Settings. */
+    private var offeredKg: Double? = null
 
     fun onEvent(event: HevyImportEvent) {
         when (event) {
@@ -64,6 +72,11 @@ class HevyImportViewModel @Inject constructor(
                 render()
             }
             HevyImportEvent.ImportClicked -> import()
+            is HevyImportEvent.MeasurementsFilePicked -> readMeasurements(event.uri)
+            is HevyImportEvent.BodyWeightToggled -> {
+                measurements = (measurements as? HevyMeasurements.BodyWeight)?.copy(checked = event.checked) ?: return
+                render()
+            }
         }
     }
 
@@ -92,9 +105,38 @@ class HevyImportViewModel @Inject constructor(
                     ready = result
                     resolutions = result.defaultResolutions
                     mapping = null
+                    measurements = null
+                    offeredKg = null
                     render()
                 }
             }
+        }
+    }
+
+    private fun readMeasurements(uri: String) {
+        if (state.value !is HevyImportUiState.Preview) return
+        state.value = HevyImportUiState.Busy
+        viewModelScope.launch {
+            offeredKg = null
+            measurements = try {
+                val text = documents.read(uri)
+                when (val result = withContext(work) { preview(text) }) {
+                    is HevyPreview.Measurements -> result.latestBodyWeight?.let { latest ->
+                        val current = settings.settings.first()
+                        offeredKg = latest.weightKg
+                        HevyMeasurements.BodyWeight(
+                            weight = HevyWeight(formatWeight(latest.weightKg, current.weightUnit), current.weightUnit),
+                            measuredAtEpochMs = latest.measuredAtEpochMs,
+                            // Never overwrite a body weight the user set without them asking (D-045).
+                            checked = current.bodyWeightKg == null,
+                        )
+                    } ?: HevyMeasurements.NoBodyWeight
+                    is HevyPreview.Ready, is HevyPreview.Rejected -> HevyMeasurements.NotMeasurementsFile
+                }
+            } catch (e: IOException) {
+                HevyMeasurements.ReadFailed
+            }
+            render()
         }
     }
 
@@ -108,11 +150,18 @@ class HevyImportViewModel @Inject constructor(
     private fun import() {
         val current = ready ?: return
         if ((state.value as? HevyImportUiState.Preview)?.canImport != true) return
+        val offer = (measurements as? HevyMeasurements.BodyWeight)?.takeIf { it.checked }
+        val bodyWeightKg = if (offer != null) offeredKg else null
         state.value = HevyImportUiState.Busy
         viewModelScope.launch {
             state.value = try {
-                val plan = withContext(work) { apply(current.workouts, resolutions, bodyWeightKg = null) }
-                HevyImportUiState.Done(plan.newWorkouts.size, plan.newTemplates.size, plan.duplicatesSkipped)
+                val plan = withContext(work) { apply(current.workouts, resolutions, bodyWeightKg) }
+                HevyImportUiState.Done(
+                    workouts = plan.newWorkouts.size,
+                    newCustomExercises = plan.newTemplates.size,
+                    duplicatesSkipped = plan.duplicatesSkipped,
+                    bodyWeight = offer?.weight,
+                )
             } catch (e: IllegalStateException) {
                 HevyImportUiState.Failed
             } catch (e: SQLiteException) {
@@ -139,6 +188,7 @@ class HevyImportViewModel @Inject constructor(
                 .map { (title, match) -> HevyExerciseRow(title, rowResolution(current, title, match), match is HevyMatch.Unmatched) }
                 .sortedBy { !it.unmatched },
             mapping = mapping?.let { (title, query) -> mappingDialog(current, title, query) },
+            measurements = measurements,
         )
     }
 

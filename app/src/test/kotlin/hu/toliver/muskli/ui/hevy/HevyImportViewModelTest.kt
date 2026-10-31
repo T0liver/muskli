@@ -7,6 +7,7 @@ import hu.toliver.muskli.domain.model.Workout
 import hu.toliver.muskli.domain.repo.Clock
 import hu.toliver.muskli.domain.repo.HevyImportRepository
 import hu.toliver.muskli.domain.repo.IdGenerator
+import hu.toliver.muskli.domain.settings.WeightUnit
 import hu.toliver.muskli.domain.usecase.importer.ApplyHevyImportUseCase
 import hu.toliver.muskli.domain.usecase.importer.PreviewHevyImportUseCase
 import hu.toliver.muskli.domain.usecase.library.SearchExercisesUseCase
@@ -48,6 +49,7 @@ class HevyImportViewModelTest {
             preview = PreviewHevyImportUseCase(hevy, ids, clock),
             apply = ApplyHevyImportUseCase(hevy, settings, ids, clock),
             search = SearchExercisesUseCase(templates),
+            settings = settings,
             documents = documents,
             work = dispatcher,
         )
@@ -57,6 +59,7 @@ class HevyImportViewModelTest {
     fun setUp() {
         Dispatchers.setMain(dispatcher)
         documents.files["content://workouts"] = WORKOUTS_CSV
+        documents.files["content://measurements"] = MEASUREMENTS_CSV
     }
 
     @After
@@ -199,6 +202,102 @@ class HevyImportViewModelTest {
         assertNull(settings.settings.value.bodyWeightKg)
     }
 
+    private fun pickBoth() {
+        viewModel.onEvent(HevyImportEvent.FilePicked("content://workouts"))
+        viewModel.onEvent(HevyImportEvent.MeasurementsFilePicked("content://measurements"))
+    }
+
+    @Test
+    fun `TC-HEVY-22 with body weight unset the latest weight is offered checked and the import sets it in kg`() {
+        pickBoth()
+
+        val weight = HevyWeight("80.4", WeightUnit.KG)
+        assertEquals(HevyMeasurements.BodyWeight(weight, MEASURED_AT, checked = true), preview().measurements)
+
+        viewModel.onEvent(HevyImportEvent.ImportClicked)
+        assertEquals(HevyImportUiState.Done(workouts = 2, newCustomExercises = 2, duplicatesSkipped = 0, bodyWeight = weight), viewModel.uiState.value)
+        assertEquals(80.4, settings.settings.value.bodyWeightKg)
+    }
+
+    @Test
+    fun `TC-HEVY-22 with body weight set the offer starts unchecked and the import leaves it unchanged`() {
+        settings.settings.update { it.copy(bodyWeightKg = 75.0) }
+        pickBoth()
+
+        assertEquals(false, (preview().measurements as HevyMeasurements.BodyWeight).checked)
+
+        viewModel.onEvent(HevyImportEvent.ImportClicked)
+        assertEquals(HevyImportUiState.Done(workouts = 2, newCustomExercises = 2, duplicatesSkipped = 0), viewModel.uiState.value)
+        assertEquals(75.0, settings.settings.value.bodyWeightKg)
+    }
+
+    @Test
+    fun `with the lb setting the offer shows pounds and the stored weight stays kg`() {
+        settings.settings.update { it.copy(weightUnit = WeightUnit.LB) }
+        pickBoth()
+
+        val weight = HevyWeight("177.3", WeightUnit.LB)
+        assertEquals(HevyMeasurements.BodyWeight(weight, MEASURED_AT, checked = true), preview().measurements)
+
+        viewModel.onEvent(HevyImportEvent.ImportClicked)
+        assertEquals(weight, (viewModel.uiState.value as HevyImportUiState.Done).bodyWeight)
+        assertEquals(80.4, settings.settings.value.bodyWeightKg)
+    }
+
+    @Test
+    fun `the weight is passed only when the box is checked`() {
+        pickBoth()
+
+        viewModel.onEvent(HevyImportEvent.BodyWeightToggled(false))
+        assertEquals(false, (preview().measurements as HevyMeasurements.BodyWeight).checked)
+        viewModel.onEvent(HevyImportEvent.ImportClicked)
+
+        assertNull((viewModel.uiState.value as HevyImportUiState.Done).bodyWeight)
+        assertNull(settings.settings.value.bodyWeightKg)
+    }
+
+    @Test
+    fun `checking the box when body weight is set overwrites it`() {
+        settings.settings.update { it.copy(bodyWeightKg = 75.0) }
+        pickBoth()
+
+        viewModel.onEvent(HevyImportEvent.BodyWeightToggled(true))
+        viewModel.onEvent(HevyImportEvent.ImportClicked)
+
+        assertEquals(80.4, settings.settings.value.bodyWeightKg)
+    }
+
+    @Test
+    fun `a wrong measurements file keeps the workout preview and passes no weight`() {
+        documents.files["content://no-weight"] = "\"date\",\"weight_kg\"\n\"5 Mar 2026, 00:00\",\n"
+        viewModel.onEvent(HevyImportEvent.FilePicked("content://workouts"))
+        val before = preview()
+
+        viewModel.onEvent(HevyImportEvent.MeasurementsFilePicked("content://no-weight"))
+        assertEquals(before.copy(measurements = HevyMeasurements.NoBodyWeight), preview())
+
+        viewModel.onEvent(HevyImportEvent.MeasurementsFilePicked("content://workouts"))
+        assertEquals(before.copy(measurements = HevyMeasurements.NotMeasurementsFile), preview())
+
+        viewModel.onEvent(HevyImportEvent.MeasurementsFilePicked("content://missing"))
+        assertEquals(before.copy(measurements = HevyMeasurements.ReadFailed), preview())
+
+        viewModel.onEvent(HevyImportEvent.ImportClicked)
+        assertEquals(HevyImportUiState.Done(workouts = 2, newCustomExercises = 2, duplicatesSkipped = 0), viewModel.uiState.value)
+        assertNull(settings.settings.value.bodyWeightKg)
+    }
+
+    @Test
+    fun `a later measurements file replaces the earlier offer`() {
+        documents.files["content://no-weight"] = "\"date\",\"weight_kg\"\n\"5 Mar 2026, 00:00\",\n"
+        pickBoth()
+
+        viewModel.onEvent(HevyImportEvent.MeasurementsFilePicked("content://no-weight"))
+        viewModel.onEvent(HevyImportEvent.ImportClicked)
+
+        assertNull(settings.settings.value.bodyWeightKg)
+    }
+
     /** Shares templates with the library fake, so search sees the customs an import created. */
     private class FakeHevyRepository(private val library: FakeExerciseTemplateRepository) : HevyImportRepository {
         val added = mutableListOf<Workout>()
@@ -229,6 +328,17 @@ class HevyImportViewModelTest {
         // 14 Mar 2026 18:05 and 12 Mar 2026 07:00 UTC; the test clock's offset is 0.
         const val PUSH_START = 1_773_511_500_000L
         const val PULL_START = 1_773_298_800_000L
+
+        // 1 Mar 2026 08:30 UTC, the latest row with a weight in the measurements fixture.
+        const val MEASURED_AT = 1_772_353_800_000L
+
+        // Same rows as domain/src/test/resources/hevy/measurement_data.csv, trimmed to the columns the parser needs.
+        val MEASUREMENTS_CSV = """
+            "date","weight_kg","fat_percent","waist_cm"
+            "20 Feb 2026, 00:00",81.2,,
+            "1 Mar 2026, 08:30",80.4,18.5,
+            "05 Mar 2026, 00:00",,,88
+        """.trimIndent() + "\n"
 
         val WORKOUTS_CSV = """
             "title","start_time","end_time","description","exercise_title","superset_id","exercise_notes","set_index","set_type","weight_kg","reps","distance_km","duration_seconds","rpe"
