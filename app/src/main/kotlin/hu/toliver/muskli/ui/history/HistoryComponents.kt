@@ -26,12 +26,16 @@ import hu.toliver.muskli.ui.components.SetColumn
 import hu.toliver.muskli.ui.theme.MuskliTheme
 import hu.toliver.muskli.ui.theme.Spacing
 
-/** "1 h 5 min" or "42 min". */
+/** "1 h 5 min", "42 min", or "30 s" under a minute (D-051). */
 @Composable
 fun durationText(durationS: Long): String {
     val hours = durationS / 3600
     val minutes = durationS % 3600 / 60
-    return if (hours > 0) stringResource(R.string.duration_h_min, hours, minutes) else stringResource(R.string.duration_min, minutes)
+    return when {
+        hours > 0 -> stringResource(R.string.duration_h_min, hours, minutes)
+        durationS in 1 until 60 -> stringResource(R.string.duration_s, durationS)
+        else -> stringResource(R.string.duration_min, minutes)
+    }
 }
 
 /** "1 h 5 min · 4,320 kg · 14 sets". */

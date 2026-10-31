@@ -108,6 +108,18 @@ class FinishViewModelTest {
     }
 
     @Test
+    fun aWorkoutUnderAMinuteSavedUneditedKeepsItsSeconds() = runTest(dispatcher) {
+        clock.now = TestClock.START_MS + 30_000L
+        val workouts = FakeWorkoutRepository(listOf(draft(set("s1", true))))
+        val vm = viewModel(workouts)
+        assertEquals("0", vm.ready.minutes)
+
+        vm.onEvent(FinishEvent.SaveClicked)
+
+        assertEquals(TestClock.START_MS + 30_000L, workouts.workouts.value.getValue("w1").finishedAtEpochMs)
+    }
+
+    @Test
     fun anEditedPastWorkoutKeepsItsDuration() = runTest(dispatcher) {
         val vm = viewModel(FakeWorkoutRepository(listOf(draft(set("s1", true), finishedAt = TestClock.START_MS + 1_800_000L))))
 

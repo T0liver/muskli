@@ -269,6 +269,7 @@
     <string name="exercise_history_empty">Not done in a finished workout yet.</string>
     <string name="duration_h_min">%1$d h %2$d min</string>
     <string name="duration_min">%1$d min</string>
+    <string name="duration_s">%1$d s</string>
     <string name="summary_added_kg">+%1$s kg</string>
     <string name="summary_added_lb">+%1$s lb</string>
     <string name="summary_assist_kg">−%1$s kg</string>
