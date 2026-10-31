@@ -121,7 +121,8 @@ class HevyImportViewModel @Inject constructor(
             measurements = try {
                 val text = documents.read(uri)
                 when (val result = withContext(work) { preview(text) }) {
-                    is HevyPreview.Measurements -> result.latestBodyWeight?.let { latest ->
+                    // The parser accepts 0, but apply rejects a non-positive weight (D-058), so it is not offered.
+                    is HevyPreview.Measurements -> result.latestBodyWeight?.takeIf { it.weightKg > 0 }?.let { latest ->
                         val current = settings.settings.first()
                         offeredKg = latest.weightKg
                         HevyMeasurements.BodyWeight(

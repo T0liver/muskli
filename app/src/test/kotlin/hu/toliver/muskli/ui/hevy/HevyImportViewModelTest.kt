@@ -298,6 +298,19 @@ class HevyImportViewModelTest {
         assertNull(settings.settings.value.bodyWeightKg)
     }
 
+    @Test
+    fun `a zero latest weight is not offered and the import still succeeds`() {
+        documents.files["content://zero"] = "\"date\",\"weight_kg\"\n\"5 Mar 2026, 00:00\",0\n"
+        viewModel.onEvent(HevyImportEvent.FilePicked("content://workouts"))
+        viewModel.onEvent(HevyImportEvent.MeasurementsFilePicked("content://zero"))
+
+        assertEquals(HevyMeasurements.NoBodyWeight, preview().measurements)
+
+        viewModel.onEvent(HevyImportEvent.ImportClicked)
+        assertEquals(HevyImportUiState.Done(workouts = 2, newCustomExercises = 2, duplicatesSkipped = 0), viewModel.uiState.value)
+        assertNull(settings.settings.value.bodyWeightKg)
+    }
+
     /** Shares templates with the library fake, so search sees the customs an import created. */
     private class FakeHevyRepository(private val library: FakeExerciseTemplateRepository) : HevyImportRepository {
         val added = mutableListOf<Workout>()
