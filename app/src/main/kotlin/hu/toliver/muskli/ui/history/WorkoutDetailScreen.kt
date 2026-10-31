@@ -182,12 +182,12 @@ private fun WorkoutDetailScreenPreview() {
     MuskliTheme {
         WorkoutDetailScreen(
             state = WorkoutDetailUiState.Ready(
-                summary = WorkoutSummaryUi("w", "Push day", "30 Oct 2026, 17:05", 3_900, "1,360", 3, listOf("Bench Press (Barbell)")),
+                summary = WorkoutSummaryUi("w", "Push day", "30 Oct 2026, 17:05", 3_900, "1,360", 3, listOf("Barbell Bench Press")),
                 notes = "Felt strong.",
                 exercises = listOf(
                     ExerciseSummaryUi(
                         templateId = "bench",
-                        name = "Bench Press (Barbell)",
+                        name = "Barbell Bench Press",
                         columns = listOf(SetColumn.WEIGHT, SetColumn.REPS),
                         sets = listOf(
                             SetSummaryUi(1, SetType.WARMUP, listOf("40", "10")),

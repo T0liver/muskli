@@ -342,11 +342,11 @@ private fun previewExercise(id: String, title: String, muscle: MuscleGroup, equi
     )
 
 private val previewState = LibraryUiState(
-    recents = listOf(previewExercise("bench-press-barbell", "Bench Press (Barbell)", MuscleGroup.CHEST, Equipment.BARBELL)),
+    recents = listOf(previewExercise("barbell-bench-press", "Barbell Bench Press", MuscleGroup.CHEST, Equipment.BARBELL)),
     results = listOf(
-        previewExercise("bench-press-barbell", "Bench Press (Barbell)", MuscleGroup.CHEST, Equipment.BARBELL),
+        previewExercise("barbell-bench-press", "Barbell Bench Press", MuscleGroup.CHEST, Equipment.BARBELL),
         previewExercise("c1", "Cable Fly (Low)", MuscleGroup.CHEST, Equipment.MACHINE, custom = true),
-        previewExercise("squat-barbell", "Squat (Barbell)", MuscleGroup.QUADRICEPS, Equipment.BARBELL),
+        previewExercise("barbell-back-squat", "Barbell Back Squat", MuscleGroup.QUADRICEPS, Equipment.BARBELL),
     ),
 )
 
@@ -385,7 +385,7 @@ private fun LibraryReplacePreview() {
             onEvent = {},
             onBack = {},
             onPicked = {},
-            currentId = "squat-barbell",
+            currentId = "barbell-back-squat",
         )
     }
 }

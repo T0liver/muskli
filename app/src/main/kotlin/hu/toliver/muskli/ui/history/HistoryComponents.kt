@@ -132,14 +132,14 @@ private fun HistoryComponentsPreview() {
         Surface {
             Column(Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.l)) {
                 WorkoutSummaryCard(
-                    workout = WorkoutSummaryUi("w", "Push day", "30 Oct 2026, 17:05", 3_900, "4,320", 14, listOf("Bench Press (Barbell)", "Dips")),
+                    workout = WorkoutSummaryUi("w", "Push day", "30 Oct 2026, 17:05", 3_900, "4,320", 14, listOf("Barbell Bench Press", "Dips")),
                     weightUnit = WeightUnit.KG,
                     onClick = {},
                 )
                 ExerciseSummary(
                     exercise = ExerciseSummaryUi(
                         templateId = "bench",
-                        name = "Bench Press (Barbell)",
+                        name = "Barbell Bench Press",
                         columns = listOf(SetColumn.WEIGHT, SetColumn.REPS),
                         sets = listOf(
                             SetSummaryUi(1, SetType.WARMUP, listOf("40", "10")),

@@ -82,7 +82,7 @@ private fun ExerciseHistoryScreenPreview() {
     MuskliTheme {
         ExerciseHistoryScreen(
             state = ExerciseHistoryUiState.Ready(
-                name = "Bench Press (Barbell)",
+                name = "Barbell Bench Press",
                 columns = listOf(SetColumn.WEIGHT, SetColumn.REPS),
                 sessions = listOf(
                     ExerciseSessionUi(

@@ -133,7 +133,7 @@ private fun HistoryScreenPreview() {
             state = HistoryUiState(
                 loading = false,
                 workouts = listOf(
-                    WorkoutSummaryUi("a", "Push day", "30 Oct 2026, 17:05", 3_900, "4,320", 14, listOf("Bench Press (Barbell)", "Dips")),
+                    WorkoutSummaryUi("a", "Push day", "30 Oct 2026, 17:05", 3_900, "4,320", 14, listOf("Barbell Bench Press", "Dips")),
                     WorkoutSummaryUi("b", "", "28 Oct 2026, 18:10", 2_700, "6,100", 12, listOf("Back Squat", "Romanian Deadlift")),
                 ),
             ),

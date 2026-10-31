@@ -62,7 +62,7 @@ fun ReorderDialog(
 private fun ReorderDialogPreview() {
     MuskliTheme {
         ReorderDialog(
-            exercises = listOf("Bench Press (Barbell)", "Lateral Raise (Dumbbell)", "Bent-Over Row (Barbell)").map {
+            exercises = listOf("Barbell Bench Press", "Dumbbell Lateral Raise", "Barbell Row").map {
                 WorkoutExerciseUi(id = it, templateId = it, name = it, columns = emptyList(), sets = emptyList())
             },
             onMove = { _, _ -> },
