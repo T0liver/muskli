@@ -116,6 +116,10 @@ class WorkoutSessionViewModel @AssistedInject constructor(
     // be overtaken by an earlier one.
     private val writes = Mutex()
 
+    // Lookups run one at a time, so a load that read the old previous mode cannot overwrite the
+    // reload that follows a mode change.
+    private val previousLookups = Mutex()
+
     private val ticks = flow {
         while (true) {
             emit(Unit)
@@ -154,7 +158,7 @@ class WorkoutSessionViewModel @AssistedInject constructor(
         }
     }
 
-    private suspend fun loadMissingPrevious(workout: Workout) {
+    private suspend fun loadMissingPrevious(workout: Workout) = previousLookups.withLock {
         if (previous.value.workoutId != workout.id) previous.value = PreviousCache(workout.id)
         workout.exercises.map { it.exerciseTemplateId }.distinct()
             .filterNot { it in previous.value.byTemplate }
@@ -167,7 +171,7 @@ class WorkoutSessionViewModel @AssistedInject constructor(
     }
 
     // Swapped in at once rather than cleared first, so the column does not blink on every return.
-    private suspend fun reloadPrevious(workout: Workout) {
+    private suspend fun reloadPrevious(workout: Workout) = previousLookups.withLock {
         val byTemplate = workout.exercises.map { it.exerciseTemplateId }.distinct().associateWith { previousOf(it, workout) }
         previous.update { if (it.workoutId == workout.id) it.copy(byTemplate = it.byTemplate + byTemplate) else it }
     }

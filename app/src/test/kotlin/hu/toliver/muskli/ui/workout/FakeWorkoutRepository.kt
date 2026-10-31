@@ -26,6 +26,7 @@ import hu.toliver.muskli.domain.usecase.workout.ReplaceExerciseUseCase
 import hu.toliver.muskli.domain.usecase.workout.SkipRestTimerUseCase
 import hu.toliver.muskli.domain.usecase.workout.StartWorkoutUseCase
 import hu.toliver.muskli.domain.usecase.workout.UncompleteSetUseCase
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -35,6 +36,9 @@ class FakeWorkoutRepository(initial: List<Workout> = emptyList()) : WorkoutRepos
 
     /** Per template id, what [exerciseHistory] returns. */
     val history = MutableStateFlow<Map<String, List<WorkoutExerciseRecord>>>(emptyMap())
+
+    /** Each [exerciseHistory] call waits for the next gate in line, if any, so tests can order lookups. */
+    val historyGates = ArrayDeque<CompletableDeferred<Unit>>()
 
     val activeDraft: Workout? get() = workouts.value.values.firstOrNull { it.finishedAtEpochMs == null && it.deletedAtEpochMs == null }
 
@@ -67,8 +71,10 @@ class FakeWorkoutRepository(initial: List<Workout> = emptyList()) : WorkoutRepos
         workouts.value[id]?.let { save(it.copy(deletedAtEpochMs = null)) }
     }
 
-    override suspend fun exerciseHistory(exerciseTemplateId: String): List<WorkoutExerciseRecord> =
-        history.value[exerciseTemplateId].orEmpty()
+    override suspend fun exerciseHistory(exerciseTemplateId: String): List<WorkoutExerciseRecord> {
+        historyGates.removeFirstOrNull()?.await()
+        return history.value[exerciseTemplateId].orEmpty()
+    }
 }
 
 /** One finished past workout in which the exercise had [sets]. */

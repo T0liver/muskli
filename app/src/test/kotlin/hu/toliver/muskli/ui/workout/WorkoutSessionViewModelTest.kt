@@ -15,6 +15,7 @@ import hu.toliver.muskli.ui.components.SetColumn
 import hu.toliver.muskli.ui.library.FakeExerciseTemplateRepository
 import hu.toliver.muskli.ui.library.sampleLibrary
 import hu.toliver.muskli.ui.settings.FakeSettingsRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -331,6 +332,22 @@ class WorkoutSessionViewModelTest {
         assertEquals(listOf(listOf("85", "6")), vm.previousColumn)
 
         settings.setPreviousMode(PreviousMode.ROUTINE_SCOPED)
+
+        assertEquals(listOf(listOf("80", "8")), vm.previousColumn)
+    }
+
+    @Test
+    fun aModeChangeDuringTheFirstLoadEndsWithTheNewMode() = runTest(dispatcher) {
+        val workouts = FakeWorkoutRepository(listOf(draft(exercise("e1", "squat-barbell", set("s1"))).copy(routineId = "routine-a")))
+        workouts.history.value = squatInRoutinesAThenB
+        val firstLoad = CompletableDeferred<Unit>()
+        val reload = CompletableDeferred<Unit>()
+        workouts.historyGates.addAll(listOf(firstLoad, reload))
+        val vm = subscribed(workouts)
+
+        settings.setPreviousMode(PreviousMode.ROUTINE_SCOPED)
+        reload.complete(Unit)
+        firstLoad.complete(Unit)
 
         assertEquals(listOf(listOf("80", "8")), vm.previousColumn)
     }
