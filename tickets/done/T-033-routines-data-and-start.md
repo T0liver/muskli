@@ -31,6 +31,12 @@ Created 2026-10-30 by the owner's request so T-024 can be built (D-038).
 
 ## Handoff log
 <!-- Newest first. Each entry: date, role, what was done, what's left, gotchas, commands run + results. -->
+- 2026-10-31 VERIFY (branch `t-033-routines-data-and-start` at `9d5b223`; no UI, so no device run):
+  - AC "starting from a routine creates a draft…": `RoutineUseCasesTest` TC-ROUTINE-04 (whole draft equals the expected `Workout`, `routineId = "r1"`, sets uncompleted) and TC-ROUTINE-05 (existing draft returned as `Resumed`, no writes) pass.
+  - AC "routines survive app restart and backup export/import": `RoomRoutineRepositoryTest` "survive recreating the database connection" (file DB via `MuskliDatabase.build`, closed and reopened; routine and draft `routineId` read back) and `JsonBackupRepositoryTest` round-trip (routines equal, `routineId` kept, re-export byte-identical), old-file and reject-file tests pass.
+  - AC "migration test passes": read `MigrationTest` "migration 4 to 5". It builds a real v4 DB from `4.json` with a template, a draft, and a workout exercise, runs `runMigrationsAndValidate(5, MIGRATION_4_5)` (schema checked against `5.json`), then opens Room with all `MIGRATIONS`. The draft and its exercise are still there, `routineId` is null, and there are no routines. The 1→2, 2→3, and 3→4 tests and the v1-from-schema test also pass.
+  - Commands: same as REVIEW, `--no-build-cache` with clean test tasks → BUILD SUCCESSFUL; domain 174/0 failures, data 62/0, app 89/0; `assembleDebug` OK; lint 0 errors, 1 existing warning.
+  - Result: all pass, moved to `done/`. No new tickets.
 - 2026-10-31 REVIEW (branch `t-033-routines-data-and-start` at `c437092`, diff `main...`):
   - Checked against the ticket, D-052 (with D-029, D-034, D-038), SPEC §6, ARCHITECTURE §3/§8, WORKFLOW §5.
   - **Blockers:** none. **Should-fix:** none. No fixes made.
