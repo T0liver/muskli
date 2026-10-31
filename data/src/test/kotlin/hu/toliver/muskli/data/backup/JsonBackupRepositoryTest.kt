@@ -10,13 +10,18 @@ import hu.toliver.muskli.data.db.dumbbellRow
 import hu.toliver.muskli.data.db.secondaryMuscleEntities
 import hu.toliver.muskli.data.db.toEntity
 import hu.toliver.muskli.data.db.workout
+import hu.toliver.muskli.data.repo.RoomRoutineRepository
 import hu.toliver.muskli.data.repo.RoomWorkoutRepository
 import hu.toliver.muskli.domain.calc.PreviousMode
 import hu.toliver.muskli.domain.model.Equipment
 import hu.toliver.muskli.domain.model.ExerciseTemplate
 import hu.toliver.muskli.domain.model.ExerciseType
 import hu.toliver.muskli.domain.model.MuscleGroup
+import hu.toliver.muskli.domain.model.PlannedSet
 import hu.toliver.muskli.domain.model.RestTimer
+import hu.toliver.muskli.domain.model.Routine
+import hu.toliver.muskli.domain.model.RoutineExercise
+import hu.toliver.muskli.domain.model.SetType
 import hu.toliver.muskli.domain.repo.Clock
 import hu.toliver.muskli.domain.repo.ImportError
 import hu.toliver.muskli.domain.repo.ImportProblem
@@ -26,9 +31,11 @@ import hu.toliver.muskli.domain.settings.Settings
 import hu.toliver.muskli.domain.settings.WeekStartDay
 import hu.toliver.muskli.domain.settings.WeightUnit
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -212,6 +219,90 @@ class JsonBackupRepositoryTest {
         val olderFile = newDb()
         assertTrue(JsonBackupRepository(olderFile, FakeSettings(Settings()), clock).import(exported.replace(unilateralKey, "")) is ImportResult.Imported)
         assertEquals(false, olderFile.exerciseTemplateDao().get(dumbbellRow.id)?.template?.unilateral)
+    }
+
+    private val pushRoutine = Routine(
+        id = "r-push",
+        title = "Push A",
+        createdAtEpochMs = 1_000L,
+        updatedAtEpochMs = 2_000L,
+        exercises = listOf(
+            RoutineExercise(
+                exerciseTemplateId = benchPress.id,
+                supersetGroup = 1,
+                notes = "pause at the chest",
+                restSeconds = 120,
+                sets = listOf(PlannedSet(SetType.WARMUP, weightKg = 40.0, reps = 10), PlannedSet(weightKg = 80.0, reps = 5)),
+            ),
+            RoutineExercise(exerciseTemplateId = unusedCatalogue.id, sets = listOf(PlannedSet(durationS = 60))),
+        ),
+    )
+
+    @Test
+    fun `routines and a workout's routineId round-trip, with the catalogue exercises routines use (D-052)`() = runTest {
+        val (source, sourceSettings) = realisticSource()
+        RoomRoutineRepository(source.routineDao()).save(pushRoutine)
+        RoomRoutineRepository(source.routineDao()).save(Routine("r-empty", "Empty", 3_000L, 3_000L, emptyList()))
+        RoomWorkoutRepository(source).save(workout("w4", startedAt = 90_000L, finishedAt = 95_000L).copy(routineId = pushRoutine.id))
+        val exported = JsonBackupRepository(source, sourceSettings, clock).export()
+
+        val target = newDb()
+        val result = JsonBackupRepository(target, FakeSettings(Settings()), clock).import(exported)
+
+        assertTrue(result is ImportResult.Imported)
+        val targetRoutines = RoomRoutineRepository(target.routineDao())
+        assertEquals(RoomRoutineRepository(source.routineDao()).observeAll().first(), targetRoutines.observeAll().first())
+        assertEquals(pushRoutine, targetRoutines.get(pushRoutine.id))
+        assertEquals(source.backupDao().allWorkouts(), target.backupDao().allWorkouts())
+        assertEquals(pushRoutine.id, RoomWorkoutRepository(target).observe("w4").first()?.routineId)
+        assertTrue(target.exerciseTemplateDao().get(unusedCatalogue.id) != null)
+        assertEquals(exported, JsonBackupRepository(target, FakeSettings(customSettings), clock).export())
+    }
+
+    @Test
+    fun `a file without routines imports none and replaces the device's routines`() = runTest {
+        val (source, sourceSettings) = realisticSource()
+        val exported = JsonBackupRepository(source, sourceSettings, clock).export()
+        assertFalse(exported.contains("\"routines\""))
+        assertFalse(exported.contains("\"routineId\""))
+
+        val target = newDb()
+        target.addTemplates(benchPress, unusedCatalogue)
+        RoomRoutineRepository(target.routineDao()).save(pushRoutine)
+        val result = JsonBackupRepository(target, FakeSettings(Settings()), clock).import(exported)
+
+        assertTrue(result is ImportResult.Imported)
+        assertEquals(emptyList<Any>(), RoomRoutineRepository(target.routineDao()).observeAll().first())
+    }
+
+    @Test
+    fun `bad routine records and an unknown routineId reject the whole file`() = runTest {
+        val source = newDb()
+        source.addTemplates(benchPress, unusedCatalogue)
+        RoomRoutineRepository(source.routineDao()).save(pushRoutine)
+        RoomWorkoutRepository(source).save(
+            workout("w1").let { w -> w.copy(routineId = pushRoutine.id, exercises = w.exercises.take(1)) },
+        )
+        val exported = JsonBackupRepository(source, FakeSettings(Settings()), clock).export()
+        val broken = exported
+            .replace("\"routineId\": \"r-push\"", "\"routineId\": \"gone\"")
+            .replace("\"exerciseTemplateId\": \"plank\"", "\"exerciseTemplateId\": \"missing\"")
+            .replace("\"type\": \"warmup\"", "\"type\": \"superset\"")
+
+        val target = newDb()
+        val result = JsonBackupRepository(target, FakeSettings(Settings()), clock).import(broken)
+
+        assertEquals(
+            listOf(
+                ImportError(ImportProblem.INVALID_VALUE, "workouts[0].exercises[0].sets[0].type"),
+                ImportError(ImportProblem.INVALID_VALUE, "routines[0].exercises[0].sets[0].type"),
+                ImportError(ImportProblem.UNKNOWN_EXERCISE, "routines[0].exercises[1].exerciseTemplateId"),
+                ImportError(ImportProblem.INVALID_VALUE, "workouts[0].routineId"),
+            ).sortedBy { it.where },
+            (result as ImportResult.Rejected).errors.sortedBy { it.where },
+        )
+        assertEquals(emptyList<Any>(), RoomRoutineRepository(target.routineDao()).observeAll().first())
+        assertEquals(emptyList<Any>(), target.backupDao().allWorkouts())
     }
 
     private fun ImportResult.problems() = (this as ImportResult.Rejected).errors.map { it.problem }

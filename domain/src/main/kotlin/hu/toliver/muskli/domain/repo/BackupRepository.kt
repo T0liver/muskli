@@ -2,11 +2,11 @@ package hu.toliver.muskli.domain.repo
 
 /** The app's own one-file JSON backup (SPEC F-08). */
 interface BackupRepository {
-    /** Every workout (draft and soft-deleted included), custom exercises, the catalogue exercises they use, and settings. */
+    /** Every workout (draft and soft-deleted included), routines, custom exercises, the catalogue exercises they use, and settings. */
     suspend fun export(): String
 
     /**
-     * Replaces all workouts and custom exercises with the file's, adds missing catalogue exercises, and restores
+     * Replaces all workouts, routines, and custom exercises with the file's, adds missing catalogue exercises, and restores
      * settings. Validates everything first; on any error nothing is applied.
      */
     suspend fun import(json: String): ImportResult
@@ -34,7 +34,7 @@ enum class ImportProblem {
     /** The same id appears twice in the file. */
     DUPLICATE_ID,
 
-    /** A workout uses an exercise the file does not contain. */
+    /** A workout or routine uses an exercise the file does not contain. */
     UNKNOWN_EXERCISE,
 
     /** More than one unfinished, non-deleted workout. */

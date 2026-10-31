@@ -10,7 +10,9 @@ import androidx.room.Relation
 import hu.toliver.muskli.domain.model.SetType
 import hu.toliver.muskli.domain.model.Side
 
-@Entity(tableName = "workout", indices = [Index("start_time")])
+// No foreign key on routine_id: SQLite cannot add one without rebuilding the table, so deleting a
+// routine clears it in the same transaction instead (D-052).
+@Entity(tableName = "workout", indices = [Index("start_time"), Index("routine_id")])
 data class WorkoutEntity(
     @PrimaryKey val id: String,
     val title: String,
@@ -23,6 +25,7 @@ data class WorkoutEntity(
     @ColumnInfo(name = "deleted_at") val deletedAt: Long?,
     @ColumnInfo(name = "rest_ends_at") val restEndsAt: Long? = null,
     @ColumnInfo(name = "rest_duration_s") val restDurationS: Int? = null,
+    @ColumnInfo(name = "routine_id") val routineId: String? = null,
 )
 
 @Entity(

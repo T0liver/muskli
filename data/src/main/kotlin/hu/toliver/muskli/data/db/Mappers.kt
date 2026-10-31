@@ -3,13 +3,20 @@ package hu.toliver.muskli.data.db
 import hu.toliver.muskli.data.db.entity.ExerciseTemplateEntity
 import hu.toliver.muskli.data.db.entity.ExerciseTemplateSecondaryMuscleEntity
 import hu.toliver.muskli.data.db.entity.ExerciseTemplateWithMuscles
+import hu.toliver.muskli.data.db.entity.RoutineEntity
+import hu.toliver.muskli.data.db.entity.RoutineExerciseEntity
+import hu.toliver.muskli.data.db.entity.RoutineSetEntity
+import hu.toliver.muskli.data.db.entity.RoutineWithChildren
 import hu.toliver.muskli.data.db.entity.WorkoutEntity
 import hu.toliver.muskli.data.db.entity.WorkoutExerciseEntity
 import hu.toliver.muskli.data.db.entity.WorkoutSetEntity
 import hu.toliver.muskli.data.db.entity.WorkoutWithExercises
 import hu.toliver.muskli.domain.calc.WorkoutExerciseRecord
 import hu.toliver.muskli.domain.model.ExerciseTemplate
+import hu.toliver.muskli.domain.model.PlannedSet
 import hu.toliver.muskli.domain.model.RestTimer
+import hu.toliver.muskli.domain.model.Routine
+import hu.toliver.muskli.domain.model.RoutineExercise
 import hu.toliver.muskli.domain.model.SetData
 import hu.toliver.muskli.domain.model.Workout
 import hu.toliver.muskli.domain.model.WorkoutExercise
@@ -93,6 +100,7 @@ fun Workout.toRows(): WorkoutRows {
         deletedAt = deletedAtEpochMs,
         restEndsAt = restTimer?.endsAtEpochMs,
         restDurationS = restTimer?.durationS,
+        routineId = routineId,
     )
     return WorkoutRows(workoutRow, exerciseRows, setRows)
 }
@@ -119,6 +127,7 @@ fun WorkoutWithExercises.toDomain() = Workout(
         )
     },
     restTimer = workout.restEndsAt?.let { endsAt -> workout.restDurationS?.let { RestTimer(endsAt, it) } },
+    routineId = workout.routineId,
 )
 
 private fun WorkoutSetEntity.toDomain() = WorkoutSet(
@@ -148,6 +157,63 @@ fun WorkoutWithExercises.toExerciseRecords(exerciseTemplateId: String): List<Wor
                 workoutDeletedAtEpochMs = domain.deletedAtEpochMs,
                 positionInWorkout = position,
                 sets = exercise.sets.map { it.data },
+                routineId = domain.routineId,
             )
         }
+}
+
+/** Rows for [hu.toliver.muskli.data.db.dao.RoutineDao.save]; list order becomes `position`. */
+data class RoutineRows(
+    val routine: RoutineEntity,
+    val exercises: List<RoutineExerciseEntity>,
+    val sets: List<RoutineSetEntity>,
+)
+
+fun Routine.toRows() = RoutineRows(
+    routine = RoutineEntity(id = id, title = title, createdAt = createdAtEpochMs, updatedAt = updatedAtEpochMs),
+    exercises = exercises.mapIndexed { position, exercise ->
+        RoutineExerciseEntity(
+            routineId = id,
+            position = position,
+            exerciseTemplateId = exercise.exerciseTemplateId,
+            supersetGroup = exercise.supersetGroup,
+            notes = exercise.notes,
+            restSeconds = exercise.restSeconds,
+        )
+    },
+    sets = exercises.flatMapIndexed { exercisePosition, exercise ->
+        exercise.sets.mapIndexed { position, set ->
+            RoutineSetEntity(
+                routineId = id,
+                exercisePosition = exercisePosition,
+                position = position,
+                setType = set.type,
+                weightKg = set.weightKg,
+                reps = set.reps,
+                distanceM = set.distanceM,
+                durationS = set.durationS,
+            )
+        }
+    },
+)
+
+fun RoutineWithChildren.toDomain(): Routine {
+    val setsByExercise = sets.groupBy { it.exercisePosition }
+    return Routine(
+        id = routine.id,
+        title = routine.title,
+        createdAtEpochMs = routine.createdAt,
+        updatedAtEpochMs = routine.updatedAt,
+        exercises = exercises.sortedBy { it.position }.map { exercise ->
+            RoutineExercise(
+                exerciseTemplateId = exercise.exerciseTemplateId,
+                supersetGroup = exercise.supersetGroup,
+                notes = exercise.notes,
+                restSeconds = exercise.restSeconds,
+                sets = setsByExercise[exercise.position].orEmpty().sortedBy { it.position }.map {
+                    PlannedSet(type = it.setType, weightKg = it.weightKg, reps = it.reps, durationS = it.durationS, distanceM = it.distanceM)
+                },
+            )
+        },
+    )
 }

@@ -18,6 +18,8 @@ data class Workout(
     val exercises: List<WorkoutExercise>,
     /** The running rest of the live workout, null when none (ARCHITECTURE §5). */
     val restTimer: RestTimer? = null,
+    /** The routine the workout was started from; null for an empty start or once that routine is deleted (D-052). */
+    val routineId: String? = null,
 )
 
 /**

@@ -19,8 +19,9 @@ class JsonBackupRepository(
     private val clock: Clock,
 ) : BackupRepository {
     override suspend fun export(): String {
-        val (templates, workouts) = db.withTransaction {
-            db.backupDao().exportedTemplates() to db.backupDao().allWorkouts()
+        val (templates, workouts, routines) = db.withTransaction {
+            val dao = db.backupDao()
+            Triple(dao.exportedTemplates(), dao.allWorkouts(), dao.allRoutines())
         }
         val file = BackupFile(
             schemaVersion = BackupFile.CURRENT_SCHEMA_VERSION,
@@ -28,6 +29,7 @@ class JsonBackupRepository(
             exercises = templates.map { it.toJson() },
             workouts = workouts.map { it.toJson() },
             settings = settingsRepository.settings.first().toJson(),
+            routines = routines.map { it.toJson() },
         )
         return json.encodeToString(BackupFile.serializer(), file)
     }
@@ -52,12 +54,17 @@ class JsonBackupRepository(
             if (conflicts.isNotEmpty()) return@withTransaction conflicts
 
             dao.deleteAllWorkouts()
+            // Before the custom exercises, which routine exercises reference with RESTRICT.
+            dao.deleteAllRoutines()
             dao.deleteCustomTemplates()
             val inserted = backup.templates.zip(dao.insertTemplatesIfMissing(backup.templates))
                 .filter { (_, rowId) -> rowId != -1L }
                 .mapTo(mutableSetOf()) { (t, _) -> t.id }
             // A catalogue exercise already on the device keeps its own muscles.
             dao.insertSecondaryMusclesIfMissing(backup.secondaryMuscles.filter { it.exerciseTemplateId in inserted })
+            dao.insertRoutines(backup.routines)
+            dao.insertRoutineExercises(backup.routineExercises)
+            dao.insertRoutineSets(backup.routineSets)
             dao.insertWorkouts(backup.workouts)
             dao.insertExercises(backup.exercises)
             dao.insertSets(backup.sets)

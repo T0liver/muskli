@@ -15,6 +15,8 @@ data class BackupFile(
     val workouts: List<WorkoutJson>,
     /** Absent means "keep this device's settings". */
     val settings: SettingsJson? = null,
+    /** Optional so files written before D-052 still import, with no routines. */
+    val routines: List<RoutineJson> = emptyList(),
 ) {
     companion object {
         const val CURRENT_SCHEMA_VERSION = 1
@@ -50,6 +52,8 @@ data class WorkoutJson(
     val deletedAtMs: Long? = null,
     val restEndsAtMs: Long? = null,
     val restDurationS: Int? = null,
+    /** The id of a routine in the same file, or absent. */
+    val routineId: String? = null,
     val exercises: List<WorkoutExerciseJson>,
 )
 
@@ -76,6 +80,36 @@ data class SetJson(
     val completed: Boolean,
     val completedAtMs: Long? = null,
     val side: String,
+)
+
+/** Exercises and sets have no ids; `index` is their position, like a workout's (D-052). */
+@Serializable
+data class RoutineJson(
+    val id: String,
+    val title: String,
+    val createdAtMs: Long,
+    val updatedAtMs: Long,
+    val exercises: List<RoutineExerciseJson>,
+)
+
+@Serializable
+data class RoutineExerciseJson(
+    val index: Int,
+    val exerciseTemplateId: String,
+    val supersetId: Int? = null,
+    val notes: String? = null,
+    val restSeconds: Int? = null,
+    val sets: List<RoutineSetJson>,
+)
+
+@Serializable
+data class RoutineSetJson(
+    val index: Int,
+    val type: String,
+    val weightKg: Double? = null,
+    val reps: Int? = null,
+    val distanceMeters: Double? = null,
+    val durationSeconds: Int? = null,
 )
 
 @Serializable
