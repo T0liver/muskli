@@ -21,6 +21,13 @@ sealed interface Route {
     data class WorkoutDetail(val workoutId: String) : Route
     data class EditWorkout(val workoutId: String, val isNew: Boolean) : Route
     data class ExerciseHistory(val exerciseTemplateId: String) : Route
+    data object Routines : Route
+
+    /** A null [routineId] creates one. [entry] is unique per opening, so each editor gets a fresh form. */
+    data class RoutineEditor(val routineId: String?, val entry: Int) : Route
+
+    /** The library picker adding to the editor opened as [entry]. */
+    data class RoutineAddExercises(val routineId: String?, val entry: Int) : Route
 }
 
 // Ids are UUIDs or catalogue slugs, so the unit separator never occurs in them.
@@ -38,6 +45,9 @@ private fun Route.encode(): String = when (this) {
     is Route.WorkoutDetail -> listOf("detail", workoutId).joinToString(SEP)
     is Route.EditWorkout -> listOf("edit", workoutId, isNew.toString()).joinToString(SEP)
     is Route.ExerciseHistory -> listOf("exercise", exerciseTemplateId).joinToString(SEP)
+    Route.Routines -> "routines"
+    is Route.RoutineEditor -> listOf("routine", routineId.orEmpty(), entry.toString()).joinToString(SEP)
+    is Route.RoutineAddExercises -> listOf("routine-add", routineId.orEmpty(), entry.toString()).joinToString(SEP)
 }
 
 private fun decodeRoute(encoded: String): Route {
@@ -53,6 +63,9 @@ private fun decodeRoute(encoded: String): Route {
         "detail" -> Route.WorkoutDetail(parts[1])
         "edit" -> Route.EditWorkout(parts[1], parts[2].toBoolean())
         "exercise" -> Route.ExerciseHistory(parts[1])
+        "routines" -> Route.Routines
+        "routine" -> Route.RoutineEditor(parts[1].ifEmpty { null }, parts[2].toInt())
+        "routine-add" -> Route.RoutineAddExercises(parts[1].ifEmpty { null }, parts[2].toInt())
         else -> Route.Home
     }
 }

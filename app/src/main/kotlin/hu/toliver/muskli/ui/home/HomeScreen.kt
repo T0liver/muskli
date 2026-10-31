@@ -30,6 +30,7 @@ fun HomeScreen(
     workoutInProgress: Boolean,
     onStartWorkout: () -> Unit,
     onResumeWorkout: () -> Unit,
+    onOpenRoutines: () -> Unit,
     onOpenHistory: () -> Unit,
     onOpenLibrary: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -54,6 +55,7 @@ fun HomeScreen(
                         .heightIn(min = Spacing.minTouchTarget),
                 ) { Text(stringResource(R.string.home_start_workout)) }
             }
+            HomeButton(R.string.home_routines, onOpenRoutines)
             HomeButton(R.string.home_history, onOpenHistory)
             HomeButton(R.string.home_library, onOpenLibrary)
             HomeButton(R.string.home_settings, onOpenSettings)
@@ -100,6 +102,6 @@ private fun HomeButton(@StringRes label: Int, onClick: () -> Unit) {
 @Composable
 private fun HomeScreenPreview() {
     MuskliTheme {
-        HomeScreen(workoutInProgress = true, onStartWorkout = {}, onResumeWorkout = {}, onOpenHistory = {}, onOpenLibrary = {}, onOpenSettings = {})
+        HomeScreen(workoutInProgress = true, onStartWorkout = {}, onResumeWorkout = {}, onOpenRoutines = {}, onOpenHistory = {}, onOpenLibrary = {}, onOpenSettings = {})
     }
 }
