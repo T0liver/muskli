@@ -42,6 +42,19 @@ None open: D-044, D-045. Re-planning in Apply avoids stale ids if the user takes
 ## Handoff log
 <!-- Newest first. Each entry: date, role, what was done, what's left, gotchas, commands run + results. -->
 
+### 2026-10-31 · VERIFY
+**Pass. Move to `done/`.** This ticket has no UI and no `AC-*` device steps (the UI is T-038), so verification is the test suites. I did not install on a device; there is nothing to see there.
+- Build: commit `f88fcbc` on `t-037-hevy-import-apply`, Windows, JDK from `gradlew`, Robolectric for `:data`.
+- `.\gradlew.bat :domain:cleanTest :domain:test :data:cleanTestDebugUnitTest :app:cleanTestDebugUnitTest testDebugUnitTest assembleDebug lintDebug --no-build-cache` gave BUILD SUCCESSFUL, 412 tests, 0 failures, 0 errors. Lint: 0 errors, 1 warning (pre-existing `NewerVersionAvailable`).
+- `RoomHevyImportRepositoryTest` 5/5 pass:
+  - TC-HEVY-20 adds 2 workouts and 3 customs, existing rows unchanged.
+  - TC-HEVY-20 rollback (a foreign-key failure leaves the DB unchanged; it was shown to fail without the transaction in REVIEW).
+  - No template replace.
+  - TC-HEVY-21 second import: 0 new, 2 duplicates, 0 customs, DB unchanged.
+  - Drafts and soft-deleted workouts count as duplicates.
+- `HevyImportUseCasesTest` 13/13 pass, including TC-HEVY-21 and TC-HEVY-22 (written after `add`, unchanged when not requested, not written on failure).
+- Every acceptance criterion holds. No new tickets.
+
 ### 2026-10-31 · REVIEW
 **Verdict: no Blockers, no Should-fix. Move to `verify/`.** Reviewed `git diff main...t-037-hevy-import-apply` (commit `e9338fc`) against the ticket, D-044, D-058 and WORKFLOW §5.
 - **Scope:** only the interface, the two use cases, `RoomHevyImportRepository`, one read query in `BackupDao`, Hilt bindings, tests, the fixture copy, and one D-058 line. No UI, no strings, no navigation. `BackupRepository` and the backup format are untouched.
