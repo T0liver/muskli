@@ -15,6 +15,7 @@ import hu.toliver.muskli.data.UuidIdGenerator
 import hu.toliver.muskli.data.backup.JsonBackupRepository
 import hu.toliver.muskli.data.db.MuskliDatabase
 import hu.toliver.muskli.data.repo.RoomExerciseTemplateRepository
+import hu.toliver.muskli.data.repo.RoomHevyImportRepository
 import hu.toliver.muskli.data.repo.RoomRoutineRepository
 import hu.toliver.muskli.data.repo.RoomWorkoutRepository
 import hu.toliver.muskli.data.seed.BundledCatalogueLoader
@@ -26,6 +27,7 @@ import hu.toliver.muskli.data.settings.DataStoreSettingsRepository
 import hu.toliver.muskli.domain.repo.BackupRepository
 import hu.toliver.muskli.domain.repo.Clock
 import hu.toliver.muskli.domain.repo.ExerciseTemplateRepository
+import hu.toliver.muskli.domain.repo.HevyImportRepository
 import hu.toliver.muskli.domain.repo.IdGenerator
 import hu.toliver.muskli.domain.repo.RoutineRepository
 import hu.toliver.muskli.domain.repo.SettingsRepository
@@ -69,6 +71,9 @@ object DataModule {
     @Provides
     fun backupRepository(db: MuskliDatabase, settings: SettingsRepository, clock: Clock): BackupRepository =
         JsonBackupRepository(db, settings, clock)
+
+    @Provides
+    fun hevyImportRepository(db: MuskliDatabase): HevyImportRepository = RoomHevyImportRepository(db)
 
     @Provides
     fun backupDocuments(documents: ContentResolverBackupDocuments): BackupDocuments = documents
