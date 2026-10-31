@@ -164,7 +164,7 @@ private fun previewExercises(completed: Boolean): List<WorkoutExerciseUi> = list
     WorkoutExerciseUi(
         id = "bench",
         templateId = "bench",
-        name = "Bench Press (Barbell)",
+        name = "Barbell Bench Press",
         columns = weightReps,
         sets = listOf(
             WorkoutSetUi("b1", 1, SetType.WARMUP, listOf("40", "10"), listOf("40", "10"), completed = completed),
@@ -176,7 +176,7 @@ private fun previewExercises(completed: Boolean): List<WorkoutExerciseUi> = list
     WorkoutExerciseUi(
         id = "raise",
         templateId = "raise",
-        name = "Lateral Raise (Dumbbell)",
+        name = "Dumbbell Lateral Raise",
         columns = weightReps,
         sets = listOf(
             WorkoutSetUi("l1", 1, SetType.NORMAL, listOf("12", "12"), listOf("12", "12"), completed = false),
@@ -187,7 +187,7 @@ private fun previewExercises(completed: Boolean): List<WorkoutExerciseUi> = list
     WorkoutExerciseUi(
         id = "row",
         templateId = "row",
-        name = "Bent-Over Row (Barbell)",
+        name = "Barbell Row",
         columns = weightReps,
         sets = listOf(
             WorkoutSetUi("r1", 1, SetType.NORMAL, listOf("70", "10"), listOf("70", "10"), completed = completed),

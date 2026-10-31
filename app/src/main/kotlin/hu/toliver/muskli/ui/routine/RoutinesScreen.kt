@@ -188,8 +188,8 @@ private fun RoutinesScreenPreview() {
             state = RoutinesUiState(
                 loading = false,
                 routines = listOf(
-                    RoutineSummaryUi("a", "Pull day", listOf("Pull Up", "Bent-Over Row (Barbell)")),
-                    RoutineSummaryUi("b", "Push day", listOf("Bench Press (Barbell)", "Lateral Raise (Dumbbell)")),
+                    RoutineSummaryUi("a", "Pull day", listOf("Pull-Up", "Barbell Row")),
+                    RoutineSummaryUi("b", "Push day", listOf("Barbell Bench Press", "Dumbbell Lateral Raise")),
                 ),
             ),
             onBack = {},

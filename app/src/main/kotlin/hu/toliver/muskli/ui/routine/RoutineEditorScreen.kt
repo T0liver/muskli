@@ -315,7 +315,7 @@ private fun RoutineEditorScreenPreview() {
                 exercises = listOf(
                     RoutineExerciseUi(
                         key = "e1",
-                        name = "Bench Press (Barbell)",
+                        name = "Barbell Bench Press",
                         columns = listOf(SetColumn.WEIGHT, SetColumn.REPS),
                         rest = "120",
                         restInvalid = false,
